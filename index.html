@@ -1,1235 +1,1269 @@
-/* CORNY UPDATE: stone, wooden pickaxe, and reusable ogger traps. */
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#173727">
+<title>Corny Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#f3e7c1;--gold:#d8b35b;--green:#183b2b}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#142f23;color:var(--cream);font-family:"VT323","Courier New",monospace;font-size:22px}
+body{overscroll-behavior:none}
+button,input{font:inherit}
+button{cursor:pointer;touch-action:manipulation}
+button:disabled{opacity:.4;cursor:default}
+button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.hidden{display:none!important}
+#game{display:block;width:100%;height:100%;touch-action:none}
+.overlay{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:16px;background:#081a13b8;backdrop-filter:blur(4px)}
+.panel{width:min(650px,100%);max-height:94dvh;overflow:auto;padding:24px;background:#183b2bf5;border:3px solid #8a9c64;box-shadow:7px 7px 0 #07170dc9;text-align:center}
+.panel.wide{width:min(940px,100%)}
+h1{font:normal clamp(64px,11vw,104px)/.85 "VT323",monospace;margin:26px 0 20px;letter-spacing:1px}
+h2{font-size:42px;line-height:1;margin:8px 0 14px;font-weight:normal}
+p{font-size:21px;line-height:1.2;color:#d3d8b9;margin:12px 0}
+.eyebrow{font-size:18px;letter-spacing:3px;color:var(--gold)}
+.small{font-size:17px;color:#b4c2a6}
+.primary,.secondary,.danger{min-height:46px;border:2px solid #ffffff25;padding:8px 16px;margin-top:10px;font-size:24px}
+.primary{background:var(--gold);color:#20341e}
+.secondary{background:#254c36;color:var(--cream)}
+.danger{background:#854334;color:#fff0d6}
+.full{width:100%}
+.row{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+input{width:100%;padding:10px;background:#10281d;color:var(--cream);border:2px solid #7e9460;font-size:25px}
+#worldList{display:grid;gap:10px;margin:20px 0;text-align:left}
+.worldCard{width:100%;display:flex;gap:14px;justify-content:space-between;align-items:center;padding:14px;background:#244932;border:2px solid #627950;color:var(--cream);text-align:left}
+.worldCard.selected{border-color:var(--gold);background:#615632}
+.worldCard strong{font-size:28px;font-weight:normal}
+.worldCard small{display:block;font-size:17px;color:#bcc9ac}
+.worldCard .arrow{font-size:32px;color:var(--gold)}
+#hud{position:fixed;inset:0;pointer-events:none;z-index:2}
+.topbar{position:absolute;top:max(12px,env(safe-area-inset-top));left:14px;right:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.card{padding:9px 12px;background:#132e22e8;border:2px solid #76915c;font-size:21px}
+.stats{display:flex;gap:16px;font-size:23px}
+#health{color:#f1a68e}
+#hunger{color:#e4ca78}
+#worldName{font-size:24px;color:var(--cream)}
+#air{font-size:21px;color:#a8ddeb}
+.toolbar{display:flex;gap:7px;pointer-events:auto}
+.control{min-height:44px;border:2px solid #819364;background:#173b2be8;color:var(--cream);padding:6px 10px;font-size:22px;touch-action:none;user-select:none;-webkit-user-select:none}
+.control:active,.control.pressed{background:#8a7038}
+#crosshair{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:34px;color:white;text-shadow:1px 1px #000;pointer-events:none}
+#target{position:absolute;top:calc(50% + 30px);left:50%;transform:translateX(-50%);padding:3px 10px;background:#11291dcc;font-size:21px;white-space:nowrap}
+#mineBox{position:absolute;top:calc(50% + 64px);left:50%;transform:translateX(-50%);width:190px;text-align:center;font-size:19px}
+.track{height:7px;background:#0008;margin-top:4px;border:1px solid #a2ae7a}
+#mineFill{height:100%;width:0;background:var(--gold)}
+#heldItem{position:absolute;bottom:max(24px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:210px;min-height:72px;pointer-events:auto;text-align:center;background:#183b2bed;border:2px solid var(--gold);color:var(--cream);padding:7px;font-size:22px}
+#heldItem small{display:block;font-size:17px;color:#cbd1ac}
+#walk{position:absolute;left:18px;bottom:max(20px,env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(3,46px);grid-template-rows:repeat(2,46px);gap:5px;pointer-events:auto}
+#actions{position:absolute;right:18px;bottom:max(20px,env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(2,88px);gap:6px;pointer-events:auto}
+#notice{position:fixed;z-index:30;left:50%;bottom:160px;transform:translateX(-50%);max-width:min(650px,90vw);padding:9px 14px;background:#10271ef2;border:2px solid #8a9c64;text-align:center;pointer-events:none;font-size:22px}
+#waterTint,#damageTint{position:fixed;inset:0;pointer-events:none;z-index:1;opacity:0}
+#waterTint{background:#156da62e}
+#damageTint{box-shadow:inset 0 0 120px 30px #d329297d}
+.inventoryGrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin:16px 0}
+.invSlot{position:relative;min-height:91px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;border:2px solid #536c46;background:#10271e;color:var(--cream);padding:6px;font-size:17px;line-height:1}
+.invSlot.selected{border-color:var(--gold);background:#5e532c}
+.invSlot.empty{color:#5b7252}
+.invSlot .count{position:absolute;right:6px;top:4px;color:#fff0b5;font-size:21px}
+.invSlot .durability{color:#b9da8c;font-size:16px}
+.itemIcon{display:block;width:24px;height:24px;border:2px solid #ffffff25;box-shadow:inset -5px -5px #0003}
+.itemIcon.dagger{width:9px;height:30px;transform:rotate(30deg);background:#b98c50;border-color:#e1bc7c}
+.craftLayout{display:grid;grid-template-columns:260px 1fr;gap:25px;align-items:start}
+#craftGrid{display:grid;gap:7px;width:240px;margin:16px auto}
+.craftSlot{height:70px;background:#10271e;border:2px solid #758959;color:var(--cream);font-size:18px}
+.craftSlot.filled{background:#674e2e;border-color:var(--gold)}
+#craftInventory .invSlot{min-height:80px;font-size:16px}
+#craftInfo{min-height:48px}
+#errorText{font:16px/1.4 "Courier New",monospace;white-space:pre-wrap;overflow-wrap:anywhere;text-align:left}
+@media(max-width:780px){
+.panel{padding:18px}
+.craftLayout{grid-template-columns:1fr}
+#craftGrid{width:220px}
+.craftSlot{height:61px}
+#heldItem{bottom:136px;width:200px;min-height:60px}
+#notice{bottom:212px;font-size:20px}
+#walk{left:10px}
+#actions{right:10px}
+.inventoryGrid{gap:5px}
+.invSlot{min-height:80px;font-size:16px}
+.card{font-size:18px}
+.stats{font-size:20px;gap:10px}
+.toolbar .control{font-size:18px;padding:6px}
+}
+@media(max-height:530px){
+.panel{max-height:95dvh;padding:14px}
+h1{font-size:64px;margin:14px 0}
+h2{font-size:34px}
+p{font-size:18px}
+.invSlot{min-height:64px}
+#heldItem{bottom:18px;width:180px;min-height:64px}
+#notice{bottom:125px}
+#actions{grid-template-columns:repeat(3,72px)}
+#walk{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(2,40px)}
+.control{font-size:19px;min-height:40px}
+}
+</style>
+</head>
+<body>
+<canvas id="game" aria-label="Corny Game 3D world"></canvas>
+<div id="waterTint"></div>
+<div id="damageTint"></div>
+<div id="notice" class="hidden" aria-live="polite"></div>
 
-const CORNY_TOOLS = new Set(["wooden_dagger", "wooden_pickaxe"]);
+<div id="loading" class="overlay">
+ <div class="panel">
+  <div class="eyebrow">CORNY GAME</div>
+  <h2>GROWING YOUR FOREST...</h2>
+  <p>Loading the 3D engine.</p>
+ </div>
+</div>
 
-NAMES.stone = "STONE";
-NAMES.wooden_pickaxe = "WOODEN PICKAXE";
-NAMES.ogger_trap = "OGGER TRAP";
+<div id="home" class="overlay hidden">
+ <div class="panel">
+  <div class="eyebrow">YOUR ISLAND. YOUR ADVENTURE.</div>
+  <h1>CORNY<br>GAME</h1>
+  <p>Explore a new forest.<br>Build a place of your own.</p>
+  <button id="playButton" class="primary full">PLAY</button>
+  <p class="small">iPad: drag to look, hold arrows to walk.<br>
+  Computer: WASD, mouse, Space.<br>
+  Worlds save in this browser.</p>
+ </div>
+</div>
 
-COLORS.stone = "#92958c";
-COLORS.wooden_pickaxe = "#b98d55";
-COLORS.ogger_trap = "#8a7860";
+<div id="worlds" class="overlay hidden">
+ <div class="panel">
+  <div class="eyebrow">SAVED ON THIS DEVICE</div>
+  <h2>YOUR SERVERS</h2>
+  <p id="worldCount"></p>
+  <div id="worldList"></div>
+  <div id="newWorldForm">
+   <label for="newWorldName">NEW WORLD NAME</label>
+   <input id="newWorldName" maxlength="24" placeholder="My Pine Island">
+   <button id="createWorld" class="primary full">CREATE WORLD</button>
+  </div>
+  <div class="row">
+   <button id="worldSettings" class="secondary">SETTINGS</button>
+   <button id="deleteWorlds" class="danger hidden">DELETE SELECTED</button>
+   <button id="worldsBack" class="secondary">BACK</button>
+  </div>
+ </div>
+</div>
 
-for (const type of ["stone", "ogger_trap"]) {
-    if (!TYPES.includes(type)) TYPES.push(type);
+<div id="hud" class="hidden">
+ <div class="topbar">
+  <div class="card">
+   <div id="worldName">PINE ISLAND</div>
+   <div class="stats"><span id="health"></span><span id="hunger"></span></div>
+   <div id="air" class="hidden"></div>
+  </div>
+  <div class="toolbar">
+   <button id="fullscreen" class="control">[ ]</button>
+   <button id="leave" class="control">MENU</button>
+  </div>
+ </div>
+ <div id="crosshair">+</div>
+ <div id="target" class="hidden"></div>
+ <div id="mineBox" class="hidden">
+  <span id="mineText"></span>
+  <div class="track"><div id="mineFill"></div></div>
+ </div>
+ <button id="heldItem"><span id="heldName">BARE HANDS</span><small id="heldDetail">OPEN INVENTORY</small></button>
+ <div id="walk">
+  <span></span><button class="control" data-move="forward">^</button><span></span>
+  <button class="control" data-move="left">&lt;</button>
+  <button class="control" data-move="backward">v</button>
+  <button class="control" data-move="right">&gt;</button>
+ </div>
+ <div id="actions">
+  <button id="mine" class="control">MINE</button>
+  <button id="place" class="control">PLACE</button>
+  <button id="attack" class="control">ATTACK</button>
+  <button id="jump" class="control">JUMP</button>
+  <button id="craft" class="control">CRAFT</button>
+  <button id="eat" class="control">EAT BEEF</button>
+ </div>
+</div>
 
-    const material = new THREE.MeshLambertMaterial({
-        map: makeTexture(type),
-        vertexColors: true
-    });
+<div id="pause" class="overlay hidden">
+ <div class="panel">
+  <h2>TAKE A BREATHER</h2>
+  <button id="resume" class="primary full">RESUME</button>
+  <button id="saveButton" class="secondary full">SAVE WORLD</button>
+  <button id="goHome" class="secondary full">SAVE AND GO TO HOMEPAGE</button>
+  <p class="small">I: inventory / E: crafting table<br>Q: eat / Space: jump / Esc: menu</p>
+ </div>
+</div>
 
-    const mesh = new THREE.InstancedMesh(
-        blockGeometry(type),
-        material,
-        type === "stone" ? 60000 : 24000
-    );
+<div id="inventory" class="overlay hidden">
+ <div class="panel">
+  <h2>INVENTORY</h2>
+  <p>20 STACKS. UP TO 15 MATCHING ITEMS PER STACK.</p>
+  <div id="inventoryGrid" class="inventoryGrid"></div>
+  <p id="inventoryDetail"></p>
+  <div class="row">
+   <button id="hands" class="secondary">BARE HANDS</button>
+   <button id="portableCraft" class="secondary">MAKE BUILDING TABLE</button>
+   <button id="inventoryEat" class="secondary">EAT BEEF</button>
+  </div>
+  <button id="closeInventory" class="primary full">BACK TO GAME</button>
+ </div>
+</div>
 
-    mesh.count = 0;
-    mesh.visible = false;
-    mesh.userData.cells = [];
-    mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+<div id="crafting" class="overlay hidden">
+ <div class="panel wide">
+  <h2 id="craftTitle">CRAFTING</h2>
+  <div class="craftLayout">
+   <div>
+    <p id="craftInstructions"></p>
+    <div id="craftGrid"></div>
+    <p id="craftInfo"></p>
+    <button id="craftResult" class="primary full" disabled>CRAFT</button>
+   </div>
+   <div>
+    <p>YOUR ITEMS</p>
+    <p class="small">Select a stack, then tap an empty crafting square.<br>Tap a filled square to take its item back.</p>
+    <div id="craftInventory" class="inventoryGrid"></div>
+   </div>
+  </div>
+  <button id="closeCraft" class="secondary full">BACK TO GAME</button>
+ </div>
+</div>
 
-    scene.add(mesh);
-    batches.set(type, mesh);
+<div id="death" class="overlay hidden">
+ <div class="panel">
+  <div class="eyebrow">YOUR WORLD IS STILL HERE</div>
+  <h2 id="deathTitle">YOU WERE DEFEATED</h2>
+  <p>Your island and inventory are saved.</p>
+  <button id="respawn" class="primary full">RESPAWN IN THIS WORLD</button>
+  <button id="deathHome" class="secondary full">GO TO HOMEPAGE</button>
+ </div>
+</div>
 
-    lootMaterials[type] = new THREE.MeshLambertMaterial({
-        color: COLORS[type]
-    });
+<div id="fatal" class="overlay hidden">
+ <div class="panel">
+  <h2>COULDN'T START</h2>
+  <pre id="errorText"></pre>
+  <button class="primary full" onclick="location.reload()">TRY AGAIN</button>
+ </div>
+</div>
+
+<script>
+window.showCornyError=function(error){
+ document.getElementById("loading").classList.add("hidden");
+ document.getElementById("fatal").classList.remove("hidden");
+ document.getElementById("errorText").textContent=error?.message||String(error);
+};
+window.addEventListener("error",e=>window.showCornyError(e.error||e.message));
+window.addEventListener("unhandledrejection",e=>window.showCornyError(e.reason));
+</script>
+
+<script type="module">
+async function main(){
+const THREE=await import("https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js");
+const $=id=>document.getElementById(id);
+const show=(id,on)=>$(id).classList.toggle("hidden",!on);
+const SAVE_KEY="corny-worlds-v2";
+const TYPES=["dirt","sand","log","leaves","table"];
+const NAMES={dirt:"DIRT",sand:"SAND",log:"PINE LOG",leaves:"PINE LEAVES",table:"BUILDING TABLE",beef:"BEEF",wooden_dagger:"WOODEN DAGGER"};
+const COLORS={dirt:"#8b6949",sand:"#dcc48b",log:"#805438",leaves:"#3a643f",table:"#b8874a",beef:"#b9614e",wooden_dagger:"#ba9058"};
+const WATER=-.22;
+const key=(x,y,z)=>`${x},${y},${z}`;
+const canvas=$("game");
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:"high-performance"});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+const scene=new THREE.Scene();
+scene.background=new THREE.Color("#a8cbd6");
+scene.fog=new THREE.Fog("#a8cbd6",45,115);
+const camera=new THREE.PerspectiveCamera(74,1,.05,190);
+camera.rotation.order="YXZ";
+scene.add(camera);
+scene.add(new THREE.HemisphereLight("#fff0d5","#687255",2.1));
+const sun=new THREE.DirectionalLight("#ffe8c0",1.9);
+sun.position.set(30,45,15);
+scene.add(sun);
+const ocean=new THREE.Mesh(new THREE.PlaneGeometry(360,360),
+ new THREE.MeshLambertMaterial({color:"#397b91",transparent:true,opacity:.9,side:THREE.DoubleSide}));
+ocean.rotation.x=-Math.PI/2;
+ocean.position.y=WATER;
+scene.add(ocean);
+
+const blocks=new Map(),batches=new Map(),mobs=new Map(),drops=[];
+const sharedCube=new THREE.BoxGeometry(1,1,1);
+const hand=new THREE.Group();
+camera.add(hand);
+let handKey="";
+const cubeMaterials={};
+for(const [name,color] of Object.entries({
+ cream:"#ece3cd",brown:"#876042",dark:"#343b30",green:"#849e55",
+ shirt:"#625947",eye:"#17241a",muzzle:"#c5a188",tooth:"#e9ddb8",
+ beef:"#b9614e",leaves:"#5d8949",wood:"#b98d55",skin:"#c39b6a"
+}))cubeMaterials[name]=new THREE.MeshLambertMaterial({color});
+
+function makeTexture(kind){
+ const c=document.createElement("canvas");c.width=c.height=16;
+ const ctx=c.getContext("2d");
+ ctx.fillStyle=kind==="dirt"?"#ffffff":COLORS[kind];ctx.fillRect(0,0,16,16);
+ for(let i=0;i<60;i++){
+  ctx.fillStyle=Math.random()<.5?"#00000018":"#ffffff18";
+  ctx.fillRect(Math.random()*16|0,Math.random()*16|0,kind==="log"?1:2,kind==="log"?4:1);
+ }
+ if(kind==="table"){
+  ctx.strokeStyle="#62412a";
+  for(let n=5;n<=10;n+=5){ctx.beginPath();ctx.moveTo(n,0);ctx.lineTo(n,16);ctx.stroke();ctx.beginPath();ctx.moveTo(0,n);ctx.lineTo(16,n);ctx.stroke();}
+ }
+ const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;t.colorSpace=THREE.SRGBColorSpace;return t;
+}
+function blockGeometry(kind){
+ const g=new THREE.BoxGeometry(1,1,1),n=g.attributes.normal,colors=[];
+ for(let i=0;i<n.count;i++){
+  const ny=n.getY(i);
+  const c=new THREE.Color(kind==="dirt"?(ny>.5?"#7d9654":"#8c6847"):"#ffffff");
+  c.multiplyScalar(ny<-.5?.72:1);colors.push(c.r,c.g,c.b);
+ }
+ g.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));return g;
+}
+for(const kind of TYPES){
+ const mat=new THREE.MeshLambertMaterial({map:makeTexture(kind),vertexColors:true});
+ const mesh=new THREE.InstancedMesh(blockGeometry(kind),mat,24000);
+ mesh.count=0;mesh.visible=false;mesh.userData.cells=[];
+ mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+ scene.add(mesh);batches.set(kind,mesh);
+}
+const tempMatrix=new THREE.Matrix4();
+function put(x,y,z,type){if(!blocks.has(key(x,y,z)))blocks.set(key(x,y,z),{x,y,z,type});}
+const at=(x,y,z)=>blocks.get(key(x,y,z));
+function rebuildTerrain(){
+ const grouped=Object.fromEntries(TYPES.map(t=>[t,[]]));
+ for(const b of blocks.values())grouped[b.type].push(b);
+ for(const type of TYPES){
+  const mesh=batches.get(type),cells=grouped[type];mesh.userData.cells=cells;
+  mesh.count=cells.length;mesh.visible=cells.length>0;
+  cells.forEach((b,i)=>{tempMatrix.makeTranslation(b.x,b.y,b.z);mesh.setMatrixAt(i,tempMatrix);});
+  mesh.instanceMatrix.needsUpdate=true;
+  if(cells.length){mesh.computeBoundingSphere();mesh.computeBoundingBox();}
+ }
+}
+const outline=new THREE.LineSegments(
+ new THREE.EdgesGeometry(new THREE.BoxGeometry(1.015,1.015,1.015)),
+ new THREE.LineBasicMaterial({color:"#fff1bb"}));
+outline.visible=false;scene.add(outline);
+const ray=new THREE.Raycaster();ray.far=4.8;
+
+let records=[],current=null,mode="home",selectWorlds=false;
+const selectedWorlds=new Set();
+let inventory=Array(20).fill(null),active=-1;
+let craftSlots=Array(9).fill(null),craftSize=3,craftSource=-1,craftStamp=0;
+let land=[],spawn={x:0,y:.5,z:0},rngState=1;
+let hp=4,hunger=4,time=0,nextHunger=180,nextHeal=30,nextSpawn=900,nextAI=.5,nextSave=20,nextHUD=0,nextAim=0;
+let yaw=0,pitch=-.4,vy=0,grounded=true,wetTime=0,nextAttack=0,swingUntil=0,playerFlash=0;
+let target=null,miningKey=null,miningTime=0,mouseMining=false;
+let nextMobID=1,message="",deathReason="YOU WERE DEFEATED";
+const feet=new THREE.Vector3(0,.5,0),held=new Set();
+let lookPointer=null,lastX=0,lastY=0,touchStartX=0,touchStartY=0,touchMoved=false;
+let noticeTimer;
+
+function notify(text){
+ message=text;$("notice").textContent=text;show("notice",true);
+ clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>show("notice",false),4500);
+}
+function hashString(s){let h=2166136261;for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619);return h>>>0;}
+function random(){
+ rngState=(rngState+0x6D2B79F5)>>>0;
+ let t=rngState;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);
+ return ((t^(t>>>14))>>>0)/4294967296;
+}
+function noise(x,z,seed){
+ let h=Math.imul(x,374761393)^Math.imul(z,668265263)^seed;
+ h=Math.imul(h^(h>>>13),1274126177);return ((h^(h>>>16))>>>0)/4294967296;
+}
+function smoothNoise(x,z,seed){
+ const ix=Math.floor(x),iz=Math.floor(z),fx=x-ix,fz=z-iz;
+ const u=fx*fx*(3-2*fx),v=fz*fz*(3-2*fz);
+ const a=noise(ix,iz,seed)*(1-u)+noise(ix+1,iz,seed)*u;
+ const b=noise(ix,iz+1,seed)*(1-u)+noise(ix+1,iz+1,seed)*u;
+ return a*(1-v)+b*v;
+}
+function uid(){return crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random().toString(36).slice(2)}`;}
+
+/* Inventory: 20 slots; each stack holds at most 15 of one item type.
+   Daggers also preserve separate durability for every item in a stack. */
+function itemFromSlot(slot){
+ if(!slot)return null;
+ if(slot.type==="wooden_dagger"){
+  const tool=slot.tools[0];return {type:slot.type,hp:tool.hp,hits:tool.hits};
+ }
+ return {type:slot.type};
+}
+function addItemTo(inv,item){
+ let slot=inv.find(s=>s&&s.type===item.type&&s.n<15);
+ if(!slot){
+  const index=inv.findIndex(s=>!s);if(index<0)return false;
+  slot={type:item.type,n:0};
+  if(item.type==="wooden_dagger")slot.tools=[];
+  inv[index]=slot;
+ }
+ slot.n++;
+ if(item.type==="wooden_dagger")slot.tools.push({hp:item.hp??40,hits:item.hits??0});
+ return true;
+}
+function takeItem(index){
+ const slot=inventory[index];if(!slot)return null;
+ const item=itemFromSlot(slot);
+ if(slot.type==="wooden_dagger")slot.tools.shift();
+ slot.n--;
+ if(slot.n<=0){inventory[index]=null;if(active===index)active=-1;}
+ return item;
+}
+const total=type=>inventory.reduce((n,s)=>n+(s?.type===type?s.n:0),0);
+function activeItem(){return active>=0?inventory[active]:null;}
+function normaliseInventory(input){
+ const result=Array(20).fill(null);
+ if(!Array.isArray(input))return result;
+ for(let i=0;i<Math.min(20,input.length);i++){
+  const s=input[i];if(!s||!NAMES[s.type])continue;
+  const n=Math.max(0,Math.min(15,Number(s.n)||0));if(!n)continue;
+  result[i]={type:s.type,n};
+  if(s.type==="wooden_dagger"){
+   result[i].tools=Array.from({length:n},(_,j)=>({
+    hp:Math.max(1,Math.min(40,Number(s.tools?.[j]?.hp)||40)),
+    hits:s.tools?.[j]?.hits===1?1:0
+   }));
+  }
+ }
+ return result;
+}
+function itemIcon(type){
+ const icon=document.createElement("span");
+ icon.className="itemIcon"+(type==="wooden_dagger"?" dagger":"");
+ if(type!=="wooden_dagger")icon.style.background=COLORS[type]||"#aaa";
+ return icon;
+}
+function drawInventory(container,selected,onSelect){
+ container.replaceChildren();
+ for(let i=0;i<20;i++){
+  const s=inventory[i],button=document.createElement("button");
+  button.className="invSlot"+(!s?" empty":"")+(selected===i?" selected":"");
+  button.setAttribute("aria-label",s?`${NAMES[s.type]}, ${s.n}`:`Empty slot ${i+1}`);
+  if(s){
+   button.append(itemIcon(s.type));
+   const name=document.createElement("span");name.textContent=NAMES[s.type];button.append(name);
+   const n=document.createElement("span");n.className="count";n.textContent=s.n;button.append(n);
+   if(s.type==="wooden_dagger"){
+    const d=document.createElement("span");d.className="durability";d.textContent=`${s.tools[0].hp}/40 HP`;button.append(d);
+   }
+  }else button.textContent=String(i+1).padStart(2,"0");
+  button.onclick=()=>onSelect(i);container.append(button);
+ }
+}
+function renderInventory(){
+ drawInventory($("inventoryGrid"),active,i=>{if(inventory[i])active=i;renderInventory();updateHand();});
+ const s=activeItem();
+ $("inventoryDetail").textContent=s?
+  `${NAMES[s.type]} SELECTED${s.type==="wooden_dagger"?" - 2X DAMAGE. EACH DAGGER HAS ITS OWN HP.":""}`:"BARE HANDS SELECTED";
+ $("inventoryEat").disabled=total("beef")===0;
 }
 
-lootMaterials.wooden_pickaxe = new THREE.MeshLambertMaterial({
-    color: COLORS.wooden_pickaxe
+/* Shared block geometry, individual creature materials for red flashes. */
+function makeMob(kind,x,y,z,state={}){
+ const id=state.id||String(nextMobID++),root=new THREE.Group(),legs=[];
+ root.position.set(x,y,z);
+ function part(w,h,d,px,py,pz,color,leg=false){
+  const mat=cubeMaterials[color].clone(),mesh=new THREE.Mesh(sharedCube,mat);
+  mesh.scale.set(w,h,d);mesh.position.set(px,py,pz);mesh.userData.mobId=id;
+  mesh.userData.baseColor=mat.color.clone();root.add(mesh);if(leg)legs.push(mesh);return mesh;
+ }
+ if(kind==="ogger"){
+  part(.78,.76,.45,0,.94,0,"shirt");
+  part(.72,.55,.60,0,1.59,-.05,"green");
+  part(.52,.23,.20,0,1.35,-.37,"brown");
+  part(.22,.25,.18,-.43,1.63,0,"green");part(.22,.25,.18,.43,1.63,0,"green");
+  for(const s of [-1,1]){
+   part(.27,.57,.32,s*.22,.29,0,"dark",true);
+   part(.23,.68,.25,s*.51,.95,-.04,"green");
+   part(.12,.085,.025,s*.18,1.66,-.358,"eye");
+   part(.23,.07,.07,s*.18,1.76,-.36,"brown");
+   part(.085,.13,.06,s*.14,1.33,-.49,"tooth");
+  }
+ }else{
+  const horse=kind==="horse",color=horse?"brown":"cream";
+  part(.82,.67,horse?1.38:1.15,0,.89,0,color);
+  part(.48,horse?.65:.52,.52,0,horse?1.27:1.12,-.68,color);
+  part(.45,.23,.24,0,horse?1.08:.96,-.96,horse?"brown":"muzzle");
+  for(const s of [-1,1]){
+   for(const e of [-1,1])part(.18,.58,.19,s*.27,.29,e*.45,"dark",true);
+   part(.08,.08,.025,s*.16,horse?1.39:1.22,-.96,"eye");
+   if(horse)part(.11,.27,.15,s*.15,1.66,-.65,"brown");
+  }
+  if(horse){part(.12,.60,.40,0,1.28,-.38,"dark");part(.13,.52,.14,0,.75,.80,"dark");}
+  else{part(.834,.31,.41,0,.98,.12,"dark");part(.2,.24,.2,0,.31,.23,"muzzle");}
+ }
+ const mob={
+  id,kind,root,legs,hp:state.hp??(kind==="ogger"?6:8),
+  angry:!!state.angry,prey:state.prey||null,nextBite:state.nextBite??0,
+  goal:null,goalAt:0,heading:state.heading||0,speed:0,
+  fleeUntil:state.fleeUntil||0,fleeFrom:state.fleeFrom||null,
+  flashUntil:0,red:false,biteUntil:0,phase:random()*6
+ };
+ root.rotation.y=mob.heading;mobs.set(id,mob);scene.add(root);return mob;
+}
+function removeMob(m){
+ m.root.traverse(o=>{if(o.isMesh)o.material.dispose();});
+ scene.remove(m.root);mobs.delete(m.id);
+}
+function setFlash(m,on){
+ m.red=on;
+ m.root.traverse(o=>{
+  if(!o.isMesh)return;
+  if(on){o.material.color.set("#ff4545");o.material.emissive.set("#7c0808");}
+  else{o.material.color.copy(o.userData.baseColor);o.material.emissive.set("#000000");}
+ });
+}
+const lootGeometry=new THREE.BoxGeometry(.22,.22,.22);
+const lootMaterials={};
+for(const [type,color] of Object.entries(COLORS))lootMaterials[type]=new THREE.MeshLambertMaterial({color});
+function addDrop(item,x,y,z){
+ const mesh=new THREE.Mesh(lootGeometry,lootMaterials[item.type]||lootMaterials.log);
+ mesh.position.set(x,y,z);scene.add(mesh);
+ drops.push({item:{...item},x,y,z,mesh,phase:Math.random()*6});
+}
+function receive(item,x=feet.x,y=feet.y+.3,z=feet.z){
+ if(addItemTo(inventory,item))return true;
+ addDrop(item,x,y,z);return false;
+}
+function clearDrops(){for(const d of drops)scene.remove(d.mesh);drops.length=0;}
+function clearWorld(){
+ for(const m of [...mobs.values()])removeMob(m);
+ clearDrops();blocks.clear();land=[];target=null;outline.visible=false;
+ inventory=Array(20).fill(null);active=-1;craftSlots=Array(9).fill(null);
+ hp=4;hunger=4;time=0;nextHunger=180;nextHeal=30;nextSpawn=900;
+ nextAI=.5;nextSave=20;nextHUD=0;nextAim=0;nextMobID=1;
+ yaw=0;pitch=-.4;vy=0;grounded=true;wetTime=0;nextAttack=0;
+ stopMining();releaseControls();handKey="";
+}
+function floorNear(x,z,nearY,maxUp=1.05,maxDown=1.6){
+ const ix=Math.floor(x+.5),iz=Math.floor(z+.5);
+ for(let y=Math.floor(nearY+maxUp-.5);y>=Math.floor(nearY-maxDown-.5);y--){
+  const f=y+.5;
+  if(f>nearY+maxUp||f<nearY-maxDown)continue;
+  if(at(ix,y,iz)&&!at(ix,y+1,iz)&&!at(ix,y+2,iz))return f;
+ }
+ return null;
+}
+function generate(seed){
+ clearWorld();rngState=hashString(seed)||1;
+ const rx=21+random()*5,rz=19+random()*5;
+ const a=random()*6.28,b=random()*6.28,c=random()*6.28,noiseSeed=rngState;
+ const heights=new Map();
+ for(let x=-34;x<=34;x++)for(let z=-34;z<=34;z++){
+  const angle=Math.atan2(z/rz,x/rx),distance=Math.hypot(x/rx,z/rz);
+  const edge=1+.13*Math.sin(angle*3+a)+.09*Math.sin(angle*5+b)+.045*Math.sin(angle*9+c);
+  if(distance<edge+(smoothNoise(x*.23,z*.23,noiseSeed)-.5)*.09)
+   heights.set(`${x},${z}`,0);
+ }
+ for(const cell of heights.keys()){
+  const [x,z]=cell.split(",").map(Number);
+  let beach=false;
+  for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)
+   if(!heights.has(`${x+dx},${z+dz}`))beach=true;
+  let h=beach?0:Math.max(0,Math.min(2,Math.floor(smoothNoise(x*.09,z*.09,noiseSeed+21)*4-.7)));
+  if(Math.abs(x)<=2&&Math.abs(z)<=2)h=0;
+  heights.set(cell,h);land.push({x,z,h,beach});
+ }
+ for(const p of land){
+  for(let y=-2;y<=p.h;y++)put(p.x,y,p.z,p.beach&&y===p.h?"sand":"dirt");
+ }
+ spawn={x:0,y:.5,z:0};
+ const shuffled=land.slice();
+ for(let i=shuffled.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];}
+ const trees=[],targetTrees=Math.floor(land.length*.043);
+ for(const p of shuffled){
+  if(trees.length>=targetTrees)break;
+  if(p.beach||Math.hypot(p.x,p.z)<6||random()>.8||trees.some(t=>Math.hypot(t.x-p.x,t.z-p.z)<3.3))continue;
+  const height=3+Math.floor(random()*3),top=p.h+height;
+  for(let y=p.h+1;y<=top;y++)put(p.x,y,p.z,"log");
+  for(let level=0;level<3;level++){
+   const radius=level===0?2:level===1?1:0;
+   for(let dx=-radius;dx<=radius;dx++)for(let dz=-radius;dz<=radius;dz++)
+    if(Math.abs(dx)+Math.abs(dz)<=radius+1)
+     put(p.x+dx,top-1+level,p.z+dz,"leaves");
+  }
+  trees.push(p);
+ }
+ put(0,1,-2,"table");feet.set(0,.5,0);
+ rebuildTerrain();spawnWave();updateCamera();
+ notify("YOUR BUILDING TABLE IS IN FRONT OF YOU. OPEN INVENTORY TO CHOOSE WHAT YOU HOLD.");
+}
+function spawnOne(kind,zone){
+ for(let attempt=0;attempt<30;attempt++){
+  const p=zone[Math.floor(random()*zone.length)];if(!p)continue;
+  const y=floorNear(p.x,p.z,p.h+.5,0,0);
+  if(y===null||y<WATER+.2||Math.hypot(p.x-feet.x,p.z-feet.z)<6)continue;
+  if([...mobs.values()].some(m=>Math.hypot(m.root.position.x-p.x,m.root.position.z-p.z)<1))continue;
+  makeMob(kind,p.x,y,p.z);return;
+ }
+}
+function spawnWave(){
+ const candidates=land.filter(p=>floorNear(p.x,p.z,p.h+.5,0,0)!==null);
+ for(let i=0;i+30<=candidates.length;i+=30)
+  if(random()<.4)spawnOne(random()<.5?"cow":"horse",candidates.slice(i,i+30));
+ // Fewer oggers: a 40% roll for each group of 60 eligible land blocks.
+ for(let i=0;i+60<=candidates.length;i+=60)
+  if(random()<.4)spawnOne("ogger",candidates.slice(i,i+60));
+}
+
+/* Save catalog and original-version migration. */
+try{
+ const raw=localStorage.getItem(SAVE_KEY);
+ if(raw){const data=JSON.parse(raw);if(data.version===2&&Array.isArray(data.worlds))records=data.worlds.slice(0,8);}
+ else{
+  const old=JSON.parse(localStorage.getItem("corny-game-vercel-v1")||"null");
+  if(old?.version===1&&Array.isArray(old.blocks))
+   records=[{id:uid(),seed:uid(),name:"ORIGINAL ISLAND",created:Date.now(),updated:Date.now(),state:{legacy:old}}];
+ }
+}catch{}
+function persist(){
+ try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:2,worlds:records}));return true;}
+ catch{notify("COULD NOT SAVE. BROWSER STORAGE MAY BE FULL. KEEP THIS TAB OPEN.");return false;}
+}
+function capture(){
+ return{
+  version:2,inventory,active,escrow:craftSlots.filter(Boolean).map(s=>s.item),
+  hp,hunger,time,nextHunger,nextHeal,nextSpawn,nextAttack,wetTime,
+  feet:[feet.x,feet.y,feet.z],yaw,pitch,spawn,land,rngState,nextMobID,deathReason,
+  blocks:[...blocks.values()].map(b=>[b.x,b.y,b.z,b.type]),
+  mobs:[...mobs.values()].map(m=>({
+   id:m.id,kind:m.kind,x:m.root.position.x,y:m.root.position.y,z:m.root.position.z,
+   hp:m.hp,angry:m.angry,prey:m.prey,nextBite:m.nextBite,heading:m.heading,
+   fleeUntil:m.fleeUntil,fleeFrom:m.fleeFrom
+  })),
+  drops:drops.map(d=>({item:d.item,x:d.x,y:d.y,z:d.z}))
+ };
+}
+function saveCurrent(manual=false){
+ if(!current||!records.some(r=>r.id===current.id))return;
+ current.state=capture();current.updated=Date.now();
+ if(persist()&&manual)notify("WORLD SAVED ON THIS DEVICE.");
+}
+function restore(data){
+ clearWorld();
+ if(data.legacy){
+  const old=data.legacy;
+  for(const [x,y,z,type] of old.blocks)if(TYPES.includes(type))put(x,y,z,type);
+  land=[...blocks.values()].filter(b=>b.y===0).map(b=>({x:b.x,z:b.z,h:0}));
+  spawn={x:10,y:.5,z:10};
+  const p=old.feet||[10,.5,10];feet.set(...p);
+  hp=old.health??4;hunger=old.hunger??4;time=old.time||0;
+  nextHunger=old.nextHunger||time+180;nextHeal=old.nextHeal||time+30;nextSpawn=old.nextSpawn||time+900;
+  yaw=old.yaw||0;pitch=old.pitch||0;rngState=hashString(current.seed)||1;
+  for(const [type,n] of Object.entries(old.inventory||{})){
+   const itemType=type==="dagger"?"wooden_dagger":type;
+   if(!NAMES[itemType])continue;
+   for(let i=0;i<Math.min(10000,n);i++)receive({type:itemType});
+  }
+  for(const m of old.mobs||[])if(["cow","horse","ogger"].includes(m.kind))
+   makeMob(m.kind,m.x,.5,m.z,{...m,hp:m.health});
+  for(const d of old.drops||[])if(NAMES[d.kind])addDrop({type:d.kind},d.x,d.y,d.z);
+ }else{
+  inventory=normaliseInventory(data.inventory);
+  active=Number.isInteger(data.active)?data.active:-1;
+  hp=data.hp??4;hunger=data.hunger??4;time=data.time||0;
+  nextHunger=data.nextHunger??time+180;nextHeal=data.nextHeal??time+30;
+  nextSpawn=data.nextSpawn??time+900;nextAttack=data.nextAttack||0;wetTime=data.wetTime||0;
+  yaw=data.yaw||0;pitch=data.pitch||0;spawn=data.spawn||{x:0,y:.5,z:0};
+  land=data.land||[];rngState=data.rngState||hashString(current.seed);nextMobID=data.nextMobID||1;
+  deathReason=data.deathReason||"YOU WERE DEFEATED";
+  for(const [x,y,z,type] of data.blocks||[])if(TYPES.includes(type))put(x,y,z,type);
+  const p=data.feet||[spawn.x,spawn.y,spawn.z];feet.set(...p);
+  for(const m of data.mobs||[])if(["cow","horse","ogger"].includes(m.kind)&&m.hp>0)
+   makeMob(m.kind,m.x,m.y,m.z,m);
+  for(const d of data.drops||[])if(NAMES[d.item?.type])addDrop(d.item,d.x,d.y,d.z);
+  for(const item of data.escrow||[])if(NAMES[item.type])receive(item);
+ }
+ nextAI=time+.5;nextSave=time+20;nextHUD=0;nextAim=0;grounded=false;
+ rebuildTerrain();updateCamera();updateHand();
+}
+function renderWorlds(){
+ $("worldCount").textContent=`${records.length} / 8 WORLDS`;
+ $("worldList").replaceChildren();
+ if(!records.length){const p=document.createElement("p");p.textContent="NO WORLDS YET. CREATE YOUR FIRST ISLAND BELOW."; $("worldList").append(p);}
+ for(const r of records){
+  const button=document.createElement("button");button.className="worldCard"+(selectedWorlds.has(r.id)?" selected":"");
+  const info=document.createElement("span"),name=document.createElement("strong"),detail=document.createElement("small"),arrow=document.createElement("span");
+  name.textContent=r.name;
+  detail.textContent=r.state?.hp===0?"RESPAWN AVAILABLE":`SAVED ${new Date(r.updated).toLocaleDateString()}`;
+  info.append(name,detail);arrow.className="arrow";arrow.textContent=selectWorlds?(selectedWorlds.has(r.id)?"[X]":"[ ]"):">";
+  button.append(info,arrow);
+  button.onclick=()=>{
+   if(selectWorlds){selectedWorlds.has(r.id)?selectedWorlds.delete(r.id):selectedWorlds.add(r.id);renderWorlds();}
+   else visitWorld(r);
+  };
+  $("worldList").append(button);
+ }
+ $("createWorld").disabled=records.length>=8||selectWorlds;
+ $("createWorld").textContent=records.length>=8?"8 WORLD LIMIT REACHED":"CREATE WORLD";
+ $("newWorldName").disabled=selectWorlds;
+ $("worldSettings").textContent=selectWorlds?"DONE SELECTING":"SETTINGS";
+ show("deleteWorlds",selectWorlds);$("deleteWorlds").disabled=selectedWorlds.size===0;
+}
+function hidePanels(){for(const id of ["home","worlds","pause","inventory","crafting","death"])show(id,false);}
+function enterPlay(){
+ hidePanels();show("hud",true);mode="playing";releaseControls();updateCamera();updateHand();renderHUD();
+}
+function visitWorld(record){
+ current=record;
+ if(record.state)restore(record.state);else generate(record.seed);
+ if(hp<=0){hidePanels();show("hud",true);mode="dead";$("deathTitle").textContent=deathReason;show("death",true);}
+ else enterPlay();
+ saveCurrent();
+}
+function goHome(){
+ refundCraft();saveCurrent();releaseControls();stopMining();mode="home";
+ document.exitPointerLock?.();hidePanels();show("hud",false);show("home",true);hand.visible=false;
+ $("waterTint").style.opacity=0;$("damageTint").style.opacity=0;
+}
+$("playButton").onclick=()=>{mode="worlds";hidePanels();show("worlds",true);selectWorlds=false;selectedWorlds.clear();renderWorlds();};
+$("worldsBack").onclick=()=>{mode="home";hidePanels();show("home",true);};
+$("worldSettings").onclick=()=>{selectWorlds=!selectWorlds;selectedWorlds.clear();renderWorlds();};
+$("deleteWorlds").onclick=()=>{
+ if(!selectedWorlds.size)return;
+ if(!confirm(`DELETE ${selectedWorlds.size} SELECTED WORLD(S)? THIS CANNOT BE UNDONE.`))return;
+ if(current&&selectedWorlds.has(current.id))current=null;
+ records=records.filter(r=>!selectedWorlds.has(r.id));
+ selectedWorlds.clear();persist();renderWorlds();
+};
+$("createWorld").onclick=()=>{
+ if(records.length>=8)return;
+ const seed=uid(),now=Date.now();
+ const record={id:uid(),seed,name:$("newWorldName").value.trim()||`PINE ISLAND ${records.length+1}`,created:now,updated:now,state:null};
+ records.push(record);$("newWorldName").value="";visitWorld(record);
+};
+
+/* Player physics, swimming, and respawning. */
+function updateCamera(){
+ camera.position.set(feet.x,feet.y+1.62,feet.z);
+ camera.rotation.set(pitch,yaw,0,"YXZ");camera.updateMatrixWorld();
+}
+function bodyCollides(p,r=.27,height=1.7){
+ const x0=Math.floor(p.x-r+.5),x1=Math.floor(p.x+r+.5);
+ const z0=Math.floor(p.z-r+.5),z1=Math.floor(p.z+r+.5);
+ const y0=Math.floor(p.y+.502),y1=Math.floor(p.y+height+.498);
+ for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++)for(let z=z0;z<=z1;z++)if(at(x,y,z))return true;
+ return false;
+}
+function landingHeight(next,oldY){
+ let best=null;
+ const x0=Math.floor(next.x+.23),x1=Math.floor(next.x+.77),z0=Math.floor(next.z+.23),z1=Math.floor(next.z+.77);
+ for(let x=x0;x<=x1;x++)for(let z=z0;z<=z1;z++)
+  for(let y=Math.floor(next.y-.5)-1;y<=Math.floor(oldY+.5);y++){
+   const top=y+.5;if(at(x,y,z)&&top<=oldY+.003&&top>=next.y-.003)best=best===null?top:Math.max(best,top);
+  }
+ return best;
+}
+function movePlayer(dt){
+ let f=(held.has("forward")?1:0)-(held.has("backward")?1:0);
+ let s=(held.has("right")?1:0)-(held.has("left")?1:0);
+ const length=Math.max(1,Math.hypot(f,s));f/=length;s/=length;
+ const inWater=feet.y<WATER+.08,speed=inWater?1.05:3.35;
+ const dx=(-Math.sin(yaw)*f+Math.cos(yaw)*s)*speed*dt;
+ const dz=(-Math.cos(yaw)*f-Math.sin(yaw)*s)*speed*dt;
+ let next=feet.clone();next.x+=dx;if(!bodyCollides(next))feet.x=next.x;
+ next=feet.clone();next.z+=dz;if(!bodyCollides(next))feet.z=next.z;
+ if(inWater){
+  const floatY=WATER-.85;
+  vy+=(floatY-feet.y)*14*dt;vy*=Math.exp(-4*dt);
+ }else vy-=14*dt;
+ next=feet.clone();next.y+=vy*dt;
+ if(bodyCollides(next)){
+  if(vy<0){const top=landingHeight(next,feet.y);grounded=top!==null;if(top!==null)feet.y=top;}
+  vy=0;
+ }else{feet.y=next.y;grounded=false;}
+ const dryGround=grounded&&feet.y>WATER+.25;
+ if(dryGround)wetTime=0;
+ else if(feet.y<WATER+.08||wetTime>0)wetTime+=dt;
+ if(wetTime>=15){hp=0;deathReason="YOU DROWNED";}
+ if(feet.y<-30){hp=0;deathReason="LOST IN THE SEA";}
+ $("waterTint").style.opacity=inWater?".8":"0";
+ updateCamera();
+}
+function jump(){
+ if(mode!=="playing")return;
+ if(feet.y<WATER+.08){vy=3.8;grounded=false;}
+ else if(grounded){vy=6;grounded=false;}
+}
+function respawnPlayer(){
+ hp=4;hunger=4;wetTime=0;vy=0;nextHeal=time+30;nextHunger=time+180;nextAttack=time;
+ let chosen=null;
+ const options=land.slice().sort((a,b)=>Math.hypot(a.x-spawn.x,a.z-spawn.z)-Math.hypot(b.x-spawn.x,b.z-spawn.z));
+ for(const p of options){
+  const y=floorNear(p.x,p.z,p.h+.5,3,3);
+  if(y!==null&&y>WATER+.2){chosen={x:p.x,y,z:p.z};break;}
+ }
+ if(!chosen){
+  const x=Math.round(spawn.x),z=Math.round(spawn.z),base=Math.round(spawn.y-.5);
+  for(let y=base+1;y<=base+3;y++)blocks.delete(key(x,y,z));
+  put(x,base,z,"dirt");rebuildTerrain();chosen={x,y:base+.5,z};
+ }
+ feet.set(chosen.x,chosen.y,chosen.z);grounded=true;
+ yaw=0;pitch=-.3;enterPlay();saveCurrent();notify("RESPAWNED IN THE SAME WORLD.");
+}
+function die(){
+ if(mode==="dead")return;
+ refundCraft();stopMining();releaseControls();mode="dead";saveCurrent();
+ document.exitPointerLock?.();hidePanels();show("death",true);$("deathTitle").textContent=deathReason;
+}
+$("respawn").onclick=respawnPlayer;$("deathHome").onclick=goHome;
+
+/* Selection, mining, placing, combat, and tool wear. */
+function pick(nx=0,ny=0){
+ ray.setFromCamera(new THREE.Vector2(nx,ny),camera);
+ const objects=[...batches.values(),...[...mobs.values()].map(m=>m.root)].filter(o=>o.visible);
+ const hit=ray.intersectObjects(objects,true)[0];if(!hit)return null;
+ if(hit.instanceId!==undefined){
+  const b=hit.object.userData.cells[hit.instanceId];return b?{type:"block",b,normal:hit.face.normal.clone()}:null;
+ }
+ const m=mobs.get(hit.object.userData.mobId);return m?{type:"mob",m}:null;
+}
+function updateAim(){
+ target=pick();outline.visible=false;
+ if(target?.type==="block"){outline.position.set(target.b.x,target.b.y,target.b.z);outline.visible=true;}
+}
+function stopMining(){miningKey=null;miningTime=0;mouseMining=false;}
+function beginMining(mouse=false){
+ if(mode!=="playing")return;
+ updateAim();if(target?.type!=="block")return notify("AIM AT A NEARBY BLOCK.");
+ miningKey=key(target.b.x,target.b.y,target.b.z);miningTime=0;mouseMining=mouse;
+ notify("KEEP AIMING AT THE BLOCK FOR FIVE SECONDS.");
+}
+function place(){
+ if(mode!=="playing")return;
+ const slot=activeItem();if(!slot||!TYPES.includes(slot.type))return notify("SELECT A BLOCK FROM YOUR INVENTORY FIRST.");
+ updateAim();if(target?.type!=="block")return notify("AIM AT A BLOCK'S SIDE OR TOP.");
+ const b=target.b,n=target.normal,x=b.x+Math.round(n.x),y=b.y+Math.round(n.y),z=b.z+Math.round(n.z);
+ if(at(x,y,z)||Math.abs(x)>64||Math.abs(z)>64||y<-3||y>32)return notify("YOU CANNOT PLACE A BLOCK THERE.");
+ const overlaps=Math.abs(x-feet.x)<.77&&Math.abs(z-feet.z)<.77&&y+.5>feet.y&&y-.5<feet.y+1.7;
+ const mobOverlap=[...mobs.values()].some(m=>Math.abs(m.root.position.x-x)<.9&&Math.abs(m.root.position.z-z)<.9&&y+.5>m.root.position.y&&y-.5<m.root.position.y+1.9);
+ if(overlaps||mobOverlap)return notify("THAT SPACE IS OCCUPIED.");
+ const item=takeItem(active);put(x,y,z,item.type);stopMining();rebuildTerrain();updateAim();updateHand();notify(`PLACED ${NAMES[item.type]}.`);
+}
+function spendDaggerHit(){
+ const slot=activeItem();if(slot?.type!=="wooden_dagger")return false;
+ const tool=slot.tools[0];tool.hits++;
+ if(tool.hits>=2){tool.hits=0;tool.hp--;}
+ if(tool.hp<=0){
+  slot.tools.shift();slot.n--;
+  if(slot.n<=0){inventory[active]=null;active=-1;}
+  updateHand();return true;
+ }
+ return false;
+}
+function damageMob(m,amount,source){
+ m.hp-=amount;m.flashUntil=time+.5;if(!m.red)setFlash(m,true);
+ if(m.kind!=="ogger"){
+  m.fleeUntil=time+8;m.fleeFrom={x:source.x,z:source.z};m.goalAt=0;
+ }
+ if(m.hp<=.001){
+  if(source.player&&m.kind!=="ogger")
+   for(let i=0;i<2;i++)addDrop({type:random()<.05?"leaves":"beef"},m.root.position.x+(i?-.22:.22),m.root.position.y+.3,m.root.position.z);
+  removeMob(m);return true;
+ }
+ return false;
+}
+function attack(){
+ if(mode!=="playing")return;
+ if(time<nextAttack)return notify(`WAIT ${(nextAttack-time).toFixed(1)} SECONDS BEFORE HITTING AGAIN.`);
+ updateAim();if(target?.type!=="mob")return notify("AIM AT A NEARBY CREATURE.");
+ stopMining();const victim=target.m;
+ for(const m of mobs.values())if(m.kind==="ogger"&&(m.id===victim.id||m.prey===victim.id)){m.angry=true;m.goalAt=0;}
+ nextAttack=time+2;swingUntil=time+.3;
+ const usingDagger=activeItem()?.type==="wooden_dagger";
+ const damage=(victim.kind==="ogger"?1:8/6)*(usingDagger?2:1);
+ const dead=damageMob(victim,damage,{x:feet.x,z:feet.z,player:true});
+ const broke=usingDagger&&spendDaggerHit();
+ notify(broke?"YOUR WOODEN DAGGER BROKE.":dead?"CREATURE DEFEATED.":`${victim.kind.toUpperCase()}: ${Math.max(0,victim.hp).toFixed(1)} HP.`);
+ updateAim();
+}
+function eat(){
+ if(!["playing","inventory"].includes(mode))return;
+ let index=activeItem()?.type==="beef"?active:inventory.findIndex(s=>s?.type==="beef");
+ if(index<0)return notify("YOU NEED BEEF TO EAT.");
+ takeItem(index);hunger=Math.min(4,hunger+2);nextHeal=Math.min(nextHeal,time+10);
+ notify("ATE BEEF. +2 HUNGER. HEALING WITHIN TEN SECONDS.");updateHand();
+ if(mode==="inventory")renderInventory();
+}
+
+/* Natural wandering, fleeing, obstacle avoidance, and predator behavior. */
+function distance(a,b){return Math.hypot(a.x-b.x,a.z-b.z);}
+function chooseGoal(m,away=null){
+ const p=m.root.position;
+ for(let i=0;i<14;i++){
+  const angle=away?Math.atan2(p.x-away.x,p.z-away.z)+(random()-.5)*1.4:m.heading+(random()-.5)*3;
+  const radius=away?4+random()*4:2+random()*4;
+  const x=p.x+Math.sin(angle)*radius,z=p.z+Math.cos(angle)*radius;
+  const y=floorNear(x,z,p.y,1,2);
+  if(y!==null&&y>WATER+.2&&!bodyCollides(new THREE.Vector3(x,y,z),.36,1.85)){
+   m.goal={x,z};m.goalAt=time+(away?1:3+random()*4);return;
+  }
+ }
+ m.goal=null;m.goalAt=time+.8;
+}
+function thinkMobs(){
+ const all=[...mobs.values()],oggers=all.filter(m=>m.kind==="ogger");
+ for(const m of all){
+  if(!mobs.has(m.id))continue;
+  const p=m.root.position;
+  if(m.kind!=="ogger"){
+   const threats=oggers.filter(o=>distance(p,o.root.position)<7).sort((a,b)=>distance(p,a.root.position)-distance(p,b.root.position));
+   if(threats[0]){m.fleeUntil=Math.max(m.fleeUntil,time+2);m.fleeFrom={x:threats[0].root.position.x,z:threats[0].root.position.z};}
+   if(time<m.fleeUntil&&m.fleeFrom){
+    m.speed=m.kind==="horse"?3.4:2.6;
+    if(time>=m.goalAt||!m.goal)chooseGoal(m,m.fleeFrom);
+   }else{
+    m.speed=m.kind==="horse"?1:.7;
+    if(time>=m.goalAt)chooseGoal(m);
+   }
+   continue;
+  }
+  let prey=null,goal=null;
+  if(m.angry){goal={x:feet.x,z:feet.z,y:feet.y};m.prey=null;}
+  else{
+   prey=all.filter(o=>o.kind!=="ogger"&&mobs.has(o.id)&&distance(p,o.root.position)<10)
+    .sort((a,b)=>distance(p,a.root.position)-distance(p,b.root.position))[0];
+   m.prey=prey?.id||null;
+   if(prey)goal={x:prey.root.position.x,z:prey.root.position.z,y:prey.root.position.y};
+  }
+  if(goal){
+   m.goal=goal;m.speed=1.2;
+   const d=distance(p,goal),vertical=Math.abs(p.y-goal.y);
+   if(d<1.35&&vertical<1.7&&time>=m.nextBite){
+    m.nextBite=time+2;m.biteUntil=time+.6;
+    if(m.angry){hp=Math.max(0,hp-.5);playerFlash=time+.5;deathReason="AN OGGER GOT YOU";notify("AN ANGRY OGGER BIT YOU.");}
+    else if(prey&&mobs.has(prey.id))damageMob(prey,.5,{x:p.x,z:p.z,player:false});
+   }
+  }else{
+   m.speed=.65;if(time>=m.goalAt)chooseGoal(m);
+  }
+ }
+}
+function moveMobs(dt){
+ for(const m of mobs.values()){
+  const p=m.root.position;let moving=false;
+  if(m.goal){
+   const dx=m.goal.x-p.x,dz=m.goal.z-p.z,d=Math.hypot(dx,dz);
+   if(d>.3){
+    const angle=Math.atan2(dx,dz),step=Math.min(d,m.speed*dt);
+    let moved=false;
+    for(const turn of [0,.4,-.4,.85,-.85,1.3,-1.3]){
+     const a=angle+turn,nx=p.x+Math.sin(a)*step,nz=p.z+Math.cos(a)*step;
+     const floor=floorNear(nx,nz,p.y,1.05,1.5);
+     if(floor===null||floor<WATER+.2||bodyCollides(new THREE.Vector3(nx,floor,nz),.36,1.85))continue;
+     const crowded=[...mobs.values()].some(o=>o.id!==m.id&&Math.hypot(o.root.position.x-nx,o.root.position.z-nz)<.62);
+     if(crowded)continue;
+     p.x=nx;p.z=nz;p.y+=(floor-p.y)*Math.min(1,dt*9);
+     const desired=Math.atan2(-Math.sin(a),-Math.cos(a));
+     let diff=Math.atan2(Math.sin(desired-m.heading),Math.cos(desired-m.heading));
+     m.heading+=diff*Math.min(1,dt*6);moved=true;moving=true;break;
+    }
+    if(!moved)m.goalAt=0;
+   }else{m.goal=null;m.goalAt=time+1+random()*3;}
+  }
+  m.root.rotation.y=m.heading;
+  m.root.rotation.x=time<m.biteUntil?Math.sin((m.biteUntil-time)*13)*.2:0;
+  m.legs.forEach((leg,i)=>{leg.rotation.x=moving?Math.sin(time*(m.speed>2?15:8)+i*Math.PI+m.phase)*(m.speed>2?.5:.27):0;});
+  if(m.red&&time>=m.flashUntil)setFlash(m,false);
+ }
+}
+
+/* Inventory and crafting screens. */
+function releaseControls(){
+ held.clear();lookPointer=null;
+ document.querySelectorAll(".pressed").forEach(b=>b.classList.remove("pressed"));
+}
+function openInventory(){
+ if(mode!=="playing")return;
+ mode="inventory";stopMining();releaseControls();document.exitPointerLock?.();show("inventory",true);renderInventory();
+}
+function closeInventory(){show("inventory",false);mode="playing";updateHand();renderHUD();}
+function validRecipe(){
+ const occupied=craftSlots.map((s,i)=>s?i:-1).filter(i=>i>=0);
+ if(occupied.some(i=>craftSlots[i].item.type!=="log"))return null;
+ if(craftSize===3&&occupied.length===3){
+  for(let row=0;row<3;row++){
+   const ids=[row*3,row*3+1,row*3+2];
+   if(ids.every(i=>craftSlots[i])&&craftSlots[ids[0]].stamp<craftSlots[ids[1]].stamp&&craftSlots[ids[1]].stamp<craftSlots[ids[2]].stamp)
+    return {type:"wooden_dagger",hp:40,hits:0};
+  }
+ }
+ if(occupied.length===4){
+  for(let row=0;row<craftSize-1;row++)for(let col=0;col<craftSize-1;col++){
+   const ids=[row*craftSize+col,row*craftSize+col+1,(row+1)*craftSize+col,(row+1)*craftSize+col+1];
+   if(ids.every(i=>craftSlots[i]))return {type:"table"};
+  }
+ }
+ return null;
+}
+function refundCraft(){
+ let overflow=false;
+ for(const slot of craftSlots)if(slot&&!receive(slot.item))overflow=true;
+ craftSlots=Array(9).fill(null);craftSource=-1;
+ if(overflow)notify("INVENTORY FULL. EXTRA INGREDIENTS ARE BESIDE YOU.");
+}
+function renderCrafting(){
+ $("craftGrid").style.gridTemplateColumns=`repeat(${craftSize},1fr)`;
+ $("craftGrid").replaceChildren();
+ for(let i=0;i<craftSize*craftSize;i++){
+  const button=document.createElement("button"),slot=craftSlots[i];
+  button.className="craftSlot"+(slot?" filled":"");
+  button.textContent=slot?NAMES[slot.item.type]:"+";
+  button.onclick=()=>{
+   if(craftSlots[i]){
+    if(!addItemTo(inventory,craftSlots[i].item))return notify("MAKE ROOM IN YOUR INVENTORY FIRST.");
+    craftSlots[i]=null;
+   }else{
+    if(!inventory[craftSource])return notify("SELECT AN ITEM STACK ON THE RIGHT FIRST.");
+    const item=takeItem(craftSource);craftSlots[i]={item,stamp:++craftStamp};
+   }
+   renderCrafting();updateHand();
+  };
+  $("craftGrid").append(button);
+ }
+ drawInventory($("craftInventory"),craftSource,i=>{if(inventory[i])craftSource=i;renderCrafting();});
+ const result=validRecipe(),copy=JSON.parse(JSON.stringify(inventory));
+ const fits=result?addItemTo(copy,result):false;
+ $("craftResult").disabled=!result||!fits;
+ $("craftResult").textContent=result?(fits?`CRAFT ${NAMES[result.type]}`:"INVENTORY FULL"):"NO MATCHING RECIPE";
+ $("craftInfo").textContent=inventory[craftSource]?`SELECTED: ${NAMES[inventory[craftSource].type]}`:"SELECT A STACK TO CRAFT WITH";
+}
+function openCraft(portable=false){
+ if(!["playing","inventory"].includes(mode))return;
+ if(!portable){
+  updateAim();
+  if(target?.type!=="block"||target.b.type!=="table")return notify("AIM AT A BUILDING TABLE. YOU CAN MAKE ONE FROM INVENTORY.");
+ }
+ stopMining();releaseControls();mode="craft";document.exitPointerLock?.();
+ show("inventory",false);show("crafting",true);
+ craftSize=portable?2:3;craftSlots=Array(9).fill(null);craftSource=-1;craftStamp=0;
+ $("craftTitle").textContent=portable?"MAKE A BUILDING TABLE":"CRAFTING";
+ $("craftInstructions").textContent=portable?
+ "FOUR LOGS IN A 2 X 2 SQUARE.":
+ "WOODEN DAGGER: PLACE THREE LOGS LEFT TO RIGHT IN ONE ROW. TABLE: FOUR LOGS IN A 2 X 2 SQUARE.";
+ renderCrafting();
+}
+function closeCraft(){refundCraft();show("crafting",false);mode="playing";updateHand();renderHUD();}
+$("craftResult").onclick=()=>{
+ const result=validRecipe();if(!result)return;
+ const copy=JSON.parse(JSON.stringify(inventory));
+ if(!addItemTo(copy,result))return notify("YOUR INVENTORY IS FULL.");
+ inventory=copy;craftSlots=Array(9).fill(null);
+ notify(`CRAFTED ${NAMES[result.type]}. SELECT IT IN YOUR INVENTORY TO HOLD IT.`);
+ renderCrafting();updateHand();
+};
+$("portableCraft").onclick=()=>openCraft(true);
+$("closeCraft").onclick=closeCraft;
+$("closeInventory").onclick=closeInventory;
+$("hands").onclick=()=>{active=-1;renderInventory();updateHand();};
+$("inventoryEat").onclick=eat;
+
+/* First-person held object. */
+function updateHand(){
+ const slot=activeItem(),type=slot?.type||"hands",k=`${active}:${type}`;
+ if(k===handKey)return;
+ handKey=k;
+ for(const child of [...hand.children])hand.remove(child);
+ function piece(w,h,d,x,y,z,mat){
+  const mesh=new THREE.Mesh(sharedCube,mat);mesh.scale.set(w,h,d);mesh.position.set(x,y,z);hand.add(mesh);
+ }
+ if(type==="wooden_dagger"){
+  piece(.055,.30,.03,0,.07,0,cubeMaterials.wood);
+  piece(.15,.035,.05,0,-.075,0,cubeMaterials.brown);
+  piece(.055,.13,.055,0,-.15,0,cubeMaterials.brown);
+ }else if(TYPES.includes(type)){
+  piece(.23,.23,.23,0,0,0,batches.get(type).material);
+ }else if(type==="beef")piece(.20,.12,.12,0,0,0,lootMaterials.beef);
+ else piece(.13,.23,.14,0,-.06,0,cubeMaterials.skin);
+ hand.position.set(.31,-.28,-.62);hand.rotation.set(-.15,-.25,-.25);
+}
+
+/* HUD and menu controls. */
+function renderHUD(){
+ $("worldName").textContent=current?.name||"PINE ISLAND";
+ $("health").textContent=`HP ${Math.max(0,hp).toFixed(1)} / 4`;
+ $("hunger").textContent=`FOOD ${hunger} / 4`;
+ show("air",wetTime>0);$("air").textContent=`SWIMMING: ${Math.max(0,15-wetTime).toFixed(1)}s LEFT`;
+ const slot=activeItem();$("heldName").textContent=slot?NAMES[slot.type]:"BARE HANDS";
+ $("heldDetail").textContent=slot?
+ (slot.type==="wooden_dagger"?`${slot.tools[0].hp}/40 HP | ${slot.n} TOOL(S)`:`${slot.n} ITEM(S) | INVENTORY`):"OPEN INVENTORY";
+ $("attack").textContent=time<nextAttack?`${(nextAttack-time).toFixed(1)}s`:"ATTACK";
+ $("attack").disabled=time<nextAttack;
+ let text="";
+ if(target?.type==="block")text=NAMES[target.b.type];
+ if(target?.type==="mob")text=`${target.m.angry?"ANGRY ":""}${target.m.kind.toUpperCase()} ${Math.max(0,target.m.hp).toFixed(1)} HP`;
+ $("target").textContent=text;show("target",!!text);
+ show("mineBox",!!miningKey);$("mineText").textContent=`MINING ${miningTime.toFixed(1)} / 5s`;
+ $("mineFill").style.width=`${Math.min(100,miningTime/5*100)}%`;
+}
+function pauseGame(){
+ if(mode!=="playing")return;
+ mode="paused";stopMining();releaseControls();document.exitPointerLock?.();saveCurrent();show("pause",true);
+}
+$("heldItem").onclick=openInventory;
+$("leave").onclick=pauseGame;
+$("resume").onclick=enterPlay;
+$("saveButton").onclick=()=>saveCurrent(true);
+$("goHome").onclick=goHome;
+$("mine").onclick=()=>beginMining(false);
+$("place").onclick=place;
+$("attack").onclick=attack;
+$("jump").onclick=jump;
+$("craft").onclick=()=>openCraft(false);
+$("eat").onclick=eat;
+$("fullscreen").onclick=async()=>{
+ try{
+  if(document.fullscreenElement)await document.exitFullscreen();
+  else if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();
+  else notify("USE SAFARI'S PAGE CONTROLS TO HIDE ITS TOOLBAR.");
+ }catch{notify("FULLSCREEN IS UNAVAILABLE HERE.");}
+};
+
+/* Touch, mouse and keyboard controls. */
+document.querySelectorAll("[data-move]").forEach(button=>{
+ const direction=button.dataset.move;
+ button.addEventListener("pointerdown",e=>{
+  e.preventDefault();if(mode!=="playing")return;
+  held.add(direction);button.classList.add("pressed");button.setPointerCapture(e.pointerId);
+ });
+ const end=()=>{held.delete(direction);button.classList.remove("pressed");};
+ button.addEventListener("pointerup",end);button.addEventListener("pointercancel",end);button.addEventListener("lostpointercapture",end);
 });
-
-/* Preserve durability for both kinds of wooden tool. */
-
-itemFromSlot = function (slot) {
-    if (!slot) return null;
-
-    if (CORNY_TOOLS.has(slot.type)) {
-        const tool = slot.tools[0];
-
-        return {
-            type: slot.type,
-            hp: tool.hp,
-            hits: tool.hits
-        };
-    }
-
-    return { type: slot.type };
-};
-
-addItemTo = function (inv, item) {
-    let slot = null;
-
-    for (let i = 0; i < 20; i++) {
-        if (inv[i]?.type === item.type && inv[i].n < 15) {
-            slot = inv[i];
-            break;
-        }
-    }
-
-    if (!slot) {
-        let empty = -1;
-
-        for (let i = 0; i < 20; i++) {
-            if (!inv[i]) {
-                empty = i;
-                break;
-            }
-        }
-
-        if (empty < 0) return false;
-
-        slot = { type: item.type, n: 0 };
-
-        if (CORNY_TOOLS.has(item.type)) {
-            slot.tools = [];
-        }
-
-        inv[empty] = slot;
-    }
-
-    slot.n++;
-
-    if (CORNY_TOOLS.has(item.type)) {
-        slot.tools.push({
-            hp: item.hp ?? 40,
-            hits: item.hits ?? 0
-        });
-    }
-
-    return true;
-};
-
-takeItem = function (index) {
-    const slot = inventory[index];
-    if (!slot) return null;
-
-    const item = itemFromSlot(slot);
-
-    if (CORNY_TOOLS.has(slot.type)) {
-        slot.tools.shift();
-    }
-
-    slot.n--;
-
-    if (slot.n <= 0) {
-        inventory[index] = null;
-        if (active === index) active = -1;
-    }
-
-    return item;
-};
-
-normaliseInventory = function (input) {
-    const result = Array(23).fill(null);
-    if (!Array.isArray(input)) return result;
-
-    for (let i = 0; i < 23; i++) {
-        const source = input[i];
-        if (!source || !NAMES[source.type]) continue;
-
-        const amount = Math.max(
-            0,
-            Math.min(15, Math.floor(Number(source.n) || 0))
-        );
-
-        if (!amount) continue;
-
-        const slot = {
-            type: source.type,
-            n: amount
-        };
-
-        if (CORNY_TOOLS.has(source.type)) {
-            slot.tools = Array.from({ length: amount }, (_, j) => ({
-                hp: Math.max(
-                    1,
-                    Math.min(40, Number(source.tools?.[j]?.hp) || 40)
-                ),
-                hits: source.tools?.[j]?.hits === 1 ? 1 : 0
-            }));
-        }
-
-        result[i] = slot;
-    }
-
-    return result;
-};
-
-/* Keep pickaxe durability when moving a quick stack back to inventory. */
-
-storeQuickButton.onclick = () => {
-    if (active < 20 || !inventory[active]) {
-        notify("SELECT A QUICK STACK FIRST.");
-        return;
-    }
-
-    const copy = JSON.parse(JSON.stringify(inventory));
-    const stack = copy[active];
-
-    for (let i = 0; i < stack.n; i++) {
-        const item = CORNY_TOOLS.has(stack.type)
-            ? {
-                type: stack.type,
-                hp: stack.tools[i].hp,
-                hits: stack.tools[i].hits
-            }
-            : { type: stack.type };
-
-        if (!addItemTo(copy, item)) {
-            notify("MAKE ROOM IN YOUR MAIN INVENTORY FIRST.");
-            return;
-        }
-    }
-
-    copy[active] = null;
-    inventory = copy;
-    active = -1;
-
-    updateHand();
-    renderInventory();
-    renderHUD();
-    saveCurrent();
-};
-
-/* Pickaxe icon and durability labels. */
-
-const cornyStoneIconOriginal = itemIcon;
-
-itemIcon = function (type) {
-    if (type !== "wooden_pickaxe") {
-        return cornyStoneIconOriginal(type);
-    }
-
-    const icon = document.createElement("span");
-    icon.className = "itemIcon pickaxe";
-    return icon;
-};
-
-const cornyStoneStyle = document.createElement("style");
-
-cornyStoneStyle.textContent = `
-.itemIcon.pickaxe {
-    position:relative;
-    width:7px;
-    height:27px;
-    background:#a77943;
-    border:0;
-    box-shadow:inset -2px 0 #0003;
-    transform:rotate(28deg);
-    margin:3px 9px;
+function requestMouse(){
+ try{const result=canvas.requestPointerLock?.();result?.catch?.(()=>notify("DRAG THE SCENE TO LOOK AROUND."));}catch{}
 }
-.itemIcon.pickaxe::before {
-    content:"";
-    position:absolute;
-    width:27px;
-    height:7px;
-    left:-10px;
-    top:0;
-    background:#d0a46b;
-    box-shadow:inset 0 -2px #0003;
-}
-.pickaxeDurability {
-    font-size:16px;
-    color:#b9da8c;
-}
-`;
-
-document.head.append(cornyStoneStyle);
-
-function decoratePickaxeSlots(container) {
-    if (!container) return;
-
-    const buttons = container.querySelectorAll(".invSlot");
-
-    buttons.forEach((button, index) => {
-        const slotIndex = container.id === "quickInventory"
-            ? index + 20
-            : container.id === "quickBar"
-                ? index + 20
-                : index;
-
-        const slot = inventory[slotIndex];
-
-        if (slot?.type !== "wooden_pickaxe") return;
-
-        let label = button.querySelector(".pickaxeDurability");
-
-        if (!label) {
-            label = document.createElement("span");
-            label.className = "pickaxeDurability";
-            button.append(label);
-        }
-
-        label.textContent = `${slot.tools[0].hp}/40 HP`;
-    });
-}
-
-const cornyStoneDrawInventory = drawInventory;
-
-drawInventory = function (container, selected, onSelect) {
-    cornyStoneDrawInventory(container, selected, onSelect);
-    decoratePickaxeSlots(container);
-};
-
-const cornyStoneRenderQuick = renderQuickBar;
-
-renderQuickBar = function (force = false) {
-    cornyStoneRenderQuick(force);
-    decoratePickaxeSlots(quickBar);
-};
-
-const cornyStoneRenderInventory = renderInventory;
-
-renderInventory = function () {
-    cornyStoneRenderInventory();
-
-    decoratePickaxeSlots($("inventoryGrid"));
-    decoratePickaxeSlots(quickInventory);
-
-    const slot = activeItem();
-
-    if (slot?.type === "wooden_pickaxe") {
-        $("inventoryDetail").textContent =
-            `WOODEN PICKAXE SELECTED — ${slot.tools[0].hp}/40 HP. ` +
-            "LOSES 1 HP EVERY TWO STONE BLOCKS MINED.";
-    }
-};
-
-$("portableCraft").textContent = "QUICK CRAFTING";
-
-/* Pickaxe and trap recipes. Existing recipes remain available. */
-
-const cornyStoneRecipeOriginal = validRecipe;
-
-validRecipe = function () {
-    const previous = cornyStoneRecipeOriginal();
-    if (previous) return previous;
-
-    const occupied = craftSlots
-        .map((slot, i) => slot ? i : -1)
-        .filter(i => i >= 0);
-
-    // Six logs: two complete horizontal rows in a 3x3 table.
-    if (
-        craftSize === 3 &&
-        occupied.length === 6 &&
-        occupied.every(i => craftSlots[i].item.type === "log")
-    ) {
-        for (let row = 0; row < 2; row++) {
-            const cells = [
-                row * 3,
-                row * 3 + 1,
-                row * 3 + 2,
-                (row + 1) * 3,
-                (row + 1) * 3 + 1,
-                (row + 1) * 3 + 2
-            ];
-
-            if (cells.every(i => craftSlots[i])) {
-                return {
-                    type: "wooden_pickaxe",
-                    hp: 40,
-                    hits: 0
-                };
-            }
-        }
-    }
-
-    // Four stone blocks: one 2x2 square.
-    if (
-        occupied.length === 4 &&
-        occupied.every(i => craftSlots[i].item.type === "stone")
-    ) {
-        for (let row = 0; row < craftSize - 1; row++) {
-            for (let col = 0; col < craftSize - 1; col++) {
-                const cells = [
-                    row * craftSize + col,
-                    row * craftSize + col + 1,
-                    (row + 1) * craftSize + col,
-                    (row + 1) * craftSize + col + 1
-                ];
-
-                if (cells.every(i => craftSlots[i])) {
-                    return { type: "ogger_trap" };
-                }
-            }
-        }
-    }
-
-    return null;
-};
-
-const cornyStoneRenderCrafting = renderCrafting;
-
-renderCrafting = function () {
-    cornyStoneRenderCrafting();
-
-    $("craftTitle").textContent =
-        craftSize === 2 ? "QUICK CRAFTING" : "BUILDING TABLE";
-
-    $("craftInstructions").textContent = craftSize === 2
-        ? "FOUR LOGS IN A SQUARE: BUILDING TABLE. FOUR STONE IN A SQUARE: OGGER TRAP."
-        : "DAGGER: THREE LOGS LEFT TO RIGHT. PICKAXE: TWO ROWS OF THREE LOGS. TABLE: FOUR LOGS IN A SQUARE. TRAP: FOUR STONE IN A SQUARE.";
-
-    decoratePickaxeSlots($("craftInventory"));
-};
-
-/* Stone layers and saved trap state. */
-
-let cornyStoneAdded = false;
-let cornyLandColumns = new Set();
-let cornyToolBroke = false;
-
-const cornyTraps = new Map();
-
-const trapMetal = new THREE.MeshLambertMaterial({
-    color: "#7a8073"
+canvas.addEventListener("contextmenu",e=>e.preventDefault());
+canvas.addEventListener("pointerdown",e=>{
+ if(mode!=="playing")return;e.preventDefault();
+ if(e.pointerType==="mouse"){
+  if(document.pointerLockElement!==canvas&&canvas.requestPointerLock){requestMouse();return;}
+  if(e.button===2){place();return;}
+  if(e.button!==0)return;
+  updateAim();
+  if(target?.type==="block"&&target.b.type==="table")openCraft(false);
+  else if(target?.type==="mob")attack();
+  else beginMining(true);
+ }else if(lookPointer===null){
+  lookPointer=e.pointerId;lastX=touchStartX=e.clientX;lastY=touchStartY=e.clientY;touchMoved=false;
+  canvas.setPointerCapture(e.pointerId);
+ }
 });
-
-const trapDarkMetal = new THREE.MeshLambertMaterial({
-    color: "#404b42"
+canvas.addEventListener("pointermove",e=>{
+ if(mode!=="playing"||e.pointerId!==lookPointer)return;
+ if(Math.hypot(e.clientX-touchStartX,e.clientY-touchStartY)>8)touchMoved=true;
+ yaw-=(e.clientX-lastX)*.005;pitch=Math.max(-1.25,Math.min(1.25,pitch-(e.clientY-lastY)*.005));
+ lastX=e.clientX;lastY=e.clientY;updateCamera();
 });
-
-function clearTrapVisuals() {
-    for (const trap of cornyTraps.values()) {
-        scene.remove(trap.group);
-    }
-
-    cornyTraps.clear();
+function finishPointer(e){
+ if(e.pointerId===lookPointer){
+  const tapped=!touchMoved&&mode==="playing";lookPointer=null;
+  if(tapped){
+   const rect=canvas.getBoundingClientRect();
+   const hit=pick((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);
+   if(hit?.type==="block"&&hit.b.type==="table"){target=hit;
+    // Opening by a direct touch uses the tapped table.
+    stopMining();releaseControls();mode="craft";show("crafting",true);
+    craftSize=3;craftSlots=Array(9).fill(null);craftSource=-1;craftStamp=0;
+    $("craftTitle").textContent="CRAFTING";
+    $("craftInstructions").textContent="DAGGER: THREE LOGS LEFT TO RIGHT IN ONE ROW. TABLE: FOUR LOGS IN A 2 X 2 SQUARE.";
+    renderCrafting();
+   }
+  }
+ }
+ if(e.pointerType==="mouse"&&mouseMining)stopMining();
 }
+canvas.addEventListener("pointerup",finishPointer);
+canvas.addEventListener("pointercancel",e=>{if(e.pointerId===lookPointer)lookPointer=null;if(mouseMining)stopMining();});
+document.addEventListener("pointerup",e=>{if(e.pointerType==="mouse"&&mouseMining)stopMining();});
+document.addEventListener("mousemove",e=>{
+ if(mode!=="playing"||document.pointerLockElement!==canvas)return;
+ yaw-=e.movementX*.0027;pitch=Math.max(-1.25,Math.min(1.25,pitch-e.movementY*.0027));updateCamera();
+});
+document.addEventListener("pointerlockchange",()=>{if(!document.pointerLockElement&&mode==="playing")pauseGame();});
+const keyMap={KeyW:"forward",ArrowUp:"forward",KeyS:"backward",ArrowDown:"backward",KeyA:"left",ArrowLeft:"left",KeyD:"right",ArrowRight:"right"};
+window.addEventListener("keydown",e=>{
+ if(e.target instanceof HTMLInputElement)return;
+ if(e.code==="Escape"){
+  if(mode==="craft")closeCraft();else if(mode==="inventory")closeInventory();else if(mode==="playing")pauseGame();
+  return;
+ }
+ if(e.code==="KeyI"&&!e.repeat){
+  if(mode==="inventory")closeInventory();else if(mode==="playing")openInventory();return;
+ }
+ if(mode!=="playing")return;
+ if(keyMap[e.code]){e.preventDefault();held.add(keyMap[e.code]);return;}
+ if(e.repeat)return;
+ if(e.code==="Space"){e.preventDefault();jump();}
+ if(e.code==="KeyE")openCraft(false);
+ if(e.code==="KeyQ")eat();
+});
+window.addEventListener("keyup",e=>{if(keyMap[e.code])held.delete(keyMap[e.code]);});
+window.addEventListener("blur",()=>{releaseControls();if(mode==="playing")pauseGame();});
+document.addEventListener("visibilitychange",()=>{if(document.hidden){releaseControls();saveCurrent();if(mode==="playing")pauseGame();}});
+window.addEventListener("pagehide",()=>saveCurrent());
+function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight,false);}
+window.addEventListener("resize",resize);resize();
 
-const cornyStoneClearWorld = clearWorld;
-
-clearWorld = function () {
-    clearTrapVisuals();
-    cornyLandColumns.clear();
-    cornyStoneAdded = false;
-    cornyToolBroke = false;
-
-    cornyStoneClearWorld();
-};
-
-function addStoneUnderIsland() {
-    cornyLandColumns = new Set(
-        land.map(tile => `${tile.x},${tile.z}`)
-    );
-
-    if (cornyStoneAdded) return;
-
-    for (const tile of land) {
-        for (let y = -3; y >= -12; y--) {
-            put(tile.x, y, tile.z, "stone");
-        }
+/* Start with a scenic background. The selected world is generated on entry. */
+generate("corny-menu-forest");mode="home";show("loading",false);show("home",true);
+show("notice",false);hand.visible=false;
+let previous=performance.now();
+renderer.setAnimationLoop(now=>{
+ const dt=Math.min((now-previous)/1000,.04);previous=now;
+ if(["home","worlds"].includes(mode)){
+  const angle=now*.00002;
+  camera.position.set(Math.sin(angle)*49,37,Math.cos(angle)*49);camera.lookAt(0,1,0);
+  hand.visible=false;outline.visible=false;
+ }
+ if(mode==="playing"&&!document.hidden){
+  time+=dt;movePlayer(dt);
+  if(time>=nextAim){updateAim();nextAim=time+.08;}
+  if(miningKey){
+   const aimed=target?.type==="block"?key(target.b.x,target.b.y,target.b.z):null;
+   if(aimed!==miningKey||!blocks.has(miningKey)){stopMining();notify("MINING STOPPED. KEEP AIMING AT THE SAME BLOCK.");}
+   else{
+    miningTime+=dt;
+    if(miningTime>=5){
+     const b=blocks.get(miningKey);
+     const kept=receive({type:b.type},b.x,b.y+.2,b.z);
+     blocks.delete(miningKey);stopMining();rebuildTerrain();updateAim();updateHand();
+     notify(kept?`COLLECTED ${NAMES[b.type]}.`:"INVENTORY FULL. THE BLOCK DROPPED BESIDE YOU.");
     }
-
-    cornyStoneAdded = true;
-    rebuildTerrain();
+   }
+  }
+  if(time>=nextHunger){hunger=Math.max(0,hunger-1);nextHunger+=180;}
+  if(time>=nextHeal&&hp>0){hp=Math.min(4,hp+2);nextHeal=time+30;}
+  if(time>=nextSpawn){spawnWave();nextSpawn+=900;}
+  if(time>=nextAI){thinkMobs();nextAI=time+.45;}
+  moveMobs(dt);
+  for(let i=drops.length-1;i>=0;i--){
+   const d=drops[i];d.mesh.position.y=d.y+Math.sin(time*3+d.phase)*.07;d.mesh.rotation.y+=dt;
+   if(Math.hypot(feet.x-d.x,feet.z-d.z)<1.35&&Math.abs(feet.y+.3-d.y)<1.8){
+    if(addItemTo(inventory,d.item)){scene.remove(d.mesh);drops.splice(i,1);notify(`PICKED UP ${NAMES[d.item.type]}.`);updateHand();}
+   }
+  }
+  updateHand();hand.visible=true;
+  const walking=held.size>0,bob=walking?Math.sin(time*10)*.012:0;
+  hand.position.y=-.28+bob;hand.rotation.z=-.25+(time<swingUntil?Math.sin((swingUntil-time)/.3*Math.PI)*.9:0);
+  $("damageTint").style.opacity=time<playerFlash?"1":"0";
+  if(time>=nextSave){saveCurrent();nextSave=time+20;}
+  if(time>=nextHUD){renderHUD();nextHUD=time+.1;}
+  if(hp<=0)die();
+ }else if(!["home","worlds"].includes(mode))hand.visible=false;
+ renderer.render(scene,camera);
+});
 }
-
-function makeTrapDevice(block) {
-    const group = new THREE.Group();
-    group.position.set(block.x, block.y, block.z);
-
-    function piece(parent, w, h, d, x, y, z, material) {
-        const mesh = new THREE.Mesh(sharedCube, material);
-        mesh.scale.set(w, h, d);
-        mesh.position.set(x, y, z);
-        parent.add(mesh);
-        return mesh;
-    }
-
-    piece(group, .94, .08, .94, 0, .54, 0, trapMetal);
-    piece(group, .28, .08, .28, 0, .61, -.05, trapDarkMetal);
-
-    const bait = piece(
-        group,
-        .24, .15, .22,
-        0, .73, -.08,
-        cubeMaterials.beef
-    );
-
-    const jaw = new THREE.Group();
-    jaw.position.set(0, .61, .36);
-    group.add(jaw);
-
-    piece(jaw, .065, .065, .77, -.39, 0, -.36, trapDarkMetal);
-    piece(jaw, .065, .065, .77, .39, 0, -.36, trapDarkMetal);
-    piece(jaw, .84, .065, .065, 0, 0, -.75, trapDarkMetal);
-
-    for (const x of [-.27, -.09, .09, .27]) {
-        piece(jaw, .065, .11, .065, x, .07, -.75, trapMetal);
-    }
-
-    piece(group, .20, .17, .20, 0, .63, .36, trapMetal);
-
-    bait.visible = false;
-    scene.add(group);
-
-    return {
-        x: block.x,
-        y: block.y,
-        z: block.z,
-        baited: false,
-        nextCatch: 0,
-        snapAt: -100,
-        catches: 0,
-        group,
-        bait,
-        jaw
-    };
-}
-
-function syncTrapDevices() {
-    for (const [k, trap] of cornyTraps) {
-        if (blocks.get(k)?.type !== "ogger_trap") {
-            scene.remove(trap.group);
-            cornyTraps.delete(k);
-        }
-    }
-
-    for (const [k, block] of blocks) {
-        if (block.type === "ogger_trap" && !cornyTraps.has(k)) {
-            cornyTraps.set(k, makeTrapDevice(block));
-        }
-    }
-}
-
-const cornyStoneRebuild = rebuildTerrain;
-
-rebuildTerrain = function () {
-    cornyStoneRebuild();
-    syncTrapDevices();
-};
-
-const cornyStoneGenerate = generate;
-
-generate = function (seed) {
-    cornyStoneGenerate(seed);
-    addStoneUnderIsland();
-};
-
-const cornyStoneCapture = capture;
-
-capture = function () {
-    const data = cornyStoneCapture();
-
-    data.stoneLayerVersion = cornyStoneAdded ? 1 : 0;
-    data.traps = [...cornyTraps].map(([k, trap]) => ({
-        key: k,
-        baited: trap.baited,
-        nextCatch: trap.nextCatch,
-        snapAt: trap.snapAt,
-        catches: trap.catches
-    }));
-
-    return data;
-};
-
-const cornyStoneRestore = restore;
-
-restore = function (data) {
-    cornyStoneRestore(data);
-
-    cornyStoneAdded = data.stoneLayerVersion === 1;
-    addStoneUnderIsland();
-    syncTrapDevices();
-
-    for (const savedTrap of data.traps || []) {
-        const trap = cornyTraps.get(savedTrap.key);
-        if (!trap) continue;
-
-        trap.baited = !!savedTrap.baited;
-        trap.nextCatch = Number(savedTrap.nextCatch) || 0;
-        trap.snapAt = Number(savedTrap.snapAt) || -100;
-        trap.catches = Number(savedTrap.catches) || 0;
-        trap.bait.visible = trap.baited;
-    }
-};
-
-/* Underground stone is dry. Only open sea causes swimming. */
-
-movePlayer = function (dt) {
-    const landColumn = cornyLandColumns.has(
-        `${Math.floor(feet.x + .5)},${Math.floor(feet.z + .5)}`
-    );
-
-    const inWater = !landColumn && feet.y < WATER + .08;
-
-    let forward =
-        (held.has("forward") ? 1 : 0) -
-        (held.has("backward") ? 1 : 0);
-
-    let side =
-        (held.has("right") ? 1 : 0) -
-        (held.has("left") ? 1 : 0);
-
-    const length = Math.max(1, Math.hypot(forward, side));
-    forward /= length;
-    side /= length;
-
-    const speed = inWater ? 1.05 : 3.35;
-
-    const dx =
-        (-Math.sin(yaw) * forward + Math.cos(yaw) * side) *
-        speed * dt;
-
-    const dz =
-        (-Math.cos(yaw) * forward - Math.sin(yaw) * side) *
-        speed * dt;
-
-    let next = feet.clone();
-    next.x += dx;
-    if (!bodyCollides(next)) feet.x = next.x;
-
-    next = feet.clone();
-    next.z += dz;
-    if (!bodyCollides(next)) feet.z = next.z;
-
-    if (inWater) {
-        const floatY = WATER - .85;
-        vy += (floatY - feet.y) * 14 * dt;
-        vy *= Math.exp(-4 * dt);
-    } else {
-        vy -= 14 * dt;
-    }
-
-    next = feet.clone();
-    next.y += vy * dt;
-
-    if (bodyCollides(next)) {
-        if (vy < 0) {
-            const top = landingHeight(next, feet.y);
-            grounded = top !== null;
-            if (top !== null) feet.y = top;
-        }
-
-        vy = 0;
-    } else {
-        feet.y = next.y;
-        grounded = false;
-    }
-
-    const nowOnLand = cornyLandColumns.has(
-        `${Math.floor(feet.x + .5)},${Math.floor(feet.z + .5)}`
-    );
-
-    if (nowOnLand || (grounded && feet.y > WATER + .25)) {
-        wetTime = 0;
-    } else if (inWater || wetTime > 0) {
-        wetTime += dt;
-    }
-
-    if (wetTime >= 15) {
-        hp = 0;
-        deathReason = "YOU DROWNED";
-    }
-
-    if (feet.y < -30) {
-        hp = 0;
-        deathReason = "YOU FELL TOO FAR";
-    }
-
-    $("waterTint").style.opacity = inWater ? ".8" : "0";
-    updateCamera();
-};
-
-jump = function () {
-    if (mode !== "playing") return;
-
-    const onIsland = cornyLandColumns.has(
-        `${Math.floor(feet.x + .5)},${Math.floor(feet.z + .5)}`
-    );
-
-    if (!onIsland && feet.y < WATER + .08) {
-        vy = 3.8;
-        grounded = false;
-    } else if (grounded) {
-        vy = 6;
-        grounded = false;
-    }
-};
-
-$("jump").onclick = () => jump();
-
-/* Mining rules and pickaxe wear. */
-
-function holdingPickaxe() {
-    const slot = activeItem();
-
-    return (
-        slot?.type === "wooden_pickaxe" &&
-        slot.tools?.[0]?.hp > 0
-    );
-}
-
-function wearPickaxe() {
-    const slot = activeItem();
-    if (slot?.type !== "wooden_pickaxe") return;
-
-    const tool = slot.tools[0];
-    tool.hits++;
-
-    if (tool.hits >= 2) {
-        tool.hits = 0;
-        tool.hp--;
-    }
-
-    if (tool.hp <= 0) {
-        slot.tools.shift();
-        slot.n--;
-
-        if (slot.n <= 0) {
-            inventory[active] = null;
-            active = -1;
-        }
-
-        cornyToolBroke = true;
-    }
-
-    updateHand();
-}
-
-const cornyStoneReceive = receive;
-
-receive = function (item, x = feet.x, y = feet.y + .3, z = feet.z) {
-    const minedBlock = miningKey ? blocks.get(miningKey) : null;
-
-    if (item.type === "stone" && minedBlock?.type === "stone") {
-        wearPickaxe();
-    }
-
-    if (item.type === "ogger_trap" && minedBlock?.type === "ogger_trap") {
-        const trap = cornyTraps.get(miningKey);
-
-        if (trap?.baited) {
-            trap.baited = false;
-
-            cornyStoneReceive(
-                { type: "beef" },
-                minedBlock.x + .3,
-                minedBlock.y + .7,
-                minedBlock.z
-            );
-        }
-    }
-
-    return cornyStoneReceive(item, x, y, z);
-};
-
-function interactWithTrap() {
-    if (mode !== "playing") return false;
-
-    updateAim();
-
-    if (target?.type !== "block" || target.b.type !== "ogger_trap") {
-        return false;
-    }
-
-    const b = target.b;
-    const trap = cornyTraps.get(key(b.x, b.y, b.z));
-    if (!trap) return false;
-
-    stopMining();
-
-    if (trap.baited) {
-        trap.baited = false;
-        trap.bait.visible = false;
-
-        const kept = receive(
-            { type: "beef" },
-            b.x + .3,
-            b.y + .75,
-            b.z
-        );
-
-        notify(
-            kept
-                ? "BAIT REMOVED. THE BEEF IS BACK IN YOUR INVENTORY."
-                : "BAIT REMOVED. THE BEEF DROPPED BESIDE THE TRAP."
-        );
-    } else {
-        const source = inventory.findIndex(s => s?.type === "beef");
-
-        if (source < 0) {
-            notify("YOU NEED ONE BEEF TO BAIT THIS TRAP.");
-            return true;
-        }
-
-        takeItem(source);
-
-        trap.baited = true;
-        trap.bait.visible = true;
-
-        notify("TRAP BAITED. THIS BEEF STAYS UNTIL YOU REMOVE IT.");
-    }
-
-    updateHand();
-    renderHUD();
-    saveCurrent();
-
-    return true;
-}
-
-const cornyStoneBeginMining = beginMining;
-
-beginMining = function (mouse = false) {
-    if (mode !== "playing") return;
-
-    updateAim();
-
-    if (mouse && target?.type === "block" && target.b.type === "ogger_trap") {
-        interactWithTrap();
-        return;
-    }
-
-    if (
-        target?.type === "block" &&
-        target.b.type === "stone" &&
-        !holdingPickaxe()
-    ) {
-        notify("HOLD A WOODEN PICKAXE TO MINE STONE.");
-        return;
-    }
-
-    cornyStoneBeginMining(mouse);
-};
-
-const cornyStoneOpenCraft = openCraft;
-
-openCraft = function (portable = false) {
-    if (!portable && mode === "playing" && interactWithTrap()) {
-        return;
-    }
-
-    cornyStoneOpenCraft(portable);
-};
-
-/* Permit placing blocks deeper underground. */
-
-place = function () {
-    if (mode !== "playing") return;
-
-    const slot = activeItem();
-
-    if (!slot || !TYPES.includes(slot.type)) {
-        notify("SELECT A BLOCK FROM YOUR INVENTORY FIRST.");
-        return;
-    }
-
-    updateAim();
-
-    if (target?.type !== "block") {
-        notify("AIM AT A BLOCK'S SIDE OR TOP.");
-        return;
-    }
-
-    const b = target.b;
-    const n = target.normal;
-
-    const x = b.x + Math.round(n.x);
-    const y = b.y + Math.round(n.y);
-    const z = b.z + Math.round(n.z);
-
-    if (
-        at(x, y, z) ||
-        Math.abs(x) > 64 ||
-        Math.abs(z) > 64 ||
-        y < -24 ||
-        y > 32
-    ) {
-        notify("YOU CANNOT PLACE A BLOCK THERE.");
-        return;
-    }
-
-    const playerOverlap =
-        Math.abs(x - feet.x) < .77 &&
-        Math.abs(z - feet.z) < .77 &&
-        y + .5 > feet.y &&
-        y - .5 < feet.y + 1.7;
-
-    const mobOverlap = [...mobs.values()].some(m =>
-        Math.abs(m.root.position.x - x) < .9 &&
-        Math.abs(m.root.position.z - z) < .9 &&
-        y + .5 > m.root.position.y &&
-        y - .5 < m.root.position.y + 1.9
-    );
-
-    if (playerOverlap || mobOverlap) {
-        notify("THAT SPACE IS OCCUPIED.");
-        return;
-    }
-
-    const item = takeItem(active);
-    put(x, y, z, item.type);
-
-    stopMining();
-    rebuildTerrain();
-    updateAim();
-    updateHand();
-
-    notify(
-        item.type === "ogger_trap"
-            ? "TRAP PLACED. AIM AT IT AND PRESS BAIT + TO ADD ONE BEEF."
-            : `PLACED ${NAMES[item.type]}.`
-    );
-};
-
-$("place").onclick = () => place();
-
-/* Held tool models. */
-
-updateHand = function () {
-    const slot = activeItem();
-    const type = slot?.type || "hands";
-    const identity = `${active}:${type}`;
-
-    if (identity === handKey) return;
-
-    handKey = identity;
-
-    for (const child of [...hand.children]) {
-        hand.remove(child);
-    }
-
-    function piece(w, h, d, x, y, z, material) {
-        const mesh = new THREE.Mesh(sharedCube, material);
-        mesh.scale.set(w, h, d);
-        mesh.position.set(x, y, z);
-        hand.add(mesh);
-    }
-
-    if (type === "wooden_pickaxe") {
-        piece(.045, .39, .045, 0, -.04, 0, cubeMaterials.brown);
-        piece(.29, .065, .06, 0, .14, 0, cubeMaterials.wood);
-        piece(.065, .11, .06, -.13, .105, 0, cubeMaterials.wood);
-        piece(.065, .11, .06, .13, .105, 0, cubeMaterials.wood);
-    } else if (type === "wooden_dagger") {
-        piece(.055, .30, .03, 0, .07, 0, cubeMaterials.wood);
-        piece(.15, .035, .05, 0, -.075, 0, cubeMaterials.brown);
-        piece(.055, .13, .055, 0, -.15, 0, cubeMaterials.brown);
-    } else if (TYPES.includes(type)) {
-        piece(.23, .23, .23, 0, 0, 0, batches.get(type).material);
-    } else if (type === "beef") {
-        piece(.20, .12, .12, 0, 0, 0, lootMaterials.beef);
-    } else {
-        piece(.13, .23, .14, 0, -.06, 0, cubeMaterials.skin);
-    }
-
-    hand.position.set(.31, -.28, -.62);
-    hand.rotation.set(-.15, -.25, -.25);
-};
-
-/* Ogger behavior: baited traps attract them, including angry oggers. */
-
-function nearestBaitedTrap(position) {
-    let chosen = null;
-    let best = 14;
-
-    for (const [k, trap] of cornyTraps) {
-        if (!trap.baited) continue;
-        if (Math.abs(position.y - (trap.y - .5)) > 2) continue;
-
-        const d = Math.hypot(position.x - trap.x, position.z - trap.z);
-
-        if (d < best) {
-            best = d;
-            chosen = { key: k, trap };
-        }
-    }
-
-    return chosen;
-}
-
-thinkMobs = function () {
-    const all = [...mobs.values()];
-    const oggers = all.filter(m => m.kind === "ogger");
-
-    for (const m of all) {
-        if (!mobs.has(m.id)) continue;
-
-        const p = m.root.position;
-
-        if (m.kind !== "ogger") {
-            const threats = oggers
-                .filter(o => distance(p, o.root.position) < 7)
-                .sort((a, b) =>
-                    distance(p, a.root.position) -
-                    distance(p, b.root.position)
-                );
-
-            if (threats[0]) {
-                m.fleeUntil = Math.max(m.fleeUntil, time + 2);
-                m.fleeFrom = {
-                    x: threats[0].root.position.x,
-                    z: threats[0].root.position.z
-                };
-            }
-
-            if (time < m.fleeUntil && m.fleeFrom) {
-                m.speed = m.kind === "horse" ? 3.4 : 2.6;
-
-                if (time >= m.goalAt || !m.goal) {
-                    chooseGoal(m, m.fleeFrom);
-                }
-            } else {
-                m.speed = m.kind === "horse" ? 1 : .7;
-                if (time >= m.goalAt) chooseGoal(m);
-            }
-
-            continue;
-        }
-
-        const lure = nearestBaitedTrap(p);
-
-        if (lure) {
-            m.prey = null;
-            m.goal = {
-                x: lure.trap.x,
-                z: lure.trap.z
-            };
-            m.speed = 1.35;
-            continue;
-        }
-
-        let prey = null;
-        let goal = null;
-
-        if (m.angry) {
-            goal = { x: feet.x, y: feet.y, z: feet.z };
-            m.prey = null;
-        } else {
-            prey = all
-                .filter(other =>
-                    other.kind !== "ogger" &&
-                    mobs.has(other.id) &&
-                    distance(p, other.root.position) < 10
-                )
-                .sort((a, b) =>
-                    distance(p, a.root.position) -
-                    distance(p, b.root.position)
-                )[0];
-
-            m.prey = prey?.id || null;
-
-            if (prey) {
-                goal = {
-                    x: prey.root.position.x,
-                    y: prey.root.position.y,
-                    z: prey.root.position.z
-                };
-            }
-        }
-
-        if (goal) {
-            m.goal = goal;
-            m.speed = 1.2;
-
-            const d = distance(p, goal);
-            const vertical = Math.abs(p.y - goal.y);
-
-            if (d < 1.35 && vertical < 1.7 && time >= m.nextBite) {
-                m.nextBite = time + 2;
-                m.biteUntil = time + .6;
-
-                if (m.angry) {
-                    hp = Math.max(0, hp - .5);
-                    playerFlash = time + .5;
-                    deathReason = "AN OGGER GOT YOU";
-                    notify("AN ANGRY OGGER BIT YOU.");
-                } else if (prey && mobs.has(prey.id)) {
-                    damageMob(prey, .5, {
-                        x: p.x,
-                        z: p.z,
-                        player: false
-                    });
-                }
-            }
-        } else {
-            m.speed = .65;
-            if (time >= m.goalAt) chooseGoal(m);
-        }
-    }
-};
-
-/* Trap activation and automatic resetting. */
-
-const trapSight = new THREE.Raycaster();
-
-function trapPathClear(mob, trap) {
-    const origin = mob.root.position.clone();
-    origin.y += .8;
-
-    const destination = new THREE.Vector3(
-        trap.x,
-        trap.y + .65,
-        trap.z
-    );
-
-    const direction = destination.clone().sub(origin);
-    const length = direction.length();
-
-    if (length < .01) return true;
-
-    direction.normalize();
-    trapSight.set(origin, direction);
-    trapSight.far = length;
-
-    const hit = trapSight.intersectObjects(
-        [...batches.values()].filter(mesh => mesh.visible),
-        false
-    )[0];
-
-    if (!hit) return true;
-    if (hit.instanceId === undefined) return false;
-
-    const cell = hit.object.userData.cells[hit.instanceId];
-
-    return !!cell &&
-        cell.x === trap.x &&
-        cell.y === trap.y &&
-        cell.z === trap.z;
-}
-
-function updateTrapDevices() {
-    for (const trap of cornyTraps.values()) {
-        trap.bait.visible = trap.baited;
-
-        const age = time - trap.snapAt;
-
-        if (age >= 0 && age < .15) {
-            trap.jaw.rotation.x = age / .15 * 2.6;
-        } else if (age < .65 && age >= .15) {
-            trap.jaw.rotation.x = 2.6;
-        } else if (age >= .65 && age < 1.2) {
-            trap.jaw.rotation.x = (1 - (age - .65) / .55) * 2.6;
-        } else {
-            trap.jaw.rotation.x = 0;
-        }
-
-        if (
-            mode !== "playing" ||
-            !trap.baited ||
-            time < trap.nextCatch
-        ) continue;
-
-        const victim = [...mobs.values()].find(mob =>
-            mob.kind === "ogger" &&
-            Math.hypot(
-                mob.root.position.x - trap.x,
-                mob.root.position.z - trap.z
-            ) < 1.42 &&
-            Math.abs(mob.root.position.y - (trap.y - .5)) < .85 &&
-            trapPathClear(mob, trap)
-        );
-
-        if (!victim) continue;
-
-        trap.snapAt = time;
-        trap.nextCatch = time + 3;
-        trap.catches++;
-
-        const p = victim.root.position.clone();
-        removeMob(victim);
-
-        addDrop(
-            { type: "beef" },
-            p.x - .2,
-            p.y + .3,
-            p.z
-        );
-
-        if (random() < .25) {
-            addDrop(
-                { type: "log" },
-                p.x + .2,
-                p.y + .3,
-                p.z
-            );
-        }
-
-        // The bait remains in the trap.
-        notify("OGGER CAUGHT. THE TRAP IS RESETTING. ITS BAIT IS STILL THERE.");
-    }
-}
-
-/* Context-sensitive controls and tool status. */
-
-const cornyStoneRenderHUD = renderHUD;
-
-renderHUD = function () {
-    cornyStoneRenderHUD();
-
-    const slot = activeItem();
-
-    if (slot?.type === "wooden_pickaxe") {
-        $("heldDetail").textContent =
-            `${slot.tools[0].hp}/40 HP | ${slot.n} TOOL(S)`;
-    }
-
-    $("craft").textContent = "CRAFT";
-    $("mine").textContent = "MINE";
-
-    if (target?.type === "block") {
-        if (target.b.type === "stone") {
-            $("mine").textContent = "MINE STONE";
-
-            if (!holdingPickaxe()) {
-                $("target").textContent = "STONE — WOODEN PICKAXE REQUIRED";
-            }
-        }
-
-        if (target.b.type === "ogger_trap") {
-            const trap = cornyTraps.get(
-                key(target.b.x, target.b.y, target.b.z)
-            );
-
-            if (trap) {
-                $("craft").textContent = trap.baited ? "BAIT -" : "BAIT +";
-
-                $("target").textContent =
-                    trap.baited
-                        ? "OGGER TRAP — BAITED"
-                        : "OGGER TRAP — NEEDS ONE BEEF";
-            }
-        }
-    }
-};
-
-/* Run extra checks around the existing animation loop.
-   This does not create a second game loop. */
-
-const cornyStoneSetAnimationLoop =
-    renderer.setAnimationLoop.bind(renderer);
-
-renderer.setAnimationLoop = function (callback) {
-    if (!callback) {
-        return cornyStoneSetAnimationLoop(null);
-    }
-
-    return cornyStoneSetAnimationLoop((now, frame) => {
-        if (
-            mode === "playing" &&
-            miningKey &&
-            blocks.get(miningKey)?.type === "stone" &&
-            !holdingPickaxe()
-        ) {
-            stopMining();
-            notify("HOLD YOUR WOODEN PICKAXE UNTIL THE STONE IS MINED.");
-        }
-
-        callback(now, frame);
-
-        updateTrapDevices();
-
-        if (cornyToolBroke) {
-            cornyToolBroke = false;
-            notify("YOUR WOODEN PICKAXE BROKE.");
-            renderHUD();
-        }
-    });
-};
-
-/* END STONE AND TRAP UPDATE */
+main().catch(window.showCornyError);
+</script>
+</body>
+</html>
