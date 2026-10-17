@@ -1,1 +1,1147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#173b2e">
+<title>Corny Game</title>
+<style>
+:root{color-scheme:dark;--cream:#f6ecd3;--gold:#e2b665;--green:#173b2e}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#173b2e;font-family:system-ui,-apple-system,sans-serif;color:var(--cream)}
+body{overscroll-behavior:none}
+button{font:inherit;cursor:pointer;touch-action:manipulation}
+button:disabled{opacity:.4;cursor:default}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+#game{display:block;width:100%;height:100%;touch-action:none}
+.hidden{display:none!important}
+.overlay{position:fixed;inset:0;display:grid;place-items:center;padding:20px;background:rgba(8,24,19,.66);backdrop-filter:blur(7px);z-index:10}
+.panel{width:min(460px,100%);padding:30px;border:1px solid #e2b66550;border-radius:22px;background:linear-gradient(145deg,#214b3cfa,#122e24fa);box-shadow:0 24px 90px #0006;text-align:center}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:3px;color:var(--gold)}
+h1{font-family:Georgia,serif;font-size:clamp(48px,9vw,76px);line-height:.95;letter-spacing:-3px;margin:22px 0}
+h2{font:38px Georgia,serif;margin:8px 0 16px}
+p{font-size:14px;line-height:1.6;color:#dfdeca}
+.primary,.secondary{width:100%;min-height:48px;border:0;border-radius:11px;margin-top:10px;font-weight:700}
+.primary{background:var(--gold);color:#253326}
+.secondary{background:#ffffff0c;color:var(--cream);border:1px solid #ffffff24}
+.small{font-size:11px;line-height:1.6;color:#b9c5b7}
+#hud{position:fixed;inset:0;pointer-events:none;z-index:2}
+.topbar{position:absolute;top:max(16px,env(safe-area-inset-top));left:18px;right:18px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.card{background:#122c22d9;border:1px solid #ffffff20;border-radius:13px;box-shadow:0 5px 25px #0002;padding:12px 15px}
+.brand{font:20px Georgia,serif}
+.biome{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#d5c79b;margin-top:4px}
+.stats{display:flex;gap:16px;margin-top:10px;font-size:13px}
+#health{color:#f4a99c}
+#hunger{color:#edca7d}
+.toolbar{display:flex;gap:8px;pointer-events:auto}
+.iconbutton{width:44px;height:44px;border-radius:12px;background:#122c22dc;border:1px solid #ffffff30;color:var(--cream);font-size:19px}
+#crosshair{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:27px;font-weight:200;color:#fff;text-shadow:0 1px 4px #000}
+#target{position:absolute;top:calc(50% + 26px);left:50%;transform:translateX(-50%);padding:5px 10px;border-radius:7px;background:#10261bba;font-size:12px;white-space:nowrap}
+#mineBox{position:absolute;top:calc(50% + 64px);left:50%;transform:translateX(-50%);width:180px;text-align:center;font-size:11px}
+.track{height:5px;border-radius:4px;background:#0006;overflow:hidden;margin-top:7px}
+#mineFill{height:100%;width:0;background:var(--gold)}
+#toast{position:absolute;left:50%;bottom:155px;transform:translateX(-50%);max-width:min(560px,85vw);background:#10261be8;border:1px solid #ffffff20;border-radius:10px;padding:10px 15px;font-size:12px;text-align:center}
+#hotbar{position:absolute;bottom:max(22px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:5px;padding:6px;background:#10261bcc;border:1px solid #ffffff25;border-radius:13px;pointer-events:auto}
+.slot{width:61px;height:63px;border:1px solid transparent;border-radius:8px;background:#ffffff09;color:var(--cream);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.slot[data-selected=true]{border-color:var(--gold);background:#e2b66525}
+.swatch{width:19px;height:19px;border-radius:3px;box-shadow:inset -4px -4px #0002}
+.slot small{font-size:10px}
+.slot strong{font-size:12px}
+#walk{position:absolute;bottom:max(20px,env(safe-area-inset-bottom));left:20px;display:grid;grid-template-columns:repeat(3,45px);grid-template-rows:repeat(2,45px);gap:5px;pointer-events:auto}
+.control{border:1px solid #ffffff35;background:#17372bdc;color:var(--cream);border-radius:11px;min-height:44px;touch-action:none;user-select:none;-webkit-user-select:none;font-weight:600;font-size:12px}
+.control:active,.control.pressed{background:#a9853b}
+#actions{position:absolute;right:20px;bottom:max(20px,env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(2,76px);gap:6px;pointer-events:auto}
+#weapon{grid-column:span 2}
+#grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:240px;margin:22px auto}
+.craftslot{height:73px;background:#0003;border:1px solid #ffffff30;border-radius:10px;color:var(--cream);font-size:12px}
+.craftslot.filled{background:#865c31;border-color:var(--gold)}
+#fatal .panel{text-align:left}
+#errorText{white-space:pre-wrap;font:12px ui-monospace,monospace;overflow-wrap:anywhere;color:#ffe1d4}
+@media(max-width:850px){
+#hotbar{bottom:125px}
+#toast{bottom:205px}
+.slot{width:49px;height:58px}
+.topbar{left:10px;right:10px;top:10px}
+.card{padding:9px 11px}
+.brand{font-size:17px}
+#walk{left:12px}
+#actions{right:12px}
+}
+@media(max-height:530px){
+.panel{padding:18px;max-height:96vh;overflow:auto}
+h1{font-size:48px;margin:12px 0}
+#grid{width:195px;margin:12px auto}
+.craftslot{height:48px}
+#hotbar{bottom:15px}
+#toast{bottom:105px}
+#actions{grid-template-columns:repeat(3,65px)}
+#weapon{grid-column:span 3}
+#walk{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(2,40px)}
+}
+</style>
+</head>
+<body>
+<canvas id="game" aria-label="Corny Game 3D world"></canvas>
 
+<div id="loading" class="overlay">
+  <div class="panel">
+    <div class="eyebrow">Corny Game</div>
+    <h2>Growing your island…</h2>
+    <p>Loading the 3D engine.</p>
+  </div>
+</div>
+
+<div id="menu" class="overlay hidden">
+  <div class="panel">
+    <div class="eyebrow">A little island. A big adventure.</div>
+    <h1>Corny<br>Game</h1>
+    <p id="menuDescription">Pine trees, ocean air, and a world to make your own.</p>
+    <button id="resume" class="primary hidden">Resume Game</button>
+    <button id="continue" class="secondary hidden">Continue Saved Island</button>
+    <button id="newGame" class="primary">Start Game</button>
+    <button id="saveGame" class="secondary hidden">Save Game</button>
+    <p class="small">
+      iPad: drag to look · hold arrows to walk<br>
+      Computer: WASD · mouse to look · Space to jump<br>
+      Your island saves in this browser.
+    </p>
+  </div>
+</div>
+
+<div id="hud" class="hidden">
+  <div class="topbar">
+    <div class="card">
+      <div class="brand">Corny Game</div>
+      <div class="biome">Pine Forest · Island 01</div>
+      <div class="stats">
+        <span id="health"></span>
+        <span id="hunger"></span>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button id="fullscreen" class="iconbutton" aria-label="Fullscreen">⛶</button>
+      <button id="pause" class="iconbutton" aria-label="Pause">Ⅱ</button>
+    </div>
+  </div>
+  <div id="crosshair">+</div>
+  <div id="target" class="hidden"></div>
+  <div id="mineBox" class="hidden">
+    <span id="mineText"></span>
+    <div class="track"><div id="mineFill"></div></div>
+  </div>
+  <div id="toast"></div>
+  <div id="hotbar"></div>
+  <div id="walk">
+    <span></span>
+    <button class="control" data-move="forward" aria-label="Walk forward">▲</button>
+    <span></span>
+    <button class="control" data-move="left" aria-label="Walk left">◀</button>
+    <button class="control" data-move="backward" aria-label="Walk backward">▼</button>
+    <button class="control" data-move="right" aria-label="Walk right">▶</button>
+  </div>
+  <div id="actions">
+    <button id="mine" class="control">Mine</button>
+    <button id="place" class="control">Place</button>
+    <button id="attack" class="control">Attack</button>
+    <button id="jump" class="control">Jump</button>
+    <button id="craft" class="control">Craft</button>
+    <button id="eat" class="control">Eat Beef</button>
+    <button id="weapon" class="control">Bare Hands</button>
+  </div>
+</div>
+
+<div id="crafting" class="overlay hidden">
+  <div class="panel">
+    <div class="eyebrow">Building Table</div>
+    <h2>Crafting</h2>
+    <p>Place three logs in one row or column to make a dagger.</p>
+    <div id="grid"></div>
+    <p id="logCount"></p>
+    <button id="makeDagger" class="primary" disabled>Craft Dagger · 2× Damage</button>
+    <button id="closeCraft" class="secondary">Back to Island</button>
+  </div>
+</div>
+
+<div id="dead" class="overlay hidden">
+  <div class="panel">
+    <div class="eyebrow">The forest got hungry</div>
+    <h2>You were defeated</h2>
+    <p>Try another adventure on a fresh island.</p>
+    <button id="restart" class="primary">New Island</button>
+  </div>
+</div>
+
+<div id="fatal" class="overlay hidden">
+  <div class="panel">
+    <h2>Couldn’t start</h2>
+    <p>Copy this message if you need help:</p>
+    <div id="errorText"></div>
+    <button class="primary" onclick="location.reload()">Try Again</button>
+  </div>
+</div>
+
+<script>
+window.showGameError = function(error) {
+  document.getElementById("loading").classList.add("hidden");
+  document.getElementById("fatal").classList.remove("hidden");
+  document.getElementById("errorText").textContent =
+    error && error.message ? error.message : String(error);
+};
+window.addEventListener("error", function(event) {
+  window.showGameError(event.error || event.message);
+});
+window.addEventListener("unhandledrejection", function(event) {
+  window.showGameError(event.reason);
+});
+</script>
+
+<script type="module">
+async function startCornyGame() {
+  const THREE = await import(
+    "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js"
+  );
+
+  const $ = id => document.getElementById(id);
+  const show = (id, visible) => $(id).classList.toggle("hidden", !visible);
+  const TYPES = ["dirt", "sand", "log", "leaves", "table"];
+  const COLORS = {
+    dirt:"#785239", sand:"#dfcb91", log:"#805333",
+    leaves:"#37613d", table:"#ba8249"
+  };
+  const SAVE_KEY = "corny-game-vercel-v1";
+  const STEP = [[0,-1],[0,1],[-1,0],[1,0]];
+  const key = (x,y,z) => `${x},${y},${z}`;
+  const canvas = $("game");
+
+  const renderer = new THREE.WebGLRenderer({
+    canvas, antialias:true, powerPreference:"high-performance"
+  });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color("#a9cddd");
+  scene.fog = new THREE.Fog("#a9cddd", 34, 95);
+
+  const camera = new THREE.PerspectiveCamera(74, 1, 0.05, 160);
+  camera.rotation.order = "YXZ";
+  scene.add(new THREE.HemisphereLight("#fff2d9", "#677758", 2));
+  const sun = new THREE.DirectionalLight("#ffe8bd", 2.1);
+  sun.position.set(20, 35, 10);
+  scene.add(sun);
+
+  const ocean = new THREE.Mesh(
+    new THREE.PlaneGeometry(250,250),
+    new THREE.MeshLambertMaterial({color:"#397e96"})
+  );
+  ocean.rotation.x = -Math.PI/2;
+  ocean.position.set(10,-0.72,10);
+  scene.add(ocean);
+
+  function texture(kind) {
+    const c = document.createElement("canvas");
+    c.width = c.height = 16;
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = kind === "dirt" ? "#ffffff" : COLORS[kind];
+    ctx.fillRect(0,0,16,16);
+
+    for (let i=0;i<65;i++) {
+      const x = Math.floor(Math.random()*16);
+      const y = Math.floor(Math.random()*16);
+      ctx.fillStyle = Math.random()<0.5
+        ? "rgba(0,0,0,.10)" : "rgba(255,255,255,.10)";
+      ctx.fillRect(x,y,kind==="log"?1:2,kind==="log"?4:1);
+    }
+
+    if (kind==="table") {
+      ctx.strokeStyle="#5c3b26";
+      ctx.lineWidth=1;
+      for (let n=5;n<=10;n+=5) {
+        ctx.beginPath();ctx.moveTo(n,0);ctx.lineTo(n,16);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(0,n);ctx.lineTo(16,n);ctx.stroke();
+      }
+    }
+
+    const t = new THREE.CanvasTexture(c);
+    t.magFilter = THREE.NearestFilter;
+    t.minFilter = THREE.NearestFilter;
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }
+
+  function blockGeometry(kind) {
+    const geometry = new THREE.BoxGeometry(1,1,1);
+    const normals = geometry.attributes.normal;
+    const values = [];
+    for (let i=0;i<normals.count;i++) {
+      const ny = normals.getY(i);
+      const c = new THREE.Color(
+        kind==="dirt" ? (ny>0.5?"#789050":"#886447") : "#ffffff"
+      );
+      c.multiplyScalar(ny<-.5?.72:1);
+      values.push(c.r,c.g,c.b);
+    }
+    geometry.setAttribute("color",new THREE.Float32BufferAttribute(values,3));
+    return geometry;
+  }
+
+  const blocks = new Map();
+  const batches = new Map();
+  const matrix = new THREE.Matrix4();
+
+  for (const kind of TYPES) {
+    const mesh = new THREE.InstancedMesh(
+      blockGeometry(kind),
+      new THREE.MeshLambertMaterial({map:texture(kind),vertexColors:true}),
+      4096
+    );
+    mesh.count=0;
+    mesh.userData.kind=kind;
+    mesh.userData.cells=[];
+    mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    scene.add(mesh);
+    batches.set(kind,mesh);
+  }
+
+  function put(x,y,z,kind) {
+    if (!blocks.has(key(x,y,z))) {
+      blocks.set(key(x,y,z),{x,y,z,kind});
+    }
+  }
+  const at = (x,y,z) => blocks.get(key(x,y,z));
+
+  function rebuildTerrain() {
+    const grouped = Object.fromEntries(TYPES.map(t=>[t,[]]));
+    for (const block of blocks.values()) grouped[block.kind].push(block);
+    for (const kind of TYPES) {
+      const mesh=batches.get(kind), cells=grouped[kind];
+      mesh.userData.cells=cells;
+      mesh.count=cells.length;
+      mesh.visible=cells.length>0;
+      cells.forEach((b,i)=>{
+        matrix.makeTranslation(b.x,b.y,b.z);
+        mesh.setMatrixAt(i,matrix);
+      });
+      mesh.instanceMatrix.needsUpdate=true;
+      if(cells.length) {
+        mesh.computeBoundingSphere();
+        mesh.computeBoundingBox();
+      }
+    }
+  }
+
+  const outline = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.BoxGeometry(1.015,1.015,1.015)),
+    new THREE.LineBasicMaterial({color:"#fff8cf"})
+  );
+  outline.visible=false;
+  scene.add(outline);
+
+  const cube = new THREE.BoxGeometry(1,1,1);
+  const mobMaterials = {};
+  for(const [name,color] of Object.entries({
+    white:"#eee8d8",black:"#393732",brown:"#886042",
+    green:"#779c52",shirt:"#667168",eye:"#171f18",
+    muzzle:"#d2b5a1",beef:"#b9634d",leaf:"#66864a"
+  })) mobMaterials[name]=new THREE.MeshLambertMaterial({color});
+
+  const mobs=new Map(), drops=[];
+  let nextID=1;
+  let inventory={};
+  const count = item => inventory[item]||0;
+  function give(item,n=1) {inventory[item]=count(item)+n;}
+
+  let mode="menu", selected="log", dagger=false, started=false;
+  let health=4,hunger=4,time=0,nextHunger=180,nextHeal=30;
+  let nextSpawn=900,nextAI=1,nextSave=20,nextAim=0,nextHUD=0;
+  let yaw=0,pitch=-.55,verticalSpeed=0,grounded=true;
+  let target=null,miningKey=null,miningTime=0,slots=Array(9).fill(false);
+  let message="Welcome to Pine Island.";
+  let attackAt=-1;
+  const feet=new THREE.Vector3(10,.5,10);
+  const held=new Set();
+  let lookPointer=null,lastX=0,lastY=0,mouseMining=false;
+  let saved=null;
+
+  try {
+    const raw=localStorage.getItem(SAVE_KEY);
+    if(raw) {
+      const data=JSON.parse(raw);
+      if(data.version===1 && Array.isArray(data.blocks) && data.health>0)
+        saved=data;
+    }
+  } catch {}
+
+  function notify(text) {message=text;}
+
+  function makeMob(kind,x,z,state={}) {
+    const id=state.id||String(nextID++);
+    const root=new THREE.Group();
+    root.position.set(x,.5,z);
+    const legs=[];
+
+    function part(w,h,d,px,py,pz,materialName,leg=false) {
+      const mesh=new THREE.Mesh(cube,mobMaterials[materialName]);
+      mesh.scale.set(w,h,d);
+      mesh.position.set(px,py,pz);
+      mesh.userData.entityId=id;
+      root.add(mesh);
+      if(leg) legs.push(mesh);
+      return mesh;
+    }
+
+    if(kind==="ogger") {
+      part(.66,.75,.38,0,.96,0,"shirt");
+      part(.62,.53,.55,0,1.6,0,"green");
+      for(const side of [-1,1]) {
+        part(.23,.60,.28,side*.19,.30,0,"black",true);
+        part(.20,.64,.22,side*.46,1.01,-.07,"green");
+        part(.085,.075,.025,side*.15,1.66,-.288,"eye");
+        part(.065,.09,.04,side*.10,1.44,-.29,"white");
+      }
+    } else {
+      const horse=kind==="horse";
+      const color=horse?"brown":"white";
+      part(.8,.65,horse?1.30:1.12,0,.87,0,color);
+      part(.49,horse?.64:.51,.51,0,horse?1.25:1.10,-.66,color);
+      part(.44,.23,.22,0,horse?1.06:.94,-.93,horse?"brown":"muzzle");
+      for(const side of [-1,1]) {
+        for(const end of [-1,1])
+          part(.17,.57,.18,side*.26,.29,end*.43,"black",true);
+        part(.08,.08,.025,side*.16,horse?1.37:1.20,-.92,"eye");
+        if(horse) part(.10,.27,.14,side*.15,1.65,-.62,"brown");
+      }
+      if(!horse) part(.812,.31,.39,0,.97,.14,"black");
+      else {
+        part(.12,.54,.44,0,1.27,-.38,"black");
+        part(.12,.52,.13,0,.76,.75,"black");
+      }
+    }
+
+    const mob={
+      id,kind,root,legs,x,z,
+      health:state.health??(kind==="ogger"?6:8),
+      angry:!!state.angry,prey:state.prey||null,
+      nextBite:state.nextBite??0,biteUntil:0
+    };
+    mobs.set(id,mob);
+    scene.add(root);
+    return mob;
+  }
+
+  function removeMob(mob) {
+    scene.remove(mob.root);
+    mobs.delete(mob.id);
+  }
+
+  const dropGeometry=new THREE.BoxGeometry(.22,.22,.22);
+  function addDrop(kind,x,y,z) {
+    const mesh=new THREE.Mesh(
+      dropGeometry,mobMaterials[kind==="beef"?"beef":"leaf"]
+    );
+    mesh.position.set(x,y,z);
+    scene.add(mesh);
+    drops.push({kind,x,y,z,mesh,phase:Math.random()*6});
+  }
+
+  function clearDrops() {
+    for(const d of drops) scene.remove(d.mesh);
+    drops.length=0;
+  }
+
+  function terrainPassable(x,z) {
+    return x>=0&&x<20&&z>=0&&z<20&&at(x,0,z)&&!at(x,1,z)&&!at(x,2,z);
+  }
+  function occupiedByMob(x,z,ignore=null) {
+    return [...mobs.values()].some(m=>m.id!==ignore&&m.x===x&&m.z===z);
+  }
+
+  function spawnInZone(kind,start,size) {
+    for(let attempt=0;attempt<30;attempt++) {
+      const n=start+Math.floor(Math.random()*size);
+      const x=n%20,z=Math.floor(n/20);
+      if(terrainPassable(x,z)&&!occupiedByMob(x,z)&&
+        Math.abs(x-feet.x)+Math.abs(z-feet.z)>4) {
+        makeMob(kind,x,z);return;
+      }
+    }
+  }
+
+  function spawnWave() {
+    for(let i=0;i+30<=400;i+=30)
+      if(Math.random()<.4)
+        spawnInZone(Math.random()<.5?"cow":"horse",i,30);
+    for(let i=0;i+20<=400;i+=20)
+      if(Math.random()<.5) spawnInZone("ogger",i,20);
+  }
+
+  function stopMining() {
+    miningKey=null;miningTime=0;mouseMining=false;
+  }
+
+  function releaseControls() {
+    held.clear();lookPointer=null;
+    document.querySelectorAll(".pressed").forEach(b=>b.classList.remove("pressed"));
+  }
+
+  function resetWorld() {
+    for(const mob of [...mobs.values()]) removeMob(mob);
+    clearDrops();blocks.clear();inventory={};nextID=1;
+    health=4;hunger=4;time=0;nextHunger=180;nextHeal=30;
+    nextSpawn=900;nextAI=1;nextSave=20;nextAim=0;nextHUD=0;
+    feet.set(10,.5,10);yaw=0;pitch=-.55;verticalSpeed=0;grounded=true;
+    selected="log";dagger=false;slots=Array(9).fill(false);
+    target=null;attackAt=-1;stopMining();releaseControls();
+
+    for(let x=0;x<20;x++) for(let z=0;z<20;z++) {
+      put(x,-1,z,"dirt");
+      put(x,0,z,x===0||x===19||z===0||z===19?"sand":"dirt");
+    }
+
+    for(const [x,z] of [
+      [3,3],[8,3],[15,3],[3,9],[16,9],[4,15],[10,16],[16,15]
+    ]) {
+      for(let y=1;y<=3;y++) put(x,y,z,"log");
+      for(let dx=-1;dx<=1;dx++) for(let dz=-1;dz<=1;dz++)
+        if(dx!==0||dz!==0) put(x+dx,3,z+dz,"leaves");
+      for(const [dx,dz] of [[0,0],[-1,0],[1,0],[0,-1],[0,1]])
+        put(x+dx,4,z+dz,"leaves");
+      put(x,5,z,"leaves");
+    }
+
+    put(10,1,9,"table");
+    rebuildTerrain();spawnWave();
+    notify("The building table is right in front of you.");
+  }
+
+  function updateCamera() {
+    camera.position.set(feet.x,feet.y+1.62,feet.z);
+    camera.rotation.set(pitch,yaw,0,"YXZ");
+    camera.updateMatrixWorld();
+  }
+
+  function collides(p) {
+    const x0=Math.floor(p.x-.27+.5),x1=Math.floor(p.x+.27+.5);
+    const z0=Math.floor(p.z-.27+.5),z1=Math.floor(p.z+.27+.5);
+    const y0=Math.floor(p.y+.502),y1=Math.floor(p.y+1.7+.498);
+    for(let x=x0;x<=x1;x++) for(let y=y0;y<=y1;y++) for(let z=z0;z<=z1;z++)
+      if(at(x,y,z)) return true;
+    return false;
+  }
+
+  function landingHeight(next,oldY) {
+    let best=null;
+    const x0=Math.floor(next.x+.23),x1=Math.floor(next.x+.77);
+    const z0=Math.floor(next.z+.23),z1=Math.floor(next.z+.77);
+    for(let x=x0;x<=x1;x++) for(let z=z0;z<=z1;z++)
+      for(let y=Math.floor(next.y-.5)-1;y<=Math.floor(oldY+.5);y++) {
+        const top=y+.5;
+        if(at(x,y,z)&&top<=oldY+.003&&top>=next.y-.003)
+          best=best===null?top:Math.max(best,top);
+      }
+    return best;
+  }
+
+  function rescue() {
+    let candidates=[];
+    for(let x=0;x<20;x++) for(let z=0;z<20;z++)
+      if(terrainPassable(x,z)) candidates.push({x,z});
+    candidates.sort((a,b)=>
+      Math.abs(a.x-10)+Math.abs(a.z-10)-Math.abs(b.x-10)-Math.abs(b.z-10)
+    );
+    if(candidates.length) {
+      feet.set(candidates[0].x,.5,candidates[0].z);
+    } else {
+      for(let y=1;y<=3;y++) blocks.delete(key(10,y,10));
+      put(10,0,10,"dirt");rebuildTerrain();feet.set(10,.5,10);
+    }
+    verticalSpeed=0;grounded=true;stopMining();
+    notify("The water carried you back to the island.");
+  }
+
+  function movePlayer(dt) {
+    let f=(held.has("forward")?1:0)-(held.has("backward")?1:0);
+    let s=(held.has("right")?1:0)-(held.has("left")?1:0);
+    const length=Math.max(1,Math.hypot(f,s));
+    f/=length;s/=length;
+    const dx=(-Math.sin(yaw)*f+Math.cos(yaw)*s)*3.2*dt;
+    const dz=(-Math.cos(yaw)*f-Math.sin(yaw)*s)*3.2*dt;
+
+    let next=feet.clone();next.x+=dx;
+    if(!collides(next)) feet.x=next.x;
+    next=feet.clone();next.z+=dz;
+    if(!collides(next)) feet.z=next.z;
+
+    verticalSpeed-=14*dt;
+    next=feet.clone();next.y+=verticalSpeed*dt;
+    if(collides(next)) {
+      if(verticalSpeed<0) {
+        const top=landingHeight(next,feet.y);
+        grounded=top!==null;
+        if(top!==null) feet.y=top;
+      }
+      verticalSpeed=0;
+    } else {
+      feet.y=next.y;grounded=false;
+    }
+
+    if(feet.y<-2.2) rescue();
+    updateCamera();
+  }
+
+  const ray=new THREE.Raycaster();
+  ray.far=4.8;
+  function updateAim() {
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+    const objects=[
+      ...batches.values(),
+      ...[...mobs.values()].map(m=>m.root)
+    ].filter(o=>o.visible);
+    const hit=ray.intersectObjects(objects,true)[0];
+    target=null;outline.visible=false;
+    if(!hit) return;
+    if(hit.instanceId!==undefined) {
+      const b=hit.object.userData.cells[hit.instanceId];
+      if(!b) return;
+      target={type:"block",block:b,normal:hit.face.normal.clone()};
+      outline.position.set(b.x,b.y,b.z);outline.visible=true;
+    } else if(hit.object.userData.entityId) {
+      const mob=mobs.get(hit.object.userData.entityId);
+      if(mob) target={type:"mob",mob};
+    }
+  }
+
+  function beginMining(mouse=false) {
+    if(mode!=="playing") return;
+    updateAim();
+    if(target?.type!=="block") return notify("Aim at a nearby block.");
+    const b=target.block;
+    miningKey=key(b.x,b.y,b.z);miningTime=0;mouseMining=mouse;
+    notify("Keep aiming at the block for five seconds.");
+  }
+
+  function place() {
+    if(mode!=="playing") return;
+    updateAim();
+    if(count(selected)<1) return notify(`Mine some ${selected} first.`);
+    if(target?.type!=="block") return notify("Aim at a block’s side or top.");
+    const b=target.block,n=target.normal;
+    const x=b.x+Math.round(n.x),y=b.y+Math.round(n.y),z=b.z+Math.round(n.z);
+    if(at(x,y,z)||x<-8||x>27||z<-8||z>27||y<-2||y>18)
+      return notify("You cannot place a block there.");
+
+    const playerOverlap=Math.abs(x-feet.x)<.77&&Math.abs(z-feet.z)<.77&&
+      y+.5>feet.y&&y-.5<feet.y+1.7;
+    if(playerOverlap||(y>=1&&y<=2&&occupiedByMob(x,z)))
+      return notify("That space is occupied.");
+
+    stopMining();put(x,y,z,selected);inventory[selected]--;
+    rebuildTerrain();updateAim();notify(`Placed ${selected}.`);
+  }
+
+  function attack() {
+    if(mode!=="playing"||time<attackAt) return;
+    updateAim();
+    if(target?.type!=="mob") return notify("Aim at a nearby creature.");
+    attackAt=time+.25;stopMining();
+    const victim=target.mob;
+    for(const mob of mobs.values())
+      if(mob.kind==="ogger"&&(mob.id===victim.id||mob.prey===victim.id))
+        mob.angry=true;
+    victim.health-=(victim.kind==="ogger"?1:8/6)*(dagger?2:1);
+    if(victim.health<=.001) {
+      if(victim.kind!=="ogger")
+        for(let i=0;i<2;i++)
+          addDrop(Math.random()<.05?"leaves":"beef",
+            victim.root.position.x+(i===0?-.2:.2),.78,victim.root.position.z);
+      notify(victim.kind==="ogger"?"Ogger defeated.":"Two items dropped. Walk over them to collect.");
+      removeMob(victim);
+    } else notify(`${victim.kind}: ${Math.max(0,victim.health).toFixed(1)} HP remaining.`);
+    updateAim();
+  }
+
+  function eat() {
+    if(mode!=="playing") return;
+    if(count("beef")<1) return notify("You need beef to eat.");
+    inventory.beef--;hunger=Math.min(4,hunger+2);
+    nextHeal=Math.min(nextHeal,time+10);
+    notify("Ate beef: +2 hunger. Healing within ten seconds.");
+  }
+
+  function jump() {
+    if(mode==="playing"&&grounded) {verticalSpeed=6;grounded=false;}
+  }
+
+  function toggleWeapon() {
+    if(!count("dagger")) return notify("Craft a dagger using three logs.");
+    dagger=!dagger;
+    notify(dagger?"Dagger equipped. Double damage.":"Using bare hands.");
+  }
+
+  function nextMobStep(mob,gx,gz) {
+    const queue=[{x:mob.x,z:mob.z,first:null}];
+    const seen=new Set([`${mob.x},${mob.z}`]);
+    for(let i=0;i<queue.length&&i<400;i++) {
+      const current=queue[i];
+      if(Math.abs(current.x-gx)+Math.abs(current.z-gz)<=1)
+        return current.first;
+      for(const [dx,dz] of STEP) {
+        const x=current.x+dx,z=current.z+dz,k=`${x},${z}`;
+        if(seen.has(k)||!terrainPassable(x,z)||occupiedByMob(x,z,mob.id)) continue;
+        seen.add(k);
+        queue.push({x,z,first:current.first||{x,z}});
+      }
+    }
+    return null;
+  }
+
+  function updateAI() {
+    for(const mob of [...mobs.values()]) {
+      if(!mobs.has(mob.id)||health<=0) continue;
+      let goal=null;
+      if(mob.kind==="ogger") {
+        if(mob.angry) {
+          mob.prey=null;goal={x:Math.round(feet.x),z:Math.round(feet.z)};
+        } else {
+          const prey=[...mobs.values()].filter(m=>
+            m.kind!=="ogger"&&Math.abs(m.x-mob.x)+Math.abs(m.z-mob.z)<=7
+          ).sort((a,b)=>
+            Math.abs(a.x-mob.x)+Math.abs(a.z-mob.z)-
+            Math.abs(b.x-mob.x)-Math.abs(b.z-mob.z)
+          )[0];
+          mob.prey=prey?.id||null;goal=prey||null;
+        }
+      }
+
+      if(goal) {
+        const near=Math.abs(goal.x-mob.x)+Math.abs(goal.z-mob.z)<=1;
+        const reachable=!mob.angry||Math.abs(feet.y-.5)<1.7;
+        if(near&&reachable) {
+          if(time>=mob.nextBite) {
+            mob.nextBite=time+2;mob.biteUntil=time+.6;
+            if(mob.angry) {
+              const distance=Math.hypot(mob.root.position.x-feet.x,mob.root.position.z-feet.z);
+              if(distance<1.8) {
+                health=Math.max(0,health-.5);notify("An angry ogger bit you.");
+              }
+            } else {
+              const prey=mobs.get(mob.prey);
+              if(prey) {
+                prey.health-=.5;
+                if(prey.health<=0) removeMob(prey);
+              }
+            }
+          }
+        } else {
+          const step=nextMobStep(mob,goal.x,goal.z);
+          if(step) {
+            const dx=step.x-mob.x,dz=step.z-mob.z;
+            mob.root.rotation.y=Math.atan2(-dx,-dz);
+            mob.x=step.x;mob.z=step.z;
+          }
+        }
+      } else if(Math.random()<.3) {
+        const [dx,dz]=STEP[Math.floor(Math.random()*STEP.length)];
+        const x=mob.x+dx,z=mob.z+dz;
+        if(terrainPassable(x,z)&&!occupiedByMob(x,z,mob.id)) {
+          mob.root.rotation.y=Math.atan2(-dx,-dz);mob.x=x;mob.z=z;
+        }
+      }
+    }
+  }
+
+  function recipeReady() {
+    const n=slots.filter(Boolean).length;
+    const lines=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8]];
+    return n===3&&lines.some(line=>line.every(i=>slots[i]));
+  }
+
+  const craftButtons=[];
+  for(let i=0;i<9;i++) {
+    const button=document.createElement("button");
+    button.className="craftslot";
+    button.setAttribute("aria-label",`Crafting slot ${i+1}`);
+    button.onclick=()=>{
+      if(slots[i]) {slots[i]=false;give("log");}
+      else if(count("log")) {inventory.log--;slots[i]=true;}
+      renderCrafting();
+    };
+    $("grid").append(button);craftButtons.push(button);
+  }
+
+  function renderCrafting() {
+    craftButtons.forEach((b,i)=>{
+      b.textContent=slots[i]?"LOG":"+";
+      b.classList.toggle("filled",slots[i]);
+    });
+    $("logCount").textContent=`Logs available: ${count("log")} · Daggers: ${count("dagger")}`;
+    $("makeDagger").disabled=!recipeReady();
+  }
+
+  function openCrafting() {
+    if(mode!=="playing") return;
+    updateAim();
+    if(target?.type!=="block"||target.block.kind!=="table")
+      return notify("Aim at the building table.");
+    stopMining();releaseControls();mode="craft";
+    document.exitPointerLock?.();
+    show("crafting",true);renderCrafting();
+  }
+
+  function closeCrafting() {
+    give("log",slots.filter(Boolean).length);
+    slots=Array(9).fill(false);
+    show("crafting",false);mode="playing";
+  }
+
+  function saveGame(manual=false) {
+    if(!started||health<=0) return;
+    const storedInventory={...inventory};
+    storedInventory.log=(storedInventory.log||0)+slots.filter(Boolean).length;
+    const data={
+      version:1,health,hunger,time,nextHunger,nextHeal,nextSpawn,
+      selected,dagger,nextID,inventory:storedInventory,
+      feet:[feet.x,feet.y,feet.z],yaw,pitch,
+      blocks:[...blocks.values()].map(b=>[b.x,b.y,b.z,b.kind]),
+      mobs:[...mobs.values()].map(m=>({
+        id:m.id,kind:m.kind,x:m.x,z:m.z,health:m.health,
+        angry:m.angry,prey:m.prey,nextBite:m.nextBite
+      })),
+      drops:drops.map(d=>({kind:d.kind,x:d.x,y:d.y,z:d.z}))
+    };
+    try {
+      localStorage.setItem(SAVE_KEY,JSON.stringify(data));saved=data;
+      if(manual) {
+        notify("Island saved in this browser.");
+        $("menuDescription").textContent="Your island is saved in this browser.";
+      }
+    } catch {
+      if(manual) $("menuDescription").textContent="This browser could not save the island.";
+    }
+  }
+
+  function restoreGame(data) {
+    for(const mob of [...mobs.values()]) removeMob(mob);
+    clearDrops();blocks.clear();
+    for(const row of data.blocks) {
+      const [x,y,z,kind]=row;
+      if(Number.isInteger(x)&&Number.isInteger(y)&&Number.isInteger(z)&&
+        Math.abs(x)<=100&&Math.abs(z)<=100&&Math.abs(y)<=30&&TYPES.includes(kind))
+        put(x,y,z,kind);
+    }
+    rebuildTerrain();
+    inventory={...data.inventory};
+    health=Math.max(.5,Math.min(4,Number(data.health)||4));
+    hunger=Math.max(0,Math.min(4,Number(data.hunger)||0));
+    time=Number(data.time)||0;
+    nextHunger=Number(data.nextHunger)||time+180;
+    nextHeal=Number(data.nextHeal)||time+30;
+    nextSpawn=Number(data.nextSpawn)||time+900;
+    nextAI=time+.5;nextSave=time+20;nextHUD=0;nextAim=0;
+    nextID=Number(data.nextID)||1;
+    selected=TYPES.includes(data.selected)?data.selected:"log";
+    dagger=!!data.dagger&&count("dagger")>0;
+    const p=data.feet;
+    if(Array.isArray(p)&&p.length===3&&p.every(Number.isFinite))
+      feet.set(p[0],p[1],p[2]);
+    else feet.set(10,.5,10);
+    yaw=Number(data.yaw)||0;pitch=Number(data.pitch)||0;
+    verticalSpeed=0;grounded=false;slots=Array(9).fill(false);
+    for(const m of data.mobs||[]) {
+      if(["cow","horse","ogger"].includes(m.kind)&&m.health>0)
+        makeMob(m.kind,m.x,m.z,m);
+    }
+    for(const d of data.drops||[])
+      if(["beef","leaves"].includes(d.kind)) addDrop(d.kind,d.x,d.y,d.z);
+    stopMining();releaseControls();updateCamera();
+    notify("Welcome back to your island.");
+  }
+
+  function play() {
+    started=true;mode="playing";releaseControls();updateCamera();
+    show("menu",false);show("dead",false);show("crafting",false);show("hud",true);
+    renderHUD();
+  }
+
+  function pauseGame() {
+    if(mode!=="playing") return;
+    mode="paused";stopMining();releaseControls();saveGame();
+    document.exitPointerLock?.();
+    show("resume",true);show("continue",false);show("saveGame",true);
+    $("newGame").textContent="Start New Island";
+    $("menuDescription").textContent="Take a breath. Your island is waiting.";
+    show("menu",true);
+  }
+
+  function die() {
+    mode="dead";stopMining();releaseControls();
+    document.exitPointerLock?.();show("dead",true);
+  }
+
+  const hotButtons=[];
+  TYPES.forEach((type,i)=>{
+    const button=document.createElement("button");
+    button.className="slot";
+    const swatch=document.createElement("span");
+    swatch.className="swatch";swatch.style.background=COLORS[type];
+    const label=document.createElement("small");label.textContent=type;
+    const number=document.createElement("strong");
+    button.append(swatch,label,number);
+    button.onclick=()=>{selected=type;renderHUD();};
+    $("hotbar").append(button);hotButtons.push({button,number,type});
+  });
+
+  function renderHUD() {
+    $("health").textContent=`♥ ${health.toFixed(1)} / 4`;
+    $("hunger").textContent=`✦ ${hunger} / 4`;
+    $("toast").textContent=message;
+    hotButtons.forEach(({button,number,type})=>{
+      number.textContent=count(type);
+      button.dataset.selected=String(selected===type);
+    });
+    $("eat").textContent=`Eat Beef (${count("beef")})`;
+    $("weapon").textContent=dagger?"Dagger · 2× Damage":"Bare Hands";
+    let label="";
+    if(target?.type==="block") label=target.block.kind;
+    if(target?.type==="mob") {
+      const m=target.mob;
+      label=`${m.angry?"angry ":""}${m.kind} · ${Math.max(0,m.health).toFixed(1)} HP`;
+    }
+    $("target").textContent=label;show("target",!!label);
+    show("mineBox",!!miningKey);
+    $("mineText").textContent=`Mining ${miningTime.toFixed(1)} / 5s`;
+    $("mineFill").style.width=`${Math.min(100,miningTime/5*100)}%`;
+  }
+
+  $("mine").onclick=()=>beginMining(false);
+  $("place").onclick=place;
+  $("attack").onclick=attack;
+  $("jump").onclick=jump;
+  $("craft").onclick=openCrafting;
+  $("eat").onclick=eat;
+  $("weapon").onclick=toggleWeapon;
+  $("pause").onclick=pauseGame;
+  $("resume").onclick=play;
+  $("saveGame").onclick=()=>saveGame(true);
+  $("newGame").onclick=$("restart").onclick=()=>{
+    resetWorld();play();saveGame();
+  };
+  $("continue").onclick=()=>{
+    try {restoreGame(saved);play();}
+    catch(error) {
+      notify("That save could not be opened.");
+      $("menuDescription").textContent="Couldn’t open this save. You can start a new island.";
+    }
+  };
+  $("makeDagger").onclick=()=>{
+    if(!recipeReady()) return;
+    slots=Array(9).fill(false);give("dagger");dagger=true;
+    notify("Dagger crafted. Your attacks now do double damage.");
+    renderCrafting();
+  };
+  $("closeCraft").onclick=closeCrafting;
+  $("fullscreen").onclick=async()=>{
+    try {
+      if(document.fullscreenElement) await document.exitFullscreen();
+      else if(document.documentElement.requestFullscreen)
+        await document.documentElement.requestFullscreen();
+      else notify("Use Safari’s page controls to hide the browser toolbar.");
+    } catch {notify("Fullscreen is unavailable in this browser.");}
+  };
+
+  document.querySelectorAll("[data-move]").forEach(button=>{
+    const direction=button.dataset.move;
+    button.addEventListener("pointerdown",event=>{
+      event.preventDefault();
+      if(mode!=="playing") return;
+      held.add(direction);button.classList.add("pressed");
+      button.setPointerCapture(event.pointerId);
+    });
+    const end=()=>{
+      held.delete(direction);button.classList.remove("pressed");
+    };
+    button.addEventListener("pointerup",end);
+    button.addEventListener("pointercancel",end);
+    button.addEventListener("lostpointercapture",end);
+  });
+
+  function requestMouse() {
+    try {
+      const result=canvas.requestPointerLock?.();
+      if(result?.catch) result.catch(()=>notify("Drag the scene to look around."));
+    } catch {}
+  }
+
+  canvas.addEventListener("contextmenu",e=>e.preventDefault());
+  canvas.addEventListener("pointerdown",event=>{
+    if(mode!=="playing") return;
+    event.preventDefault();
+    if(event.pointerType==="mouse") {
+      if(document.pointerLockElement!==canvas&&canvas.requestPointerLock) {
+        requestMouse();return;
+      }
+      if(event.button===2) {place();return;}
+      if(event.button!==0) return;
+      updateAim();
+      if(target?.type==="block"&&target.block.kind==="table") openCrafting();
+      else if(target?.type==="mob") attack();
+      else beginMining(true);
+    } else if(lookPointer===null) {
+      lookPointer=event.pointerId;lastX=event.clientX;lastY=event.clientY;
+      canvas.setPointerCapture(event.pointerId);
+    }
+  });
+  canvas.addEventListener("pointermove",event=>{
+    if(mode!=="playing"||event.pointerId!==lookPointer) return;
+    yaw-=(event.clientX-lastX)*.005;
+    pitch=Math.max(-1.25,Math.min(1.25,pitch-(event.clientY-lastY)*.005));
+    lastX=event.clientX;lastY=event.clientY;updateCamera();
+  });
+  function finishPointer(event) {
+    if(event.pointerId===lookPointer) lookPointer=null;
+    if(event.pointerType==="mouse"&&mouseMining) stopMining();
+  }
+  canvas.addEventListener("pointerup",finishPointer);
+  canvas.addEventListener("pointercancel",finishPointer);
+  document.addEventListener("pointerup",event=>{
+    if(event.pointerType==="mouse"&&mouseMining) stopMining();
+  });
+  document.addEventListener("mousemove",event=>{
+    if(mode!=="playing"||document.pointerLockElement!==canvas) return;
+    yaw-=event.movementX*.0027;
+    pitch=Math.max(-1.25,Math.min(1.25,pitch-event.movementY*.0027));
+    updateCamera();
+  });
+  document.addEventListener("pointerlockchange",()=>{
+    if(!document.pointerLockElement&&mode==="playing") pauseGame();
+  });
+
+  const keyMap={
+    KeyW:"forward",ArrowUp:"forward",KeyS:"backward",ArrowDown:"backward",
+    KeyA:"left",ArrowLeft:"left",KeyD:"right",ArrowRight:"right"
+  };
+  window.addEventListener("keydown",event=>{
+    if(mode==="craft"&&event.code==="Escape") {closeCrafting();return;}
+    if(mode!=="playing") return;
+    if(keyMap[event.code]) {
+      event.preventDefault();held.add(keyMap[event.code]);return;
+    }
+    if(event.repeat) return;
+    if(event.code==="Space") {event.preventDefault();jump();}
+    if(event.code==="KeyE") openCrafting();
+    if(event.code==="KeyQ") eat();
+    if(event.code==="KeyR") toggleWeapon();
+    if(event.code==="Escape") pauseGame();
+    if(/^Digit[1-5]$/.test(event.code)) {
+      selected=TYPES[Number(event.code.slice(-1))-1];
+    }
+  });
+  window.addEventListener("keyup",event=>{
+    if(keyMap[event.code]) held.delete(keyMap[event.code]);
+  });
+  window.addEventListener("blur",()=>{
+    releaseControls();
+    if(mode==="playing") pauseGame();
+  });
+  document.addEventListener("visibilitychange",()=>{
+    if(document.hidden) {
+      releaseControls();saveGame();
+      if(mode==="playing") pauseGame();
+    }
+  });
+  window.addEventListener("pagehide",()=>saveGame());
+
+  function resize() {
+    camera.aspect=innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth,innerHeight,false);
+  }
+  window.addEventListener("resize",resize);
+  resize();
+
+  resetWorld();
+  show("loading",false);show("menu",true);show("continue",!!saved);
+  let previous=performance.now();
+
+  function animate(now) {
+    const dt=Math.min((now-previous)/1000,.04);
+    previous=now;
+
+    if(mode==="menu") {
+      const angle=now*.000025;
+      camera.position.set(
+        9.5+Math.sin(angle)*29,24,9.5+Math.cos(angle)*29
+      );
+      camera.lookAt(9.5,1,9.5);
+    }
+
+    if(mode==="playing"&&!document.hidden) {
+      time+=dt;
+      movePlayer(dt);
+
+      if(time>=nextAim) {
+        updateAim();nextAim=time+.08;
+      }
+
+      if(miningKey) {
+        const aimedKey=target?.type==="block"
+          ?key(target.block.x,target.block.y,target.block.z):null;
+        if(aimedKey!==miningKey||!blocks.has(miningKey)) {
+          stopMining();notify("Mining stopped. Keep aiming at the same block.");
+        } else {
+          miningTime+=dt;
+          if(miningTime>=5) {
+            const b=blocks.get(miningKey);
+            give(b.kind);blocks.delete(miningKey);
+            stopMining();rebuildTerrain();updateAim();
+            notify(`Collected ${b.kind}.`);
+          }
+        }
+      }
+
+      if(time>=nextHunger) {
+        hunger=Math.max(0,hunger-1);nextHunger+=180;
+      }
+      if(time>=nextHeal) {
+        health=Math.min(4,health+2);nextHeal=time+30;
+      }
+      if(time>=nextSpawn) {spawnWave();nextSpawn+=900;}
+      if(time>=nextAI) {updateAI();nextAI=time+.9;}
+
+      for(const mob of mobs.values()) {
+        const dx=mob.x-mob.root.position.x,dz=mob.z-mob.root.position.z;
+        const moving=Math.abs(dx)+Math.abs(dz)>.025;
+        const blend=Math.min(1,dt*7);
+        mob.root.position.x+=dx*blend;
+        mob.root.position.z+=dz*blend;
+        mob.legs.forEach((leg,i)=>{
+          leg.rotation.x=moving?Math.sin(time*11+i*Math.PI)*.3:0;
+        });
+        mob.root.rotation.x=time<mob.biteUntil
+          ?Math.sin((mob.biteUntil-time)*13)*.18:0;
+      }
+
+      for(let i=drops.length-1;i>=0;i--) {
+        const d=drops[i];
+        d.mesh.position.y=d.y+Math.sin(time*3+d.phase)*.08;
+        d.mesh.rotation.y+=dt;
+        if(Math.hypot(feet.x-d.x,feet.z-d.z)<1.4&&Math.abs(feet.y+.3-d.y)<1.8) {
+          give(d.kind);scene.remove(d.mesh);drops.splice(i,1);
+          notify(`Picked up ${d.kind}.`);
+        }
+      }
+
+      if(time>=nextSave) {saveGame();nextSave=time+20;}
+      if(time>=nextHUD) {renderHUD();nextHUD=time+.1;}
+      if(health<=0) die();
+    }
+
+    renderer.render(scene,camera);
+  }
+
+  renderer.setAnimationLoop(animate);
+}
+startCornyGame().catch(window.showGameError);
+</script>
+</body>
+</html>
