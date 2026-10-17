@@ -2213,7 +2213,28 @@ async function main(){
   $("storeQuick").onclick=storeQuick;
   $("inventoryEat").onclick=eat;
   $("portableCraft").onclick=()=>openCraft(true);
-  $("closeCraft").onclick=closeCraft;
+// Keep the exit button visible at the top of the crafting screen.
+const craftExitButton = $("closeCraft");
+
+craftExitButton.textContent = "X — EXIT CRAFTING";
+craftExitButton.style.cssText = `
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  width: 100%;
+  margin: 0 0 12px;
+  background: #254c36;
+`;
+
+$("craftTitle").before(craftExitButton);
+craftExitButton.onclick = closeCraft;
+
+// Tapping outside the crafting panel also closes it.
+$("crafting").addEventListener("click", event => {
+  if (event.target === $("crafting") && mode === "craft") {
+    closeCraft();
+  }
+});
   $("craftResult").onclick=craftItem;
   $("mine").onclick=()=>beginMining(false);
   $("place").onclick=place;
