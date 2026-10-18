@@ -1,3 +1,12 @@
+Here’s the complete updated `index.html`.
+
+- Pickaxe mining takes **2.5 seconds**, with normal combat damage.
+- Use **MINE** or **F** to collect blocks. Campfires and traps require a pickaxe; beds don’t.
+- Animals, oggers, the farmer, and the player can step up and down one-block stairs.
+
+The movement and tool-rule checks passed; browser testing is still needed.
+
+```html
 <!doctype html>
 <html lang="en">
 <head>
@@ -11,11 +20,7 @@
 <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 
 <style>
-:root{
-  --cream:#f3e7c1;
-  --gold:#d8b35b;
-  --green:#183b2b;
-}
+:root{--cream:#f3e7c1;--gold:#d8b35b;--green:#183b2b}
 *{box-sizing:border-box}
 html,body{
   margin:0;width:100%;height:100%;overflow:hidden;
@@ -263,6 +268,7 @@ input{
       Computer: WASD, mouse, Space.<br>
       Left-click: place held blocks.<br>
       Right-click: eat selected quick-stack food.<br>
+      Mine button or F: mine and pick up blocks.<br>
       Worlds save in this browser.
     </p>
   </div>
@@ -301,17 +307,22 @@ input{
       <button id="leave" class="control">MENU</button>
     </div>
   </div>
+
   <div id="crosshair">+</div>
   <div id="target" class="hidden"></div>
+
   <div id="mineBox" class="hidden">
     <span id="mineText"></span>
     <div class="track"><div id="mineFill"></div></div>
   </div>
+
   <button id="heldItem">
     <span id="heldName">BARE HANDS</span>
     <small id="heldDetail">OPEN INVENTORY</small>
   </button>
+
   <div id="quickBar"></div>
+
   <div id="walk">
     <span></span>
     <button class="control" data-move="forward" aria-label="Forward">^</button>
@@ -320,6 +331,7 @@ input{
     <button class="control" data-move="backward" aria-label="Backward">v</button>
     <button class="control" data-move="right" aria-label="Right">&gt;</button>
   </div>
+
   <div id="actions">
     <button id="mine" class="control">MINE</button>
     <button id="place" class="control">PLACE</button>
@@ -340,6 +352,7 @@ input{
       I: inventory / E: use / Q: eat / F: mine<br>
       Left-click: place held blocks or interact.<br>
       Right-click: eat selected quick-stack food.<br>
+      Pickaxe: double mining speed, normal combat damage.<br>
       1, 2, 3: quick stacks / Space: jump / Esc: menu
     </p>
   </div>
@@ -356,20 +369,25 @@ input{
       Select a stack, then assign it to Quick 1, 2 or 3.
       An occupied quick slot swaps with your selected stack.
     </p>
+
     <div class="row">
       <button id="assign1" class="secondary">ASSIGN QUICK 1</button>
       <button id="assign2" class="secondary">ASSIGN QUICK 2</button>
       <button id="assign3" class="secondary">ASSIGN QUICK 3</button>
     </div>
+
     <button id="storeQuick" class="secondary full">
       STORE SELECTED QUICK STACK IN MAIN
     </button>
+
     <p id="inventoryDetail"></p>
+
     <div class="row">
       <button id="hands" class="secondary">BARE HANDS</button>
       <button id="portableCraft" class="secondary">QUICK CRAFTING</button>
       <button id="inventoryEat" class="secondary">EAT</button>
     </div>
+
     <button id="closeInventory" class="primary full">BACK TO GAME</button>
   </div>
 </div>
@@ -378,7 +396,9 @@ input{
   <div class="panel wide">
     <button id="closeCraft" class="secondary full craftExit"
       aria-label="Exit crafting">X — EXIT CRAFTING</button>
+
     <h2 id="craftTitle">CRAFTING</h2>
+
     <div class="craftLayout">
       <div>
         <p id="craftInstructions"></p>
@@ -386,6 +406,7 @@ input{
         <p id="craftInfo"></p>
         <button id="craftResult" class="primary full" disabled>CRAFT</button>
       </div>
+
       <div>
         <p>YOUR ITEMS</p>
         <p class="small">
@@ -440,7 +461,6 @@ async function main(){
   const $=id=>document.getElementById(id);
   const show=(id,on)=>$(id).classList.toggle("hidden",!on);
 
-  /* Keep this key so existing saved worlds remain available. */
   const SAVE_KEY="corny-worlds-v2";
   const WATER=-.22;
   const DAY_LENGTH=300;
@@ -485,6 +505,7 @@ async function main(){
   const renderer=new THREE.WebGLRenderer({
     canvas,antialias:true,powerPreference:"high-performance"
   });
+
   renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));
   renderer.outputColorSpace=THREE.SRGBColorSpace;
 
@@ -509,6 +530,7 @@ async function main(){
       color:"#397b91",transparent:true,opacity:.9,side:THREE.DoubleSide
     })
   );
+
   ocean.rotation.x=-Math.PI/2;
   ocean.position.y=WATER;
   scene.add(ocean);
@@ -525,11 +547,13 @@ async function main(){
   const campfires=new Map();
   const drops=[];
   const landColumns=new Set();
+
   const sharedCube=new THREE.BoxGeometry(1,1,1);
   const hand=new THREE.Group();
   camera.add(hand);
 
   const materials={};
+
   for(const [name,color] of Object.entries({
     cream:"#ece3cd",brown:"#876042",dark:"#343b30",green:"#849e55",
     shirt:"#625947",eye:"#17241a",muzzle:"#c5a188",tooth:"#e9ddb8",
@@ -546,12 +570,14 @@ async function main(){
   for(const [type,color] of Object.entries(COLORS)){
     lootMaterials[type]=new THREE.MeshLambertMaterial({color});
   }
+
   const lootGeometry=new THREE.BoxGeometry(.22,.22,.22);
 
   function makeTexture(type){
     const c=document.createElement("canvas");
     c.width=c.height=16;
     const ctx=c.getContext("2d");
+
     ctx.fillStyle=type==="dirt"?"#ffffff":COLORS[type];
     ctx.fillRect(0,0,16,16);
 
@@ -565,6 +591,7 @@ async function main(){
 
     if(type==="table"){
       ctx.strokeStyle="#62412a";
+
       for(let n=5;n<=10;n+=5){
         ctx.beginPath();ctx.moveTo(n,0);ctx.lineTo(n,16);ctx.stroke();
         ctx.beginPath();ctx.moveTo(0,n);ctx.lineTo(16,n);ctx.stroke();
@@ -609,6 +636,7 @@ async function main(){
       const color=new THREE.Color(
         type==="dirt"?(ny>.5?"#7d9654":"#8c6847"):"#ffffff"
       );
+
       color.multiplyScalar(ny<-.5 ? .72 : 1);
       colors.push(color.r,color.g,color.b);
     }
@@ -616,6 +644,7 @@ async function main(){
     geometry.setAttribute(
       "color",new THREE.Float32BufferAttribute(colors,3)
     );
+
     return geometry;
   }
 
@@ -627,10 +656,12 @@ async function main(){
       }),
       type==="stone"?60000:24000
     );
+
     mesh.count=0;
     mesh.visible=false;
     mesh.userData.cells=[];
     mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+
     scene.add(mesh);
     batches.set(type,mesh);
   }
@@ -639,22 +670,29 @@ async function main(){
     new THREE.EdgesGeometry(new THREE.BoxGeometry(1.015,1.015,1.015)),
     new THREE.LineBasicMaterial({color:"#fff1bb"})
   );
+
   outline.visible=false;
   scene.add(outline);
 
   let records=[],current=null,mode="home",selectWorlds=false;
   const selectedWorlds=new Set();
+
   let inventory=Array(23).fill(null),active=-1;
   let craftSlots=Array(9).fill(null),craftSize=3,craftSource=-1,craftStamp=0;
   let land=[],spawn={x:0,y:.5,z:0},rngState=1,nextMobID=1;
+
   let hp=4,hunger=4,time=0,nextHunger=180,nextHeal=30;
   let nextSpawn=900,nextAI=.5,nextSave=20,nextHUD=0,nextAim=0;
   let dayClock=0,nextStarve=1,previousNight=false;
+
   let yaw=0,pitch=-.4,vy=0,grounded=true,wetTime=0,nextAttack=0;
+  let playerStepOffset=0;
+
   let swingUntil=0,playerFlash=0,stoneAdded=false;
   let target=null,miningKey=null,miningTime=0,mouseMining=false;
   let deathReason="YOU WERE DEFEATED";
   let handKey="",quickSignature="";
+
   let lookPointer=null,lastX=0,lastY=0,startX=0,startY=0,touchMoved=false;
   let noticeTimer;
 
@@ -677,17 +715,21 @@ async function main(){
 
   function hashString(s){
     let h=2166136261;
+
     for(let i=0;i<s.length;i++){
       h=Math.imul(h^s.charCodeAt(i),16777619);
     }
+
     return h>>>0;
   }
 
   function random(){
     rngState=(rngState+0x6D2B79F5)>>>0;
     let t=rngState;
+
     t=Math.imul(t^(t>>>15),t|1);
     t^=t+Math.imul(t^(t>>>7),t|61);
+
     return ((t^(t>>>14))>>>0)/4294967296;
   }
 
@@ -700,8 +742,10 @@ async function main(){
   function smoothNoise(x,z,seed){
     const ix=Math.floor(x),iz=Math.floor(z),fx=x-ix,fz=z-iz;
     const u=fx*fx*(3-2*fx),v=fz*fz*(3-2*fz);
+
     const a=noise(ix,iz,seed)*(1-u)+noise(ix+1,iz,seed)*u;
     const b=noise(ix,iz+1,seed)*(1-u)+noise(ix+1,iz+1,seed)*u;
+
     return a*(1-v)+b*v;
   }
 
@@ -715,6 +759,7 @@ async function main(){
 
   function rebuildTerrain(){
     const grouped=Object.fromEntries(BLOCKS.map(type=>[type,[]]));
+
     for(const b of blocks.values()){
       if(grouped[b.type])grouped[b.type].push(b);
     }
@@ -731,6 +776,7 @@ async function main(){
       });
 
       mesh.instanceMatrix.needsUpdate=true;
+
       if(cells.length){
         mesh.computeBoundingSphere();
         mesh.computeBoundingBox();
@@ -754,7 +800,9 @@ async function main(){
   function clearNightAggression(){
     for(const mob of mobs.values()){
       if(mob.kind!=="ogger")continue;
+
       mob.nightAggro=false;
+
       if(!mob.angry){
         mob.goal=null;
         mob.goalAt=0;
@@ -784,6 +832,7 @@ async function main(){
     sun.color.set(brightness>.35?"#ffe8c0":"#a7bfea");
 
     const angle=phase/CYCLE_LENGTH*Math.PI*2;
+
     sun.position.set(
       Math.sin(angle)*35,
       15+Math.abs(Math.cos(angle))*35,
@@ -804,9 +853,12 @@ async function main(){
     }
 
     stopMining();
+
     dayClock=(Math.floor(dayClock/CYCLE_LENGTH)+1)*CYCLE_LENGTH;
+
     clearNightAggression();
     nextAI=time;
+
     updateSky();
     updateAim();
     renderHUD();
@@ -815,25 +867,33 @@ async function main(){
     notify("YOU SLEPT UNTIL MORNING.");
   }
 
-  /* Inventory: 20 main stacks and 3 quick stacks. */
+  /* Inventory. */
 
   function addMain(inv,item){
     let slot=null;
 
     for(let i=0;i<20;i++){
       if(inv[i]?.type===item.type&&inv[i].n<15){
-        slot=inv[i];break;
+        slot=inv[i];
+        break;
       }
     }
 
     if(!slot){
       let empty=-1;
+
       for(let i=0;i<20;i++){
-        if(!inv[i]){empty=i;break;}
+        if(!inv[i]){
+          empty=i;
+          break;
+        }
       }
+
       if(empty<0)return false;
+
       slot={type:item.type,n:0};
       if(TOOLS.has(item.type))slot.tools=[];
+
       inv[empty]=slot;
     }
 
@@ -842,11 +902,13 @@ async function main(){
     if(TOOLS.has(item.type)){
       slot.tools.push({hp:item.hp??40,hits:item.hits??0});
     }
+
     return true;
   }
 
   function firstItem(slot){
     if(!slot)return null;
+
     return TOOLS.has(slot.type)
       ?{type:slot.type,hp:slot.tools[0].hp,hits:slot.tools[0].hits}
       :{type:slot.type};
@@ -855,6 +917,7 @@ async function main(){
   function takeItem(index){
     const slot=inventory[index];
     if(!slot)return null;
+
     const item=firstItem(slot);
 
     if(TOOLS.has(slot.type))slot.tools.shift();
@@ -868,7 +931,9 @@ async function main(){
     return item;
   }
 
-  function activeStack(){return active>=0?inventory[active]:null;}
+  function activeStack(){
+    return active>=0?inventory[active]:null;
+  }
 
   function total(type){
     return inventory.reduce(
@@ -887,6 +952,7 @@ async function main(){
       const n=Math.max(
         0,Math.min(15,Math.floor(Number(source.n)||0))
       );
+
       if(!n)continue;
 
       const slot={type:source.type,n};
@@ -908,13 +974,18 @@ async function main(){
     const mesh=new THREE.Mesh(
       lootGeometry,lootMaterials[item.type]||lootMaterials.log
     );
+
     mesh.position.set(x,y,z);
     scene.add(mesh);
-    drops.push({item:{...item},x,y,z,mesh,phase:Math.random()*6});
+
+    drops.push({
+      item:{...item},x,y,z,mesh,phase:Math.random()*6
+    });
   }
 
   function receive(item,x=feet.x,y=feet.y+.3,z=feet.z){
     if(addMain(inventory,item))return true;
+
     addDrop(item,x,y,z);
     return false;
   }
@@ -956,6 +1027,7 @@ async function main(){
       const amount=document.createElement("span");
       amount.className="count";
       amount.textContent=slot.n;
+
       button.append(label,amount);
 
       if(TOOLS.has(slot.type)){
@@ -980,12 +1052,14 @@ async function main(){
     });
 
     if(!force&&signature===quickSignature)return;
+
     quickSignature=signature;
     $("quickBar").replaceChildren();
 
     for(let i=20;i<23;i++){
       $("quickBar").append(slotButton(i,active,index=>{
         if(mode!=="playing")return;
+
         active=index;
         stopMining();
         updateHand();
@@ -1011,23 +1085,29 @@ async function main(){
     $("quickInventory").replaceChildren();
 
     const select=index=>{
-      active=index;renderInventory();updateHand();renderHUD();
+      active=index;
+      renderInventory();
+      updateHand();
+      renderHUD();
     };
 
     for(let i=0;i<20;i++){
       $("inventoryGrid").append(slotButton(i,active,select));
     }
+
     for(let i=20;i<23;i++){
       $("quickInventory").append(slotButton(i,active,select));
     }
 
     const slot=activeStack();
+
     $("inventoryDetail").textContent=slot
       ?`${NAMES[slot.type]} SELECTED`+
         (TOOLS.has(slot.type)?` — ${slot.tools[0].hp}/40 HP`:"")
       :"BARE HANDS SELECTED";
 
     const edible=foodIndex();
+
     $("inventoryEat").disabled=edible<0;
     $("inventoryEat").textContent=edible>=0
       ?`EAT ${NAMES[inventory[edible].type]}`:"NO FOOD";
@@ -1037,7 +1117,8 @@ async function main(){
 
   function assignQuick(destination){
     if(active<0||!inventory[active]){
-      notify("SELECT A STACK FIRST.");return;
+      notify("SELECT A STACK FIRST.");
+      return;
     }
 
     if(active!==destination){
@@ -1047,12 +1128,17 @@ async function main(){
     }
 
     active=destination;
-    renderInventory();updateHand();renderHUD();saveCurrent();
+
+    renderInventory();
+    updateHand();
+    renderHUD();
+    saveCurrent();
   }
 
   function storeQuick(){
     if(active<20||!inventory[active]){
-      notify("SELECT A QUICK STACK FIRST.");return;
+      notify("SELECT A QUICK STACK FIRST.");
+      return;
     }
 
     const copy=JSON.parse(JSON.stringify(inventory));
@@ -1064,30 +1150,45 @@ async function main(){
         :{type:stack.type};
 
       if(!addMain(copy,item)){
-        notify("MAKE ROOM IN THE MAIN INVENTORY FIRST.");return;
+        notify("MAKE ROOM IN THE MAIN INVENTORY FIRST.");
+        return;
       }
     }
 
     copy[active]=null;
-    inventory=copy;active=-1;
-    renderInventory();updateHand();renderHUD();saveCurrent();
+    inventory=copy;
+    active=-1;
+
+    renderInventory();
+    updateHand();
+    renderHUD();
+    saveCurrent();
   }
 
-  /* Creature models. */
+  /* Creature models. Physics and visual stepping use separate groups. */
 
   function makeMob(kind,x,y,z,state={}){
     const id=state.id||String(nextMobID++);
-    const root=new THREE.Group(),legs=[];
+    const root=new THREE.Group();
+    const model=new THREE.Group();
+    const legs=[];
+
+    root.add(model);
     root.position.set(x,y,z);
 
     function part(w,h,d,px,py,pz,color,leg=false){
       const material=materials[color].clone();
       const mesh=new THREE.Mesh(sharedCube,material);
-      mesh.scale.set(w,h,d);mesh.position.set(px,py,pz);
+
+      mesh.scale.set(w,h,d);
+      mesh.position.set(px,py,pz);
+
       mesh.userData.mobId=id;
       mesh.userData.baseColor=material.color.clone();
-      root.add(mesh);
+
+      model.add(mesh);
       if(leg)legs.push(mesh);
+
       return mesh;
     }
 
@@ -1115,13 +1216,15 @@ async function main(){
         for(const end of [-1,1]){
           part(.18,.57,.19,side*.29,.29,end*.40,"sheepFace",true);
         }
+
         part(.12,.15,.19,side*.30,1.13,-.68,"sheepFace");
         part(.07,.07,.026,side*.15,1.13,-.945,"eye");
       }
 
       part(.14,.20,.15,0,.92,.66,"wool");
     }else{
-      const horse=kind==="horse",color=horse?"brown":"cream";
+      const horse=kind==="horse";
+      const color=horse?"brown":"cream";
 
       part(.82,.67,horse?1.38:1.15,0,.89,0,color);
       part(.48,horse ? .65 : .52,.52,0,horse?1.27:1.12,-.68,color);
@@ -1131,8 +1234,12 @@ async function main(){
         for(const end of [-1,1]){
           part(.18,.58,.19,side*.27,.29,end*.45,"dark",true);
         }
+
         part(.08,.08,.025,side*.16,horse?1.39:1.22,-.96,"eye");
-        if(horse)part(.11,.27,.15,side*.15,1.66,-.65,"brown");
+
+        if(horse){
+          part(.11,.27,.15,side*.15,1.66,-.65,"brown");
+        }
       }
 
       if(horse){
@@ -1145,20 +1252,32 @@ async function main(){
     }
 
     const mob={
-      id,kind,root,legs,hp:state.hp??(kind==="ogger"?6:8),
+      id,kind,root,model,legs,
+      hp:state.hp??(kind==="ogger"?6:8),
       angry:!!state.angry,
       nightAggro:!!state.nightAggro,
-      prey:state.prey||null,nextBite:state.nextBite??0,
-      goal:null,goalAt:0,heading:state.heading||0,speed:0,
-      fleeUntil:state.fleeUntil||0,fleeFrom:state.fleeFrom||null,
-      fleeing:false,flashUntil:0,red:false,biteUntil:0,
+      prey:state.prey||null,
+      nextBite:state.nextBite??0,
+      goal:null,
+      goalAt:0,
+      heading:state.heading||0,
+      speed:0,
+      fleeUntil:state.fleeUntil||0,
+      fleeFrom:state.fleeFrom||null,
+      fleeing:false,
+      flashUntil:0,
+      red:false,
+      biteUntil:0,
       phase:Math.random()*6,
-      deadAt:state.deadAt??null,deathLoot:state.deathLoot||null
+      deadAt:state.deadAt??null,
+      deathLoot:state.deathLoot||null
     };
 
     root.rotation.y=mob.heading;
+
     mobs.set(id,mob);
     scene.add(root);
+
     return mob;
   }
 
@@ -1166,14 +1285,17 @@ async function main(){
     mob.root.traverse(object=>{
       if(object.isMesh)object.material.dispose();
     });
+
     scene.remove(mob.root);
     mobs.delete(mob.id);
   }
 
   function flashMob(mob,on){
     mob.red=on;
+
     mob.root.traverse(object=>{
       if(!object.isMesh)return;
+
       if(on){
         object.material.color.set("#ff4545");
         object.material.emissive.set("#7c0808");
@@ -1203,7 +1325,10 @@ async function main(){
 
     if(mob.deathLoot==="trap"){
       addDrop({type:"beef"},p.x-.2,p.y+.3,p.z);
-      if(random()<.25)addDrop({type:"log"},p.x+.2,p.y+.3,p.z);
+
+      if(random()<.25){
+        addDrop({type:"log"},p.x+.2,p.y+.3,p.z);
+      }
     }
 
     removeMob(mob);
@@ -1217,16 +1342,22 @@ async function main(){
 
     function piece(parent,w,h,d,x,y,z,material){
       const mesh=new THREE.Mesh(sharedCube,material);
-      mesh.scale.set(w,h,d);mesh.position.set(x,y,z);
-      parent.add(mesh);return mesh;
+      mesh.scale.set(w,h,d);
+      mesh.position.set(x,y,z);
+      parent.add(mesh);
+      return mesh;
     }
 
     piece(root,.94,.08,.94,0,.54,0,materials.metal);
     piece(root,.28,.08,.28,0,.61,-.05,materials.darkMetal);
 
-    const bait=piece(root,.24,.15,.22,0,.73,-.08,lootMaterials.beef);
+    const bait=piece(
+      root,.24,.15,.22,0,.73,-.08,lootMaterials.beef
+    );
+
     const jaw=new THREE.Group();
-    jaw.position.set(0,.61,.36);root.add(jaw);
+    jaw.position.set(0,.61,.36);
+    root.add(jaw);
 
     piece(jaw,.065,.065,.77,-.39,0,-.36,materials.darkMetal);
     piece(jaw,.065,.065,.77,.39,0,-.36,materials.darkMetal);
@@ -1235,9 +1366,11 @@ async function main(){
     for(const x of [-.27,-.09,.09,.27]){
       piece(jaw,.065,.11,.065,x,.07,-.75,materials.metal);
     }
+
     piece(root,.20,.17,.20,0,.63,.36,materials.metal);
 
-    bait.visible=false;scene.add(root);
+    bait.visible=false;
+    scene.add(root);
 
     return{
       x:block.x,y:block.y,z:block.z,root,bait,jaw,
@@ -1248,7 +1381,8 @@ async function main(){
   function syncDevices(){
     for(const [k,device] of devices){
       if(blocks.get(k)?.type!=="ogger_trap"){
-        scene.remove(device.root);devices.delete(k);
+        scene.remove(device.root);
+        devices.delete(k);
       }
     }
 
@@ -1259,7 +1393,7 @@ async function main(){
     }
   }
 
-  /* Campfires hold one piece of meat at a time. */
+  /* Campfires. */
 
   function cookedType(raw){
     return raw==="beef"?"cooked_beef":
@@ -1268,6 +1402,7 @@ async function main(){
 
   function campfireOutput(fire){
     if(!fire.rawType)return null;
+
     return{
       type:time>=fire.readyAt?cookedType(fire.rawType):fire.rawType
     };
@@ -1279,17 +1414,21 @@ async function main(){
 
     function piece(w,h,d,x,y,z,material){
       const mesh=new THREE.Mesh(sharedCube,material);
-      mesh.scale.set(w,h,d);mesh.position.set(x,y,z);
-      root.add(mesh);return mesh;
+      mesh.scale.set(w,h,d);
+      mesh.position.set(x,y,z);
+      root.add(mesh);
+      return mesh;
     }
 
     const logA=piece(.72,.13,.16,0,-.22,0,materials.brown);
     const logB=piece(.72,.13,.16,0,-.16,0,materials.wood);
+
     logA.rotation.y=.65;
     logB.rotation.y=-.65;
 
     const flameA=piece(.28,.36,.24,0,.02,0,fireOrange);
     const flameB=piece(.14,.26,.14,.05,.01,-.02,fireYellow);
+
     flameA.rotation.z=.15;
     flameB.rotation.z=-.22;
 
@@ -1299,6 +1438,7 @@ async function main(){
 
     const meat=piece(.24,.11,.19,0,.31,0,lootMaterials.beef);
     meat.visible=false;
+
     scene.add(root);
 
     return{
@@ -1331,6 +1471,7 @@ async function main(){
       if(fire.rawType){
         const type=time>=fire.readyAt
           ?cookedType(fire.rawType):fire.rawType;
+
         fire.meat.material=lootMaterials[type];
       }
     }
@@ -1338,8 +1479,10 @@ async function main(){
 
   function interactCampfire(k){
     if(mode!=="playing")return;
+
     const fire=campfires.get(k);
     if(!fire)return;
+
     stopMining();
 
     if(fire.rawType){
@@ -1350,6 +1493,7 @@ async function main(){
 
       const item=campfireOutput(fire);
       const kept=receive(item,fire.x+.4,fire.y+.5,fire.z);
+
       fire.rawType=null;
       fire.readyAt=0;
       fire.meat.visible=false;
@@ -1366,31 +1510,40 @@ async function main(){
       }
 
       takeItem(active);
+
       fire.rawType=type;
       fire.readyAt=time+COOK_TIME;
 
       notify(`COOKING ${NAMES[type]}. COME BACK IN TEN SECONDS.`);
     }
 
-    updateCampfires();updateHand();renderHUD();saveCurrent();
+    updateCampfires();
+    updateHand();
+    renderHUD();
+    saveCurrent();
   }
 
-  /* Fast terrain picking. */
+  /* Terrain picking. */
 
   function terrainRay(origin,direction,limit){
     let x=Math.floor(origin.x+.5);
     let y=Math.floor(origin.y+.5);
     let z=Math.floor(origin.z+.5);
 
-    const sx=Math.sign(direction.x),sy=Math.sign(direction.y),sz=Math.sign(direction.z);
+    const sx=Math.sign(direction.x);
+    const sy=Math.sign(direction.y);
+    const sz=Math.sign(direction.z);
+
     const dx=direction.x===0?Infinity:Math.abs(1/direction.x);
     const dy=direction.y===0?Infinity:Math.abs(1/direction.y);
     const dz=direction.z===0?Infinity:Math.abs(1/direction.z);
 
     let tx=direction.x===0?Infinity:
       ((sx>0?x+.5:x-.5)-origin.x)/direction.x;
+
     let ty=direction.y===0?Infinity:
       ((sy>0?y+.5:y-.5)-origin.y)/direction.y;
+
     let tz=direction.z===0?Infinity:
       ((sz>0?z+.5:z-.5)-origin.z)/direction.z;
 
@@ -1399,6 +1552,7 @@ async function main(){
 
     for(let i=0;i<256&&distance<=limit;i++){
       const block=at(x,y,z);
+
       if(block)return{type:"block",block,normal,distance};
 
       if(tx<=ty&&tx<=tz){
@@ -1420,6 +1574,7 @@ async function main(){
 
   function pick(nx=0,ny=0){
     camera.updateMatrixWorld();
+
     mouseRay.setFromCamera(new THREE.Vector2(nx,ny),camera);
 
     const terrain=terrainRay(
@@ -1429,12 +1584,14 @@ async function main(){
     mouseRay.far=terrain?terrain.distance:4.8;
 
     const living=[...mobs.values()]
-      .filter(mob=>mob.hp>0).map(mob=>mob.root);
+      .filter(mob=>mob.hp>0)
+      .map(mob=>mob.root);
 
     const hit=mouseRay.intersectObjects(living,true)[0];
 
     if(hit){
       const mob=mobs.get(hit.object.userData.mobId);
+
       if(mob)return{type:"mob",mob,distance:hit.distance};
     }
 
@@ -1442,21 +1599,29 @@ async function main(){
   }
 
   function updateAim(){
-    target=pick();outline.visible=false;
+    target=pick();
+    outline.visible=false;
+
     if(target?.type==="block"){
       const b=target.block;
-      outline.position.set(b.x,b.y,b.z);outline.visible=true;
+      outline.position.set(b.x,b.y,b.z);
+      outline.visible=true;
     }
   }
 
   function lineClear(origin,destination,allowedKey=null){
     const direction=destination.clone().sub(origin);
     const length=direction.length();
+
     if(length<.01)return true;
+
     direction.normalize();
+
     const hit=terrainRay(origin,direction,length);
     if(!hit)return true;
+
     const b=hit.block;
+
     return allowedKey!==null&&key(b.x,b.y,b.z)===allowedKey;
   }
 
@@ -1467,37 +1632,89 @@ async function main(){
     for(const device of devices.values())scene.remove(device.root);
     for(const fire of campfires.values())scene.remove(fire.root);
 
-    devices.clear();campfires.clear();
-    clearDrops();blocks.clear();landColumns.clear();
+    devices.clear();
+    campfires.clear();
+    clearDrops();
+    blocks.clear();
+    landColumns.clear();
 
-    land=[];inventory=Array(23).fill(null);active=-1;
-    craftSlots=Array(9).fill(null);craftSource=-1;craftStamp=0;
-    hp=4;hunger=4;time=0;nextHunger=180;nextHeal=30;
-    dayClock=0;nextStarve=1;previousNight=false;
-    nextSpawn=900;nextAI=.5;nextSave=20;nextHUD=0;nextAim=0;
-    yaw=0;pitch=-.4;vy=0;grounded=true;wetTime=0;nextAttack=0;
-    swingUntil=0;playerFlash=0;nextMobID=1;stoneAdded=false;
-    target=null;outline.visible=false;handKey="";quickSignature="";
-    stopMining();releaseControls();deathReason="YOU WERE DEFEATED";
+    land=[];
+    inventory=Array(23).fill(null);
+    active=-1;
+
+    craftSlots=Array(9).fill(null);
+    craftSource=-1;
+    craftStamp=0;
+
+    hp=4;
+    hunger=4;
+    time=0;
+    nextHunger=180;
+    nextHeal=30;
+
+    dayClock=0;
+    nextStarve=1;
+    previousNight=false;
+
+    nextSpawn=900;
+    nextAI=.5;
+    nextSave=20;
+    nextHUD=0;
+    nextAim=0;
+
+    yaw=0;
+    pitch=-.4;
+    vy=0;
+    grounded=true;
+    wetTime=0;
+    nextAttack=0;
+    playerStepOffset=0;
+
+    swingUntil=0;
+    playerFlash=0;
+    nextMobID=1;
+    stoneAdded=false;
+
+    target=null;
+    outline.visible=false;
+    handKey="";
+    quickSignature="";
+
+    stopMining();
+    releaseControls();
+
+    deathReason="YOU WERE DEFEATED";
   }
 
   function addStoneLayers(){
     landColumns.clear();
-    for(const tile of land)landColumns.add(`${tile.x},${tile.z}`);
+
+    for(const tile of land){
+      landColumns.add(`${tile.x},${tile.z}`);
+    }
+
     if(stoneAdded)return;
 
     for(const tile of land){
-      for(let y=-3;y>=-12;y--)put(tile.x,y,tile.z,"stone");
+      for(let y=-3;y>=-12;y--){
+        put(tile.x,y,tile.z,"stone");
+      }
     }
 
     stoneAdded=true;
   }
 
   function generate(seed){
-    clearWorld();rngState=hashString(seed)||1;
+    clearWorld();
+    rngState=hashString(seed)||1;
 
-    const rx=24+random()*6,rz=21+random()*7;
-    const a=random()*Math.PI*2,b=random()*Math.PI*2,c=random()*Math.PI*2;
+    const rx=24+random()*6;
+    const rz=21+random()*7;
+
+    const a=random()*Math.PI*2;
+    const b=random()*Math.PI*2;
+    const c=random()*Math.PI*2;
+
     const seedNumber=rngState;
     const heights=new Map();
 
@@ -1505,13 +1722,18 @@ async function main(){
       for(let z=-42;z<=42;z++){
         const angle=Math.atan2(z/rz,x/rx);
         const distance=Math.hypot(x/rx,z/rz);
+
         const coast=1+
           Math.sin(angle*3+a)*.16+
           Math.sin(angle*5+b)*.10+
           Math.sin(angle*8+c)*.055;
-        const roughness=(smoothNoise(x*.18,z*.18,seedNumber)-.5)*.13;
 
-        if(distance<coast+roughness)heights.set(`${x},${z}`,0);
+        const roughness=
+          (smoothNoise(x*.18,z*.18,seedNumber)-.5)*.13;
+
+        if(distance<coast+roughness){
+          heights.set(`${x},${z}`,0);
+        }
       }
     }
 
@@ -1521,7 +1743,9 @@ async function main(){
 
       for(let dx=-2;dx<=2;dx++){
         for(let dz=-2;dz<=2;dz++){
-          if(!heights.has(`${x+dx},${z+dz}`))beach=true;
+          if(!heights.has(`${x+dx},${z+dz}`)){
+            beach=true;
+          }
         }
       }
 
@@ -1530,16 +1754,23 @@ async function main(){
       ));
 
       if(Math.abs(x)<=3&&Math.abs(z)<=3)h=0;
-      heights.set(cell,h);land.push({x,z,h,beach});
+
+      heights.set(cell,h);
+      land.push({x,z,h,beach});
     }
 
     for(const tile of land){
       for(let y=-2;y<=tile.h;y++){
-        put(tile.x,y,tile.z,tile.beach&&y===tile.h?"sand":"dirt");
+        put(
+          tile.x,y,tile.z,
+          tile.beach&&y===tile.h?"sand":"dirt"
+        );
       }
     }
 
-    spawn={x:0,y:.5,z:0};feet.set(0,.5,0);
+    spawn={x:0,y:.5,z:0};
+    feet.set(0,.5,0);
+
     const candidates=land.slice();
 
     for(let i=candidates.length-1;i>0;i--){
@@ -1547,26 +1778,37 @@ async function main(){
       [candidates[i],candidates[j]]=[candidates[j],candidates[i]];
     }
 
-    const trees=[],targetTrees=Math.floor(land.length*.043);
+    const trees=[];
+    const targetTrees=Math.floor(land.length*.043);
 
     for(const tile of candidates){
       if(trees.length>=targetTrees)break;
       if(tile.beach||Math.hypot(tile.x,tile.z)<6)continue;
-      if(trees.some(tree=>Math.hypot(tree.x-tile.x,tree.z-tile.z)<3.1))continue;
+
+      if(trees.some(tree=>
+        Math.hypot(tree.x-tile.x,tree.z-tile.z)<3.1
+      ))continue;
 
       const chance=.25+
         smoothNoise(tile.x*.12,tile.z*.12,seedNumber+97)*.7;
+
       if(random()>chance)continue;
 
       const top=tile.h+3+Math.floor(random()*3);
-      for(let y=tile.h+1;y<=top;y++)put(tile.x,y,tile.z,"log");
+
+      for(let y=tile.h+1;y<=top;y++){
+        put(tile.x,y,tile.z,"log");
+      }
 
       for(let level=0;level<3;level++){
         const radius=level===0?2:level===1?1:0;
+
         for(let dx=-radius;dx<=radius;dx++){
           for(let dz=-radius;dz<=radius;dz++){
             if(Math.abs(dx)+Math.abs(dz)<=radius+1){
-              put(tile.x+dx,top-1+level,tile.z+dz,"leaves");
+              put(
+                tile.x+dx,top-1+level,tile.z+dz,"leaves"
+              );
             }
           }
         }
@@ -1576,47 +1818,134 @@ async function main(){
     }
 
     put(0,1,-2,"table");
-    addStoneLayers();rebuildTerrain();spawnWave();updateCamera();
+
+    addStoneLayers();
+    rebuildTerrain();
+    spawnWave();
+    updateCamera();
     updateSky();
   }
 
-  /* Collision and player movement. */
+  /* Collision and shared one-block stair movement. */
 
   function bodyCollides(p,r=.27,height=1.7){
-    const x0=Math.floor(p.x-r+.5),x1=Math.floor(p.x+r+.5);
-    const z0=Math.floor(p.z-r+.5),z1=Math.floor(p.z+r+.5);
-    const y0=Math.floor(p.y+.502),y1=Math.floor(p.y+height+.498);
+    const x0=Math.floor(p.x-r+.5);
+    const x1=Math.floor(p.x+r+.5);
+    const z0=Math.floor(p.z-r+.5);
+    const z1=Math.floor(p.z+r+.5);
+
+    const y0=Math.floor(p.y+.502);
+    const y1=Math.floor(p.y+height+.498);
 
     for(let x=x0;x<=x1;x++){
       for(let y=y0;y<=y1;y++){
-        for(let z=z0;z<=z1;z++)if(at(x,y,z))return true;
+        for(let z=z0;z<=z1;z++){
+          if(at(x,y,z))return true;
+        }
       }
     }
+
     return false;
   }
 
   function floorNear(x,z,nearY,maxUp=1.05,maxDown=1.6){
-    const ix=Math.floor(x+.5),iz=Math.floor(z+.5);
+    const ix=Math.floor(x+.5);
+    const iz=Math.floor(z+.5);
 
-    for(let y=Math.floor(nearY+maxUp-.5);
-      y>=Math.floor(nearY-maxDown-.5);y--){
+    for(
+      let y=Math.floor(nearY+maxUp-.5);
+      y>=Math.floor(nearY-maxDown-.5);
+      y--
+    ){
       const floor=y+.5;
+
       if(floor>nearY+maxUp||floor<nearY-maxDown)continue;
-      if(at(ix,y,iz)&&!at(ix,y+1,iz)&&!at(ix,y+2,iz))return floor;
+
+      if(at(ix,y,iz)&&!at(ix,y+1,iz)&&!at(ix,y+2,iz)){
+        return floor;
+      }
     }
 
     return null;
   }
 
+  /*
+   * Find a supporting surface under the whole body footprint.
+   * This lets an entity lift onto a step before its center crosses
+   * the step's edge, and keeps it supported while stepping down.
+   */
+
+  function walkingFloor(
+    x,z,nearY,r=.36,height=1.85,maxUp=1.001,maxDown=1.001
+  ){
+    const x0=Math.floor(x-r+.5);
+    const x1=Math.floor(x+r+.5);
+    const z0=Math.floor(z-r+.5);
+    const z1=Math.floor(z+r+.5);
+
+    const y0=Math.ceil(nearY-maxDown-.5-1e-6);
+    const y1=Math.floor(nearY+maxUp-.5+1e-6);
+
+    for(let y=y1;y>=y0;y--){
+      let supported=false;
+
+      for(let bx=x0;bx<=x1&&!supported;bx++){
+        for(let bz=z0;bz<=z1;bz++){
+          if(at(bx,y,bz)){
+            supported=true;
+            break;
+          }
+        }
+      }
+
+      if(supported&&!bodyCollides({x,y:y+.5,z},r,height)){
+        return y+.5;
+      }
+    }
+
+    return null;
+  }
+
+  function entityStep(p,x,z,r=.36,height=1.85){
+    const floor=walkingFloor(x,z,p.y,r,height);
+    if(floor===null)return null;
+
+    if(
+      floor>p.y+.01&&
+      bodyCollides({x:p.x,y:floor,z:p.z},r,height)
+    ){
+      return null;
+    }
+
+    return floor;
+  }
+
+  function dryFloor(x,z,floor){
+    if(floor===null)return false;
+
+    return floor>WATER+.2||
+      landColumns.has(
+        `${Math.floor(x+.5)},${Math.floor(z+.5)}`
+      );
+  }
+
   function landingHeight(next,oldY){
     let best=null;
-    const x0=Math.floor(next.x+.23),x1=Math.floor(next.x+.77);
-    const z0=Math.floor(next.z+.23),z1=Math.floor(next.z+.77);
+
+    const x0=Math.floor(next.x+.23);
+    const x1=Math.floor(next.x+.77);
+    const z0=Math.floor(next.z+.23);
+    const z1=Math.floor(next.z+.77);
 
     for(let x=x0;x<=x1;x++){
       for(let z=z0;z<=z1;z++){
-        for(let y=Math.floor(next.y-.5)-1;y<=Math.floor(oldY+.5);y++){
+        for(
+          let y=Math.floor(next.y-.5)-1;
+          y<=Math.floor(oldY+.5);
+          y++
+        ){
           const top=y+.5;
+
           if(at(x,y,z)&&top<=oldY+.003&&top>=next.y-.003){
             best=best===null?top:Math.max(best,top);
           }
@@ -1634,65 +1963,129 @@ async function main(){
   }
 
   function updateCamera(){
-    camera.position.set(feet.x,feet.y+1.62,feet.z);
+    camera.position.set(
+      feet.x,feet.y+1.62+playerStepOffset,feet.z
+    );
+
     camera.rotation.set(pitch,yaw,0,"YXZ");
     camera.updateMatrixWorld();
   }
 
   function movePlayer(dt){
+    playerStepOffset*=Math.exp(-12*dt);
+
     const island=onIslandColumn();
     const inWater=!island&&feet.y<WATER+.08;
 
-    let forward=(held.has("forward")?1:0)-(held.has("backward")?1:0);
-    let side=(held.has("right")?1:0)-(held.has("left")?1:0);
+    let forward=
+      (held.has("forward")?1:0)-(held.has("backward")?1:0);
+
+    let side=
+      (held.has("right")?1:0)-(held.has("left")?1:0);
+
     const length=Math.max(1,Math.hypot(forward,side));
-    forward/=length;side/=length;
+    forward/=length;
+    side/=length;
 
     const speed=inWater?1.05:3.35;
-    const dx=(-Math.sin(yaw)*forward+Math.cos(yaw)*side)*speed*dt;
-    const dz=(-Math.cos(yaw)*forward-Math.sin(yaw)*side)*speed*dt;
 
-    let next=feet.clone();next.x+=dx;
-    if(!bodyCollides(next))feet.x=next.x;
-    next=feet.clone();next.z+=dz;
-    if(!bodyCollides(next))feet.z=next.z;
+    const dx=(
+      -Math.sin(yaw)*forward+Math.cos(yaw)*side
+    )*speed*dt;
+
+    const dz=(
+      -Math.cos(yaw)*forward-Math.sin(yaw)*side
+    )*speed*dt;
+
+    function moveAxis(axis,change){
+      if(Math.abs(change)<1e-9)return;
+
+      const next=feet.clone();
+      next[axis]+=change;
+
+      const canStep=grounded&&!inWater&&vy<=0;
+
+      if(canStep){
+        const floor=entityStep(
+          feet,next.x,next.z,.27,1.7
+        );
+
+        if(floor!==null){
+          playerStepOffset+=feet.y-floor;
+
+          feet.set(next.x,floor,next.z);
+          vy=0;
+          grounded=true;
+          return;
+        }
+      }
+
+      if(!bodyCollides(next)){
+        feet[axis]=next[axis];
+
+        if(canStep)grounded=false;
+      }
+    }
+
+    moveAxis("x",dx);
+    moveAxis("z",dz);
 
     if(inWater){
       vy+=(WATER-.85-feet.y)*14*dt;
       vy*=Math.exp(-4*dt);
-    }else vy-=14*dt;
+    }else{
+      vy-=14*dt;
+    }
 
-    next=feet.clone();next.y+=vy*dt;
+    const next=feet.clone();
+    next.y+=vy*dt;
 
     if(bodyCollides(next)){
       if(vy<0){
         const top=landingHeight(next,feet.y);
         grounded=top!==null;
+
         if(top!==null)feet.y=top;
       }
+
       vy=0;
     }else{
-      feet.y=next.y;grounded=false;
+      feet.y=next.y;
+      grounded=false;
     }
 
-    if(onIslandColumn()||(grounded&&feet.y>WATER+.25))wetTime=0;
-    else if(inWater||wetTime>0)wetTime+=dt;
+    if(onIslandColumn()||(grounded&&feet.y>WATER+.25)){
+      wetTime=0;
+    }else if(inWater||wetTime>0){
+      wetTime+=dt;
+    }
 
-    if(wetTime>=15){hp=0;deathReason="YOU DROWNED";}
-    if(feet.y<-30){hp=0;deathReason="YOU FELL TOO FAR";}
+    if(wetTime>=15){
+      hp=0;
+      deathReason="YOU DROWNED";
+    }
+
+    if(feet.y<-30){
+      hp=0;
+      deathReason="YOU FELL TOO FAR";
+    }
+
     $("waterTint").style.opacity=inWater?".8":"0";
   }
 
   function jump(){
     if(mode!=="playing")return;
+
     if(!onIslandColumn()&&feet.y<WATER+.08){
-      vy=3.8;grounded=false;
+      vy=3.8;
+      grounded=false;
     }else if(grounded){
-      vy=6;grounded=false;
+      vy=6;
+      grounded=false;
     }
   }
 
-  /* Animal spawning, including updates to existing worlds. */
+  /* Animal spawning. */
 
   function spawnOne(kind,zone){
     for(let attempt=0;attempt<80;attempt++){
@@ -1702,14 +2095,20 @@ async function main(){
       const y=floorNear(tile.x,tile.z,tile.h+.5,0,0);
       if(y===null||y<WATER+.2)continue;
 
-      if(Math.hypot(tile.x-feet.x,tile.z-feet.z)<
-        (kind==="ogger"?18:5))continue;
+      if(
+        Math.hypot(tile.x-feet.x,tile.z-feet.z)<
+        (kind==="ogger"?18:5)
+      )continue;
 
-      if([...mobs.values()].some(mob=>mob.hp>0&&Math.hypot(
-        mob.root.position.x-tile.x,mob.root.position.z-tile.z
-      )<1))continue;
+      if([...mobs.values()].some(mob=>
+        mob.hp>0&&Math.hypot(
+          mob.root.position.x-tile.x,
+          mob.root.position.z-tile.z
+        )<1
+      ))continue;
 
-      makeMob(kind,tile.x,y,tile.z);return;
+      makeMob(kind,tile.x,y,tile.z);
+      return;
     }
   }
 
@@ -1727,7 +2126,9 @@ async function main(){
       for(let i=0;i<8;i++){
         const population=[...mobs.values()]
           .filter(mob=>mob.kind===kind&&mob.hp>0).length;
+
         if(population>=2)break;
+
         spawnOne(kind,nearby.length?nearby:all);
       }
     }
@@ -1750,7 +2151,9 @@ async function main(){
     }
 
     for(let i=0;i+60<=candidates.length;i+=60){
-      if(random()<.4)spawnOne("ogger",candidates.slice(i,i+60));
+      if(random()<.4){
+        spawnOne("ogger",candidates.slice(i,i+60));
+      }
     }
 
     ensureAnimals();
@@ -1769,30 +2172,39 @@ async function main(){
         :mob.heading+(random()-.5)*3;
 
       const radius=away?4+random()*4:2+random()*4;
+
       const x=p.x+Math.sin(angle)*radius;
       const z=p.z+Math.cos(angle)*radius;
-      const y=floorNear(x,z,p.y,1,2);
+      const y=walkingFloor(x,z,p.y,.36,1.85);
 
-      if(y!==null&&y>WATER+.2&&
-        !bodyCollides(new THREE.Vector3(x,y,z),.36,1.85)){
+      if(dryFloor(x,z,y)){
         mob.goal={x,z};
-        mob.goalAt=time+(away?.9:3+random()*4);
+        mob.goalAt=time+(away ? .9 : 3+random()*4);
         return;
       }
     }
 
-    mob.goal=null;mob.goalAt=time+.8;
+    mob.goal=null;
+    mob.goalAt=time+.8;
   }
 
   function nearestTrap(position){
-    let selected=null,best=14;
+    let selected=null;
+    let best=14;
 
     for(const [k,trap] of devices){
-      if(!trap.baited||Math.abs(position.y-(trap.y-.5))>2)continue;
-      const d=Math.hypot(position.x-trap.x,position.z-trap.z);
+      if(
+        !trap.baited||
+        Math.abs(position.y-(trap.y-.5))>2
+      )continue;
+
+      const d=Math.hypot(
+        position.x-trap.x,position.z-trap.z
+      );
 
       if(d<best){
-        best=d;selected={key:k,trap};
+        best=d;
+        selected={key:k,trap};
       }
     }
 
@@ -1802,7 +2214,8 @@ async function main(){
   function damageMob(mob,amount,source){
     if(mob.hp<=0)return false;
 
-    mob.hp-=amount;mob.flashUntil=time+.5;
+    mob.hp-=amount;
+    mob.flashUntil=time+.5;
     flashMob(mob,true);
 
     if(mob.kind!=="ogger"){
@@ -1813,9 +2226,12 @@ async function main(){
     }
 
     if(mob.hp<=.001){
-      mob.hp=0;mob.deadAt=time+.5;
-      mob.deathLoot=source.player&&mob.kind!=="ogger"?"animal":null;
+      mob.hp=0;
+      mob.deadAt=time+.5;
+      mob.deathLoot=
+        source.player&&mob.kind!=="ogger"?"animal":null;
       mob.goal=null;
+
       return true;
     }
 
@@ -1834,25 +2250,30 @@ async function main(){
         const threat=mob.kind==="sheep"?null:oggers
           .filter(other=>distance(p,other.root.position)<7)
           .sort((a,b)=>
-            distance(p,a.root.position)-distance(p,b.root.position)
+            distance(p,a.root.position)-
+            distance(p,b.root.position)
           )[0];
 
         if(threat){
           mob.fleeUntil=Math.max(mob.fleeUntil,time+2);
           mob.fleeFrom={
-            x:threat.root.position.x,z:threat.root.position.z
+            x:threat.root.position.x,
+            z:threat.root.position.z
           };
         }
 
         if(time<mob.fleeUntil&&mob.fleeFrom){
           mob.speed=mob.kind==="horse"?3.4:2.6;
+
           if(!mob.fleeing||time>=mob.goalAt||!mob.goal){
             chooseGoal(mob,mob.fleeFrom);
           }
+
           mob.fleeing=true;
         }else{
           mob.fleeing=false;
           mob.speed=mob.kind==="horse"?1:.7;
+
           if(time>=mob.goalAt)chooseGoal(mob);
         }
 
@@ -1861,12 +2282,20 @@ async function main(){
 
       if(!night){
         mob.nightAggro=false;
-      }else if(!mob.nightAggro&&distance(p,feet)<12&&
-        Math.abs(p.y-feet.y)<3){
-        const eyes=p.clone();eyes.y+=1.5;
-        const playerBody=feet.clone();playerBody.y+=1;
+      }else if(
+        !mob.nightAggro&&
+        distance(p,feet)<12&&
+        Math.abs(p.y-feet.y)<3
+      ){
+        const eyes=p.clone();
+        eyes.y+=1.5;
 
-        if(lineClear(eyes,playerBody))mob.nightAggro=true;
+        const playerBody=feet.clone();
+        playerBody.y+=1;
+
+        if(lineClear(eyes,playerBody)){
+          mob.nightAggro=true;
+        }
       }
 
       const lure=nearestTrap(p);
@@ -1878,8 +2307,11 @@ async function main(){
         continue;
       }
 
-      let prey=null,goal=null;
-      const chasingPlayer=mob.angry||(night&&mob.nightAggro);
+      let prey=null;
+      let goal=null;
+
+      const chasingPlayer=
+        mob.angry||(night&&mob.nightAggro);
 
       if(chasingPlayer){
         mob.prey=null;
@@ -1889,7 +2321,8 @@ async function main(){
           (other.kind==="cow"||other.kind==="horse")&&
           distance(p,other.root.position)<10
         ).sort((a,b)=>
-          distance(p,a.root.position)-distance(p,b.root.position)
+          distance(p,a.root.position)-
+          distance(p,b.root.position)
         )[0];
 
         mob.prey=prey?.id||null;
@@ -1904,22 +2337,36 @@ async function main(){
       }
 
       if(goal){
-        mob.goal=goal;mob.speed=1.2;
+        mob.goal=goal;
+        mob.speed=1.2;
 
-        if(distance(p,goal)<1.35&&Math.abs(p.y-goal.y)<1.7&&
-          time>=mob.nextBite){
-          const origin=p.clone();origin.y+=.8;
-          const destination=new THREE.Vector3(goal.x,goal.y+.8,goal.z);
+        if(
+          distance(p,goal)<1.35&&
+          Math.abs(p.y-goal.y)<1.7&&
+          time>=mob.nextBite
+        ){
+          const origin=p.clone();
+          origin.y+=.8;
+
+          const destination=new THREE.Vector3(
+            goal.x,goal.y+.8,goal.z
+          );
 
           if(!lineClear(origin,destination))continue;
-          mob.nextBite=time+2;mob.biteUntil=time+.6;
+
+          mob.nextBite=time+2;
+          mob.biteUntil=time+.6;
 
           if(chasingPlayer){
-            hp=Math.max(0,hp-.5);playerFlash=time+.5;
+            hp=Math.max(0,hp-.5);
+            playerFlash=time+.5;
             deathReason="AN OGGER GOT YOU";
+
             notify("AN OGGER BIT YOU.");
           }else if(prey){
-            damageMob(prey,.5,{x:p.x,z:p.z,player:false});
+            damageMob(prey,.5,{
+              x:p.x,z:p.z,player:false
+            });
           }
         }
       }else{
@@ -1932,7 +2379,10 @@ async function main(){
   function moveMobs(dt){
     for(const mob of [...mobs.values()]){
       if(mob.hp<=0){
-        if(mob.deadAt!==null&&time>=mob.deadAt)finishMobDeath(mob);
+        if(mob.deadAt!==null&&time>=mob.deadAt){
+          finishMobDeath(mob);
+        }
+
         continue;
       }
 
@@ -1940,103 +2390,151 @@ async function main(){
       let moving=false;
 
       if(mob.goal){
-        const dx=mob.goal.x-p.x,dz=mob.goal.z-p.z,d=Math.hypot(dx,dz);
+        const dx=mob.goal.x-p.x;
+        const dz=mob.goal.z-p.z;
+        const d=Math.hypot(dx,dz);
 
         if(d>.3){
-          const angle=Math.atan2(dx,dz),step=Math.min(d,mob.speed*dt);
+          const angle=Math.atan2(dx,dz);
+          const step=Math.min(d,mob.speed*dt);
           let moved=false;
 
           for(const turn of [0,.4,-.4,.85,-.85,1.3,-1.3]){
             const a=angle+turn;
             const nx=p.x+Math.sin(a)*step;
             const nz=p.z+Math.cos(a)*step;
-            const floor=floorNear(nx,nz,p.y,1.05,1.5);
 
-            if(floor===null||floor<WATER+.2)continue;
-            if(bodyCollides(new THREE.Vector3(nx,floor,nz),.36,1.85))continue;
+            const floor=entityStep(
+              p,nx,nz,.36,1.85
+            );
 
-            if([...mobs.values()].some(other=>
-              other.id!==mob.id&&other.hp>0&&Math.hypot(
-                other.root.position.x-nx,other.root.position.z-nz
+            if(!dryFloor(nx,nz,floor))continue;
+
+            const crowded=[...mobs.values()].some(other=>
+              other.id!==mob.id&&
+              other.hp>0&&
+              Math.abs(other.root.position.y-floor)<1.8&&
+              Math.hypot(
+                other.root.position.x-nx,
+                other.root.position.z-nz
               )<.62
-            ))continue;
+            );
 
-            p.x=nx;p.z=nz;
-            p.y+=(floor-p.y)*Math.min(1,dt*9);
+            if(crowded)continue;
 
-            const desired=Math.atan2(-Math.sin(a),-Math.cos(a));
+            const oldY=p.y;
+
+            p.set(nx,floor,nz);
+            mob.model.position.y+=oldY-floor;
+
+            const desired=Math.atan2(
+              -Math.sin(a),-Math.cos(a)
+            );
+
             const diff=Math.atan2(
-              Math.sin(desired-mob.heading),Math.cos(desired-mob.heading)
+              Math.sin(desired-mob.heading),
+              Math.cos(desired-mob.heading)
             );
 
             mob.heading+=diff*Math.min(1,dt*6);
-            moved=true;moving=true;break;
+
+            moved=true;
+            moving=true;
+            break;
           }
 
           if(!moved){
-            mob.goal=null;mob.goalAt=time+.3;
+            mob.goal=null;
+            mob.goalAt=time+.3;
           }
         }else{
-          mob.goal=null;mob.goalAt=time+1+random()*3;
+          mob.goal=null;
+          mob.goalAt=time+1+random()*3;
         }
       }
 
+      mob.model.position.y*=Math.exp(-12*dt);
       mob.root.rotation.y=mob.heading;
+
       mob.root.rotation.x=time<mob.biteUntil
-        ?Math.sin((mob.biteUntil-time)*13)*.2:0;
+        ?Math.sin((mob.biteUntil-time)*13)*.2
+        :0;
 
       mob.legs.forEach((leg,i)=>{
         leg.rotation.x=moving
-          ?Math.sin(time*(mob.speed>2?15:8)+i*Math.PI+mob.phase)*
-            (mob.speed>2 ? .5 : .27)
+          ?Math.sin(
+            time*(mob.speed>2?15:8)+i*Math.PI+mob.phase
+          )*(mob.speed>2 ? .5 : .27)
           :0;
       });
 
-      if(mob.red&&time>=mob.flashUntil)flashMob(mob,false);
+      if(mob.red&&time>=mob.flashUntil){
+        flashMob(mob,false);
+      }
     }
   }
 
   function updateDevices(){
     for(const [k,trap] of devices){
       trap.bait.visible=trap.baited;
+
       const age=time-trap.snapAt;
 
-      if(age>=0&&age<.15)trap.jaw.rotation.x=age/.15*2.6;
-      else if(age>=.15&&age<.65)trap.jaw.rotation.x=2.6;
-      else if(age>=.65&&age<1.2){
+      if(age>=0&&age<.15){
+        trap.jaw.rotation.x=age/.15*2.6;
+      }else if(age>=.15&&age<.65){
+        trap.jaw.rotation.x=2.6;
+      }else if(age>=.65&&age<1.2){
         trap.jaw.rotation.x=(1-(age-.65)/.55)*2.6;
-      }else trap.jaw.rotation.x=0;
+      }else{
+        trap.jaw.rotation.x=0;
+      }
 
       if(!trap.baited||time<trap.nextCatch)continue;
 
       const victim=[...mobs.values()].find(mob=>{
         if(mob.kind!=="ogger"||mob.hp<=0)return false;
+
         const p=mob.root.position;
 
-        if(Math.hypot(p.x-trap.x,p.z-trap.z)>=1.42||
-          Math.abs(p.y-(trap.y-.5))>=.85)return false;
+        if(
+          Math.hypot(p.x-trap.x,p.z-trap.z)>=1.42||
+          Math.abs(p.y-(trap.y-.5))>=.85
+        )return false;
 
-        const origin=p.clone();origin.y+=.8;
+        const origin=p.clone();
+        origin.y+=.8;
 
         return lineClear(
-          origin,new THREE.Vector3(trap.x,trap.y+.65,trap.z),k
+          origin,
+          new THREE.Vector3(trap.x,trap.y+.65,trap.z),
+          k
         );
       });
 
       if(!victim)continue;
 
-      trap.snapAt=time;trap.nextCatch=time+3;trap.catches++;
-      victim.hp=0;victim.deadAt=time+.2;
-      victim.deathLoot="trap";victim.goal=null;
+      trap.snapAt=time;
+      trap.nextCatch=time+3;
+      trap.catches++;
 
-      notify("OGGER CAUGHT. THE TRAP RESETS WITH ITS BAIT STILL INSIDE.");
+      victim.hp=0;
+      victim.deadAt=time+.2;
+      victim.deathLoot="trap";
+      victim.goal=null;
+
+      notify(
+        "OGGER CAUGHT. THE TRAP RESETS WITH ITS BAIT STILL INSIDE."
+      );
     }
   }
 
-  /* Mining, placing, fighting, and eating. */
+  /* Mining and tool rules. */
 
   function stopMining(){
-    miningKey=null;miningTime=0;mouseMining=false;
+    miningKey=null;
+    miningTime=0;
+    mouseMining=false;
   }
 
   function holdingPickaxe(){
@@ -2044,26 +2542,46 @@ async function main(){
       activeStack().tools[0].hp>0;
   }
 
+  function needsPickaxe(type){
+    return ["stone","ogger_trap","campfire"].includes(type);
+  }
+
+  function miningSeconds(){
+    return holdingPickaxe()?2.5:5;
+  }
+
+  function hitDamage(kind,type){
+    return (kind==="ogger"?1:8/6)*
+      (type==="wooden_dagger"?2:1);
+  }
+
   function beginMining(mouse=false){
     if(mode!=="playing")return;
+
     updateAim();
 
     if(target?.type!=="block"){
-      notify("AIM AT A NEARBY BLOCK.");return;
-    }
-
-    if(mouse&&target.block.type==="ogger_trap"){
-      interactTrap(key(target.block.x,target.block.y,target.block.z));
+      notify("AIM AT A NEARBY BLOCK.");
       return;
     }
 
-    if(target.block.type==="stone"&&!holdingPickaxe()){
-      notify("HOLD A WOODEN PICKAXE TO MINE STONE.");return;
+    if(needsPickaxe(target.block.type)&&!holdingPickaxe()){
+      notify(
+        `HOLD A WOODEN PICKAXE TO COLLECT ${NAMES[target.block.type]}.`
+      );
+      return;
     }
 
-    miningKey=key(target.block.x,target.block.y,target.block.z);
-    miningTime=0;mouseMining=mouse;
-    notify("KEEP AIMING AT THE SAME BLOCK FOR FIVE SECONDS.");
+    miningKey=key(
+      target.block.x,target.block.y,target.block.z
+    );
+
+    miningTime=0;
+    mouseMining=mouse;
+
+    notify(
+      `KEEP AIMING AT THIS BLOCK FOR ${miningSeconds()} SECONDS.`
+    );
   }
 
   function wearHeldTool(type){
@@ -2074,15 +2592,21 @@ async function main(){
     tool.hits++;
 
     if(tool.hits>=2){
-      tool.hits=0;tool.hp--;
+      tool.hits=0;
+      tool.hp--;
     }
 
     if(tool.hp<=0){
-      slot.tools.shift();slot.n--;
+      slot.tools.shift();
+      slot.n--;
+
       if(slot.n<=0){
-        inventory[active]=null;active=-1;
+        inventory[active]=null;
+        active=-1;
       }
-      updateHand();return true;
+
+      updateHand();
+      return true;
     }
 
     return false;
@@ -2090,15 +2614,31 @@ async function main(){
 
   function completeMining(){
     const block=blocks.get(miningKey);
-    if(!block){stopMining();return;}
 
-    const broke=block.type==="stone"
-      ?wearHeldTool("wooden_pickaxe"):false;
+    if(!block){
+      stopMining();
+      return;
+    }
+
+    if(needsPickaxe(block.type)&&!holdingPickaxe()){
+      stopMining();
+      notify("KEEP HOLDING YOUR WOODEN PICKAXE.");
+      return;
+    }
+
+    const broke=holdingPickaxe()
+      ?wearHeldTool("wooden_pickaxe")
+      :false;
 
     if(block.type==="ogger_trap"){
       const device=devices.get(miningKey);
+
       if(device?.baited){
-        receive({type:"beef"},block.x+.3,block.y+.7,block.z);
+        receive(
+          {type:"beef"},
+          block.x+.3,block.y+.7,block.z
+        );
+
         device.baited=false;
       }
     }
@@ -2106,7 +2646,10 @@ async function main(){
     if(block.type==="campfire"){
       const fire=campfires.get(miningKey);
       const item=fire?campfireOutput(fire):null;
-      if(item)receive(item,block.x+.3,block.y+.3,block.z);
+
+      if(item){
+        receive(item,block.x+.3,block.y+.3,block.z);
+      }
     }
 
     const kept=receive(
@@ -2114,43 +2657,66 @@ async function main(){
     );
 
     blocks.delete(miningKey);
-    stopMining();rebuildTerrain();updateAim();updateHand();
+
+    stopMining();
+    rebuildTerrain();
+    updateAim();
+    updateHand();
+    renderHUD();
 
     notify(broke
-      ?"STONE MINED. YOUR WOODEN PICKAXE BROKE."
-      :kept?`COLLECTED ${NAMES[block.type]}.`
-      :"INVENTORY FULL. THE ITEM DROPPED BESIDE YOU.");
+      ?`COLLECTED ${NAMES[block.type]}. YOUR WOODEN PICKAXE BROKE.`
+      :kept
+        ?`COLLECTED ${NAMES[block.type]}.`
+        :"INVENTORY FULL. THE ITEM DROPPED BESIDE YOU.");
   }
 
   function place(){
     if(mode!=="playing")return;
+
     const slot=activeStack();
 
     if(!slot||!BLOCKS.includes(slot.type)){
-      notify("SELECT A BLOCK FROM YOUR INVENTORY FIRST.");return;
+      notify("SELECT A BLOCK FROM YOUR INVENTORY FIRST.");
+      return;
     }
 
     updateAim();
 
     if(target?.type!=="block"){
-      notify("AIM AT A BLOCK'S SIDE OR TOP.");return;
+      notify("AIM AT A BLOCK'S SIDE OR TOP.");
+      return;
     }
 
-    const b=target.block,n=target.normal;
-    const x=b.x+Math.round(n.x),y=b.y+Math.round(n.y),z=b.z+Math.round(n.z);
+    const b=target.block;
+    const n=target.normal;
 
-    if(at(x,y,z)||Math.abs(x)>64||Math.abs(z)>64||y<-24||y>32){
-      notify("YOU CANNOT PLACE A BLOCK THERE.");return;
+    const x=b.x+Math.round(n.x);
+    const y=b.y+Math.round(n.y);
+    const z=b.z+Math.round(n.z);
+
+    if(
+      at(x,y,z)||
+      Math.abs(x)>64||
+      Math.abs(z)>64||
+      y<-24||y>32
+    ){
+      notify("YOU CANNOT PLACE A BLOCK THERE.");
+      return;
     }
 
     const playerOverlap=
-      Math.abs(x-feet.x)<.77&&Math.abs(z-feet.z)<.77&&
-      y+.5>feet.y&&y-.5<feet.y+1.7;
+      Math.abs(x-feet.x)<.77&&
+      Math.abs(z-feet.z)<.77&&
+      y+.5>feet.y&&
+      y-.5<feet.y+1.7;
 
-    const mobOverlap=[...mobs.values()].some(mob=>mob.hp>0&&
+    const mobOverlap=[...mobs.values()].some(mob=>
+      mob.hp>0&&
       Math.abs(mob.root.position.x-x)<.9&&
       Math.abs(mob.root.position.z-z)<.9&&
-      y+.5>mob.root.position.y&&y-.5<mob.root.position.y+1.9
+      y+.5>mob.root.position.y&&
+      y-.5<mob.root.position.y+1.9
     );
 
     const farmerOverlap=farmerActor?.hp>0&&
@@ -2160,17 +2726,23 @@ async function main(){
       y-.5<farmerActor.root.position.y+1.97;
 
     if(playerOverlap||mobOverlap||farmerOverlap){
-      notify("THAT SPACE IS OCCUPIED.");return;
+      notify("THAT SPACE IS OCCUPIED.");
+      return;
     }
 
     const item=takeItem(active);
+
     put(x,y,z,item.type);
-    stopMining();rebuildTerrain();updateAim();updateHand();
+
+    stopMining();
+    rebuildTerrain();
+    updateAim();
+    updateHand();
 
     notify(item.type==="ogger_trap"
       ?"TRAP PLACED. AIM AT IT AND PRESS BAIT +."
       :item.type==="bed"
-        ?"BED PLACED. AIM AT IT AND PRESS SLEEP AT NIGHT."
+        ?"BED PLACED. USE IT TO SLEEP, OR MINE IT TO PICK IT UP."
         :`PLACED ${NAMES[item.type]}.`);
   }
 
@@ -2178,38 +2750,48 @@ async function main(){
     if(mode!=="playing")return;
 
     if(time<nextAttack){
-      notify(`WAIT ${(nextAttack-time).toFixed(1)} SECONDS.`);return;
+      notify(`WAIT ${(nextAttack-time).toFixed(1)} SECONDS.`);
+      return;
     }
 
     updateAim();
 
     if(target?.type!=="mob"){
-      notify("AIM AT A NEARBY CREATURE.");return;
+      notify("AIM AT A NEARBY CREATURE.");
+      return;
     }
 
     const victim=target.mob;
 
     for(const mob of mobs.values()){
-      if(mob.kind==="ogger"&&
-        (mob.id===victim.id||mob.prey===victim.id)){
-        mob.angry=true;mob.goalAt=0;
+      if(
+        mob.kind==="ogger"&&
+        (mob.id===victim.id||mob.prey===victim.id)
+      ){
+        mob.angry=true;
+        mob.goalAt=0;
       }
     }
 
-    stopMining();nextAttack=time+2;swingUntil=time+.3;
+    stopMining();
+    nextAttack=time+2;
+    swingUntil=time+.3;
 
-    const dagger=activeStack()?.type==="wooden_dagger";
-    const damage=(victim.kind==="ogger"?1:8/6)*(dagger?2:1);
+    const heldType=activeStack()?.type;
+    const damage=hitDamage(victim.kind,heldType);
 
     const dead=damageMob(victim,damage,{
       x:feet.x,z:feet.z,player:true
     });
 
-    const broke=dagger&&wearHeldTool("wooden_dagger");
+    const broke=heldType==="wooden_dagger"&&
+      wearHeldTool("wooden_dagger");
 
-    notify(broke?"YOUR WOODEN DAGGER BROKE."
-      :dead?"CREATURE DEFEATED."
-      :`${victim.kind.toUpperCase()}: ${victim.hp.toFixed(1)} HP.`);
+    notify(broke
+      ?"YOUR WOODEN DAGGER BROKE."
+      :dead
+        ?"CREATURE DEFEATED."
+        :`${victim.kind.toUpperCase()}: ${victim.hp.toFixed(1)} HP.`);
 
     updateAim();
   }
@@ -2235,24 +2817,34 @@ async function main(){
 
     if(info.fullHeal){
       hp=4;
-      notify(`ATE ${NAMES[type]}. ALL FOUR HEALTH POINTS RESTORED.`);
+      notify(
+        `ATE ${NAMES[type]}. ALL FOUR HEALTH POINTS RESTORED.`
+      );
     }else{
-      if(info.fastHeal)nextHeal=Math.min(nextHeal,time+10);
+      if(info.fastHeal){
+        nextHeal=Math.min(nextHeal,time+10);
+      }
+
       notify(`ATE ${NAMES[type]}. +${info.food} FOOD.`);
     }
 
-    updateHand();renderHUD();
+    updateHand();
+    renderHUD();
+
     if(mode==="inventory")renderInventory();
   }
 
   function interactTrap(k){
     if(mode!=="playing")return;
+
     const trap=devices.get(k);
     if(!trap)return;
+
     stopMining();
 
     if(trap.baited){
-      trap.baited=false;trap.bait.visible=false;
+      trap.baited=false;
+      trap.bait.visible=false;
 
       const kept=receive(
         {type:"beef"},trap.x+.3,trap.y+.7,trap.z
@@ -2262,25 +2854,35 @@ async function main(){
         ?"BAIT REMOVED. THE BEEF IS IN YOUR INVENTORY."
         :"BAIT REMOVED. THE BEEF DROPPED BESIDE THE TRAP.");
     }else{
-      const index=inventory.findIndex(slot=>slot?.type==="beef");
+      const index=inventory.findIndex(
+        slot=>slot?.type==="beef"
+      );
 
       if(index<0){
-        notify("TRAPS NEED ONE RAW BEEF. LAMB CANNOT BE USED AS BAIT.");
+        notify(
+          "TRAPS NEED ONE RAW BEEF. LAMB CANNOT BE USED AS BAIT."
+        );
         return;
       }
 
-      takeItem(index);trap.baited=true;trap.bait.visible=true;
+      takeItem(index);
+      trap.baited=true;
+      trap.bait.visible=true;
+
       notify("TRAP BAITED. THE BEEF STAYS UNTIL YOU REMOVE IT.");
     }
 
-    updateHand();renderHUD();saveCurrent();
+    updateHand();
+    renderHUD();
+    saveCurrent();
   }
 
-  /* Crafting recipes. */
+  /* Crafting. */
 
   function recipe(){
     const occupied=craftSlots
-      .map((slot,index)=>slot?index:-1).filter(index=>index>=0);
+      .map((slot,index)=>slot?index:-1)
+      .filter(index=>index>=0);
 
     const matches=(cells,type)=>
       occupied.length===cells.length&&
@@ -2290,9 +2892,11 @@ async function main(){
       for(let row=0;row<3;row++){
         const cells=[row*3,row*3+1,row*3+2];
 
-        if(matches(cells,"log")&&
+        if(
+          matches(cells,"log")&&
           craftSlots[cells[0]].stamp<craftSlots[cells[1]].stamp&&
-          craftSlots[cells[1]].stamp<craftSlots[cells[2]].stamp){
+          craftSlots[cells[1]].stamp<craftSlots[cells[2]].stamp
+        ){
           return{type:"wooden_dagger",hp:40,hits:0};
         }
       }
@@ -2312,13 +2916,18 @@ async function main(){
     for(let row=0;row<craftSize-1;row++){
       for(let col=0;col<craftSize-1;col++){
         const cells=[
-          row*craftSize+col,row*craftSize+col+1,
-          (row+1)*craftSize+col,(row+1)*craftSize+col+1
+          row*craftSize+col,
+          row*craftSize+col+1,
+          (row+1)*craftSize+col,
+          (row+1)*craftSize+col+1
         ];
 
         if(matches(cells,"log"))return{type:"table"};
         if(matches(cells,"stone"))return{type:"ogger_trap"};
-        if(craftSize===3&&matches(cells,"wool"))return{type:"bed"};
+
+        if(craftSize===3&&matches(cells,"wool")){
+          return{type:"bed"};
+        }
       }
     }
 
@@ -2327,11 +2936,17 @@ async function main(){
 
   function refundCraft(){
     let overflow=false;
+
     for(const slot of craftSlots){
       if(slot&&!receive(slot.item))overflow=true;
     }
-    craftSlots=Array(9).fill(null);craftSource=-1;
-    if(overflow)notify("EXTRA INGREDIENTS DROPPED BESIDE YOU.");
+
+    craftSlots=Array(9).fill(null);
+    craftSource=-1;
+
+    if(overflow){
+      notify("EXTRA INGREDIENTS DROPPED BESIDE YOU.");
+    }
   }
 
   function renderCrafting(){
@@ -2342,28 +2957,38 @@ async function main(){
       ?"FOUR PINE LOGS IN A SQUARE: TABLE. FOUR STONE IN A SQUARE: OGGER TRAP."
       :"DAGGER: THREE PINE LOGS LEFT TO RIGHT. PICKAXE: TWO ROWS OF THREE PINE LOGS. TABLE: FOUR PINE LOGS IN A SQUARE. TRAP: FOUR STONE IN A SQUARE. BED: FOUR WOOL IN A SQUARE.";
 
-    $("craftGrid").style.gridTemplateColumns=`repeat(${craftSize},1fr)`;
+    $("craftGrid").style.gridTemplateColumns=
+      `repeat(${craftSize},1fr)`;
+
     $("craftGrid").replaceChildren();
 
     for(let i=0;i<craftSize*craftSize;i++){
-      const slot=craftSlots[i],button=document.createElement("button");
+      const slot=craftSlots[i];
+      const button=document.createElement("button");
+
       button.className="craftSlot"+(slot?" filled":"");
       button.textContent=slot?NAMES[slot.item.type]:"+";
 
       button.onclick=()=>{
         if(craftSlots[i]){
           if(!addMain(inventory,craftSlots[i].item)){
-            notify("MAKE ROOM IN YOUR MAIN INVENTORY FIRST.");return;
+            notify("MAKE ROOM IN YOUR MAIN INVENTORY FIRST.");
+            return;
           }
+
           craftSlots[i]=null;
         }else{
           if(!inventory[craftSource]){
-            notify("SELECT AN ITEM STACK FIRST.");return;
+            notify("SELECT AN ITEM STACK FIRST.");
+            return;
           }
+
           const item=takeItem(craftSource);
           craftSlots[i]={item,stamp:++craftStamp};
         }
-        renderCrafting();updateHand();
+
+        renderCrafting();
+        updateHand();
       };
 
       $("craftGrid").append(button);
@@ -2374,14 +2999,17 @@ async function main(){
     for(let i=0;i<23;i++){
       if(i===20){
         const label=document.createElement("p");
-        label.className="gridLabel";label.textContent="QUICK STACKS";
+        label.className="gridLabel";
+        label.textContent="QUICK STACKS";
         $("craftInventory").append(label);
       }
 
-      $("craftInventory").append(slotButton(i,craftSource,index=>{
-        if(inventory[index])craftSource=index;
-        renderCrafting();
-      }));
+      $("craftInventory").append(
+        slotButton(i,craftSource,index=>{
+          if(inventory[index])craftSource=index;
+          renderCrafting();
+        })
+      );
     }
 
     const result=recipe();
@@ -2389,8 +3017,11 @@ async function main(){
     const fits=result?addMain(copy,result):false;
 
     $("craftResult").disabled=!result||!fits;
+
     $("craftResult").textContent=result
-      ?fits?`CRAFT ${NAMES[result.type]}`:"MAIN INVENTORY FULL"
+      ?fits
+        ?`CRAFT ${NAMES[result.type]}`
+        :"MAIN INVENTORY FULL"
       :"NO MATCHING RECIPE";
 
     $("craftInfo").textContent=inventory[craftSource]
@@ -2404,16 +3035,23 @@ async function main(){
     if(!portable){
       if(!directBlock){
         updateAim();
-        if(target?.type==="block")directBlock=target.block;
+
+        if(target?.type==="block"){
+          directBlock=target.block;
+        }
       }
 
       if(directBlock?.type==="ogger_trap"){
-        interactTrap(key(directBlock.x,directBlock.y,directBlock.z));
+        interactTrap(
+          key(directBlock.x,directBlock.y,directBlock.z)
+        );
         return;
       }
 
       if(directBlock?.type==="campfire"){
-        interactCampfire(key(directBlock.x,directBlock.y,directBlock.z));
+        interactCampfire(
+          key(directBlock.x,directBlock.y,directBlock.z)
+        );
         return;
       }
 
@@ -2428,18 +3066,33 @@ async function main(){
       }
     }
 
-    stopMining();releaseControls();mode="craft";
+    stopMining();
+    releaseControls();
+
+    mode="craft";
     document.exitPointerLock?.();
-    show("inventory",false);show("crafting",true);
+
+    show("inventory",false);
+    show("crafting",true);
+
     craftSize=portable?2:3;
-    craftSlots=Array(9).fill(null);craftSource=-1;craftStamp=0;
+    craftSlots=Array(9).fill(null);
+    craftSource=-1;
+    craftStamp=0;
+
     renderCrafting();
   }
 
   function closeCraft(){
     if(mode!=="craft")return;
-    refundCraft();show("crafting",false);
-    mode="playing";updateHand();renderHUD();
+
+    refundCraft();
+    show("crafting",false);
+
+    mode="playing";
+
+    updateHand();
+    renderHUD();
   }
 
   function craftItem(){
@@ -2449,27 +3102,40 @@ async function main(){
     const copy=JSON.parse(JSON.stringify(inventory));
 
     if(!addMain(copy,result)){
-      notify("YOUR MAIN INVENTORY IS FULL.");return;
+      notify("YOUR MAIN INVENTORY IS FULL.");
+      return;
     }
 
-    inventory=copy;craftSlots=Array(9).fill(null);
-    notify(`CRAFTED ${NAMES[result.type]}. SELECT IT IN INVENTORY TO HOLD IT.`);
-    renderCrafting();updateHand();
+    inventory=copy;
+    craftSlots=Array(9).fill(null);
+
+    notify(
+      `CRAFTED ${NAMES[result.type]}. SELECT IT IN INVENTORY TO HOLD IT.`
+    );
+
+    renderCrafting();
+    updateHand();
   }
 
   /* First-person held item. */
 
   function updateHand(){
-    const slot=activeStack(),type=slot?.type||"hands";
+    const slot=activeStack();
+    const type=slot?.type||"hands";
     const identity=`${active}:${type}`;
+
     if(identity===handKey)return;
     handKey=identity;
 
-    for(const child of [...hand.children])hand.remove(child);
+    for(const child of [...hand.children]){
+      hand.remove(child);
+    }
 
     function piece(w,h,d,x,y,z,material){
       const mesh=new THREE.Mesh(sharedCube,material);
-      mesh.scale.set(w,h,d);mesh.position.set(x,y,z);hand.add(mesh);
+      mesh.scale.set(w,h,d);
+      mesh.position.set(x,y,z);
+      hand.add(mesh);
     }
 
     if(type==="wooden_pickaxe"){
@@ -2482,7 +3148,9 @@ async function main(){
       piece(.15,.035,.05,0,-.075,0,materials.brown);
       piece(.055,.13,.055,0,-.15,0,materials.brown);
     }else if(BLOCKS.includes(type)){
-      piece(.23,.23,.23,0,0,0,batches.get(type).material);
+      piece(
+        .23,.23,.23,0,0,0,batches.get(type).material
+      );
     }else if(FOOD[type]){
       piece(.20,.12,.12,0,0,0,lootMaterials[type]);
     }else{
@@ -2493,13 +3161,14 @@ async function main(){
     hand.rotation.set(-.15,-.25,-.25);
   }
 
-  /* Saved-world catalog and older-save compatibility. */
+  /* Saved-world catalog and compatibility. */
 
   try{
     const raw=localStorage.getItem(SAVE_KEY);
 
     if(raw){
       const data=JSON.parse(raw);
+
       if(data.version===2&&Array.isArray(data.worlds)){
         records=data.worlds.slice(0,8);
       }
@@ -2510,8 +3179,12 @@ async function main(){
 
       if(old?.version===1&&Array.isArray(old.blocks)){
         records=[{
-          id:uid(),seed:uid(),name:"ORIGINAL ISLAND",
-          created:Date.now(),updated:Date.now(),state:{legacy:old}
+          id:uid(),
+          seed:uid(),
+          name:"ORIGINAL ISLAND",
+          created:Date.now(),
+          updated:Date.now(),
+          state:{legacy:old}
         }];
       }
     }
@@ -2520,8 +3193,10 @@ async function main(){
   function persist(){
     try{
       localStorage.setItem(
-        SAVE_KEY,JSON.stringify({version:2,worlds:records})
+        SAVE_KEY,
+        JSON.stringify({version:2,worlds:records})
       );
+
       return true;
     }catch{
       notify("COULD NOT SAVE. BROWSER STORAGE MAY BE FULL.");
@@ -2531,7 +3206,7 @@ async function main(){
 
   function capture(){
     return{
-      version:4,
+      version:5,
       stoneLayerVersion:1,
       inventory:JSON.parse(JSON.stringify(inventory)),
       active,
@@ -2542,35 +3217,62 @@ async function main(){
       yaw,pitch,spawn:{...spawn},
       land:land.map(tile=>({...tile})),
       rngState,nextMobID,deathReason,
+
       blocks:[...blocks.values()].map(block=>[
         block.x,block.y,block.z,block.type
       ]),
+
       mobs:[...mobs.values()].map(mob=>({
-        id:mob.id,kind:mob.kind,
-        x:mob.root.position.x,y:mob.root.position.y,z:mob.root.position.z,
-        hp:mob.hp,angry:mob.angry,nightAggro:mob.nightAggro,
-        prey:mob.prey,nextBite:mob.nextBite,
-        heading:mob.heading,fleeUntil:mob.fleeUntil,fleeFrom:mob.fleeFrom,
-        deadAt:mob.deadAt,deathLoot:mob.deathLoot
+        id:mob.id,
+        kind:mob.kind,
+        x:mob.root.position.x,
+        y:mob.root.position.y,
+        z:mob.root.position.z,
+        hp:mob.hp,
+        angry:mob.angry,
+        nightAggro:mob.nightAggro,
+        prey:mob.prey,
+        nextBite:mob.nextBite,
+        heading:mob.heading,
+        fleeUntil:mob.fleeUntil,
+        fleeFrom:mob.fleeFrom,
+        deadAt:mob.deadAt,
+        deathLoot:mob.deathLoot
       })),
+
       drops:drops.map(drop=>({
-        item:{...drop.item},x:drop.x,y:drop.y,z:drop.z
+        item:{...drop.item},
+        x:drop.x,y:drop.y,z:drop.z
       })),
+
       traps:[...devices].map(([k,trap])=>({
-        key:k,baited:trap.baited,nextCatch:trap.nextCatch,
-        snapAt:trap.snapAt,catches:trap.catches
+        key:k,
+        baited:trap.baited,
+        nextCatch:trap.nextCatch,
+        snapAt:trap.snapAt,
+        catches:trap.catches
       })),
+
       campfires:[...campfires].map(([k,fire])=>({
-        key:k,rawType:fire.rawType,readyAt:fire.readyAt
+        key:k,
+        rawType:fire.rawType,
+        readyAt:fire.readyAt
       }))
     };
   }
 
   function saveCurrent(manual=false){
-    if(!current||!records.some(record=>record.id===current.id))return;
+    if(
+      !current||
+      !records.some(record=>record.id===current.id)
+    )return;
+
     current.state=capture();
     current.updated=Date.now();
-    if(persist()&&manual)notify("WORLD SAVED ON THIS DEVICE.");
+
+    if(persist()&&manual){
+      notify("WORLD SAVED ON THIS DEVICE.");
+    }
   }
 
   function restoreState(input){
@@ -2578,22 +3280,31 @@ async function main(){
 
     const legacy=!!input.legacy;
     const data=input.legacy||input;
+
     rngState=data.rngState||hashString(current.seed)||1;
 
     for(const row of data.blocks||[]){
       const [x,y,z,type]=row;
-      if(BLOCKS.includes(type)&&Number.isInteger(x)&&
-        Number.isInteger(y)&&Number.isInteger(z)){
+
+      if(
+        BLOCKS.includes(type)&&
+        Number.isInteger(x)&&
+        Number.isInteger(y)&&
+        Number.isInteger(z)
+      ){
         put(x,y,z,type);
       }
     }
 
-    land=Array.isArray(data.land)?data.land:
-      [...blocks.values()].filter(block=>block.y===0)
+    land=Array.isArray(data.land)
+      ?data.land
+      :[...blocks.values()]
+        .filter(block=>block.y===0)
         .map(block=>({x:block.x,z:block.z,h:0}));
 
     spawn=data.spawn||(legacy
-      ?{x:10,y:.5,z:10}:{x:0,y:.5,z:0});
+      ?{x:10,y:.5,z:10}
+      :{x:0,y:.5,z:0});
 
     const p=data.feet||[spawn.x,spawn.y,spawn.z];
     feet.set(p[0],p[1],p[2]);
@@ -2606,20 +3317,28 @@ async function main(){
     nextSpawn=data.nextSpawn??time+900;
     nextAttack=data.nextAttack||0;
     wetTime=data.wetTime||0;
-    yaw=data.yaw||0;pitch=data.pitch||0;
+    yaw=data.yaw||0;
+    pitch=data.pitch||0;
     nextMobID=data.nextMobID||data.nextID||1;
     deathReason=data.deathReason||"YOU WERE DEFEATED";
-    dayClock=Number.isFinite(data.dayClock)?data.dayClock:0;
+
+    dayClock=Number.isFinite(data.dayClock)
+      ?data.dayClock:0;
+
     nextStarve=Number.isFinite(data.nextStarve)
       ?data.nextStarve:time+1;
 
     if(Array.isArray(data.inventory)){
       inventory=normaliseInventory(data.inventory);
-      active=Number.isInteger(data.active)&&data.active>=0&&data.active<23
+
+      active=Number.isInteger(data.active)&&
+        data.active>=0&&data.active<23
         ?data.active:-1;
     }else{
       for(const [oldType,n] of Object.entries(data.inventory||{})){
-        const type=oldType==="dagger"?"wooden_dagger":oldType;
+        const type=oldType==="dagger"
+          ?"wooden_dagger":oldType;
+
         if(!NAMES[type])continue;
 
         for(let i=0;i<Math.min(10000,Math.max(0,n));i++){
@@ -2629,23 +3348,38 @@ async function main(){
     }
 
     stoneAdded=data.stoneLayerVersion===1;
-    addStoneLayers();rebuildTerrain();
+
+    addStoneLayers();
+    rebuildTerrain();
 
     for(const state of data.mobs||[]){
-      if(!["cow","horse","sheep","ogger"].includes(state.kind))continue;
-      const health=state.hp??state.health??(state.kind==="ogger"?6:8);
+      if(
+        !["cow","horse","sheep","ogger"].includes(state.kind)
+      )continue;
+
+      const health=state.hp??state.health??
+        (state.kind==="ogger"?6:8);
+
       if(health<=0&&!state.deathLoot)continue;
-      makeMob(state.kind,state.x,state.y??.5,state.z,{...state,hp:health});
+
+      makeMob(
+        state.kind,state.x,state.y??.5,state.z,
+        {...state,hp:health}
+      );
     }
 
     for(const drop of data.drops||[]){
       const item=drop.item||{type:drop.kind};
-      if(NAMES[item.type])addDrop(item,drop.x,drop.y,drop.z);
+
+      if(NAMES[item.type]){
+        addDrop(item,drop.x,drop.y,drop.z);
+      }
     }
 
     for(const saved of data.traps||[]){
       const device=devices.get(saved.key);
       if(!device)continue;
+
       device.baited=!!saved.baited;
       device.nextCatch=Number(saved.nextCatch)||0;
       device.snapAt=Number(saved.snapAt)||-100;
@@ -2656,8 +3390,10 @@ async function main(){
     for(const saved of data.campfires||[]){
       const fire=campfires.get(saved.key);
       if(!fire)continue;
+
       fire.rawType=["beef","lamb"].includes(saved.rawType)
         ?saved.rawType:null;
+
       fire.readyAt=Number(saved.readyAt)||0;
     }
 
@@ -2665,13 +3401,24 @@ async function main(){
       if(NAMES[item.type])receive(item);
     }
 
-    nextAI=time+.5;nextSave=time+20;nextHUD=0;nextAim=0;
-    vy=0;grounded=false;
+    nextAI=time+.5;
+    nextSave=time+20;
+    nextHUD=0;
+    nextAim=0;
+
+    vy=0;
+    grounded=false;
+    playerStepOffset=0;
 
     ensureAnimals();
+
     if(!isNight())clearNightAggression();
     previousNight=isNight();
-    updateCamera();updateHand();updateSky();updateCampfires();
+
+    updateCamera();
+    updateHand();
+    updateSky();
+    updateCampfires();
   }
 
   /* Homepage and world selection. */
@@ -2679,7 +3426,9 @@ async function main(){
   function hidePanels(){
     for(const id of [
       "home","worlds","pause","inventory","crafting","death"
-    ])show(id,false);
+    ]){
+      show(id,false);
+    }
   }
 
   function renderWorlds(){
@@ -2688,12 +3437,15 @@ async function main(){
 
     if(!records.length){
       const empty=document.createElement("p");
-      empty.textContent="NO WORLDS YET. CREATE YOUR FIRST WORLD BELOW.";
+      empty.textContent=
+        "NO WORLDS YET. CREATE YOUR FIRST WORLD BELOW.";
+
       $("worldList").append(empty);
     }
 
     for(const record of records){
       const button=document.createElement("button");
+
       button.className="worldCard"+
         (selectedWorlds.has(record.id)?" selected":"");
 
@@ -2703,6 +3455,7 @@ async function main(){
       const arrow=document.createElement("span");
 
       name.textContent=record.name;
+
       detail.textContent=record.state?.hp===0
         ?"RESPAWN AVAILABLE"
         :`SAVED ${new Date(
@@ -2710,10 +3463,12 @@ async function main(){
         ).toLocaleDateString()}`;
 
       info.append(name,detail);
+
       arrow.className="arrow";
       arrow.textContent=selectWorlds
         ?selectedWorlds.has(record.id)?"[X]":"[ ]"
         :">";
+
       button.append(info,arrow);
 
       button.onclick=()=>{
@@ -2721,18 +3476,27 @@ async function main(){
           selectedWorlds.has(record.id)
             ?selectedWorlds.delete(record.id)
             :selectedWorlds.add(record.id);
+
           renderWorlds();
-        }else openWorld(record);
+        }else{
+          openWorld(record);
+        }
       };
 
       $("worldList").append(button);
     }
 
-    $("createWorld").disabled=records.length>=8||selectWorlds;
+    $("createWorld").disabled=
+      records.length>=8||selectWorlds;
+
     $("createWorld").textContent=records.length>=8
       ?"8 WORLD LIMIT REACHED":"CREATE NEW WORLD";
+
     $("newWorldName").disabled=selectWorlds;
-    $("worldSettings").textContent=selectWorlds?"DONE SELECTING":"SETTINGS";
+
+    $("worldSettings").textContent=selectWorlds
+      ?"DONE SELECTING":"SETTINGS";
+
     show("deleteWorlds",selectWorlds);
     $("deleteWorlds").disabled=selectedWorlds.size===0;
   }
@@ -2740,22 +3504,32 @@ async function main(){
   async function openWorld(record){
     show("loading",true);
     $("loadingText").textContent="OPENING YOUR WORLD...";
+
     await new Promise(resolve=>setTimeout(resolve,30));
 
     try{
       current=record;
 
-      if(record.state)restoreState(record.state);
-      else generate(record.seed);
+      if(record.state){
+        restoreState(record.state);
+      }else{
+        generate(record.seed);
+      }
 
       show("loading",false);
 
       if(hp<=0){
-        hidePanels();mode="dead";
-        show("hud",true);show("death",true);
+        hidePanels();
+        mode="dead";
+
+        show("hud",true);
+        show("death",true);
+
         $("deathTitle").textContent=deathReason;
         renderHUD();
-      }else enterPlay();
+      }else{
+        enterPlay();
+      }
 
       saveCurrent();
     }catch(error){
@@ -2764,14 +3538,29 @@ async function main(){
   }
 
   function enterPlay(){
-    hidePanels();mode="playing";show("hud",true);
-    releaseControls();updateCamera();updateHand();renderHUD();
+    hidePanels();
+    mode="playing";
+    show("hud",true);
+
+    releaseControls();
+    updateCamera();
+    updateHand();
+    renderHUD();
   }
 
   function goHome(){
-    refundCraft();saveCurrent();releaseControls();stopMining();
-    mode="home";document.exitPointerLock?.();
-    hidePanels();show("hud",false);show("home",true);
+    refundCraft();
+    saveCurrent();
+    releaseControls();
+    stopMining();
+
+    mode="home";
+    document.exitPointerLock?.();
+
+    hidePanels();
+    show("hud",false);
+    show("home",true);
+
     hand.visible=false;
     $("waterTint").style.opacity=0;
     $("damageTint").style.opacity=0;
@@ -2779,34 +3568,70 @@ async function main(){
 
   function pauseGame(){
     if(mode!=="playing")return;
-    mode="paused";stopMining();releaseControls();
-    document.exitPointerLock?.();saveCurrent();show("pause",true);
+
+    mode="paused";
+    stopMining();
+    releaseControls();
+
+    document.exitPointerLock?.();
+
+    saveCurrent();
+    show("pause",true);
   }
 
   function openInventory(){
     if(mode!=="playing")return;
-    mode="inventory";stopMining();releaseControls();
+
+    mode="inventory";
+    stopMining();
+    releaseControls();
+
     document.exitPointerLock?.();
-    show("inventory",true);renderInventory();
+
+    show("inventory",true);
+    renderInventory();
   }
 
   function closeInventory(){
-    show("inventory",false);mode="playing";updateHand();renderHUD();
+    show("inventory",false);
+    mode="playing";
+
+    updateHand();
+    renderHUD();
   }
 
   function die(){
     if(mode==="dead")return;
-    refundCraft();stopMining();releaseControls();mode="dead";
-    saveCurrent();document.exitPointerLock?.();
-    hidePanels();show("death",true);
+
+    refundCraft();
+    stopMining();
+    releaseControls();
+
+    mode="dead";
+
+    saveCurrent();
+    document.exitPointerLock?.();
+
+    hidePanels();
+    show("death",true);
+
     $("deathTitle").textContent=deathReason;
     renderHUD();
   }
 
   function respawn(){
-    hp=4;hunger=4;wetTime=0;vy=0;
-    nextHeal=time+30;nextHunger=time+180;nextAttack=time;
-    nextStarve=time+1;playerFlash=0;
+    hp=4;
+    hunger=4;
+    wetTime=0;
+    vy=0;
+
+    nextHeal=time+30;
+    nextHunger=time+180;
+    nextAttack=time;
+    nextStarve=time+1;
+
+    playerFlash=0;
+    playerStepOffset=0;
 
     let chosen=null;
 
@@ -2817,22 +3642,37 @@ async function main(){
 
     for(const tile of options){
       const y=floorNear(tile.x,tile.z,tile.h+.5,3,3);
+
       if(y!==null&&y>WATER+.2){
-        chosen={x:tile.x,y,z:tile.z};break;
+        chosen={x:tile.x,y,z:tile.z};
+        break;
       }
     }
 
     if(!chosen){
-      const x=Math.round(spawn.x),z=Math.round(spawn.z);
+      const x=Math.round(spawn.x);
+      const z=Math.round(spawn.z);
       const base=Math.round(spawn.y-.5);
-      for(let y=base+1;y<=base+3;y++)blocks.delete(key(x,y,z));
-      put(x,base,z,"dirt");rebuildTerrain();
+
+      for(let y=base+1;y<=base+3;y++){
+        blocks.delete(key(x,y,z));
+      }
+
+      put(x,base,z,"dirt");
+      rebuildTerrain();
+
       chosen={x,y:base+.5,z};
     }
 
     feet.set(chosen.x,chosen.y,chosen.z);
-    grounded=true;yaw=0;pitch=-.3;
-    enterPlay();saveCurrent();
+
+    grounded=true;
+    yaw=0;
+    pitch=-.3;
+
+    enterPlay();
+    saveCurrent();
+
     notify("RESPAWNED IN THE SAME WORLD.");
   }
 
@@ -2840,13 +3680,18 @@ async function main(){
 
   function renderHUD(){
     $("worldName").textContent=current?.name||"NEW WORLD";
-    $("health").textContent=`HP ${Math.max(0,hp).toFixed(1)} / 4`;
+
+    $("health").textContent=
+      `HP ${Math.max(0,hp).toFixed(1)} / 4`;
+
     $("hunger").textContent=`FOOD ${hunger} / 4`;
 
     const phase=dayPhase();
+
     const remaining=Math.max(0,Math.ceil(
       isNight()?CYCLE_LENGTH-phase:DAY_LENGTH-phase
     ));
+
     const minutes=Math.floor(remaining/60);
     const seconds=String(remaining%60).padStart(2,"0");
 
@@ -2854,10 +3699,15 @@ async function main(){
       `${isNight()?"NIGHT":"DAY"} — ${minutes}:${seconds} LEFT`;
 
     show("air",wetTime>0);
-    $("air").textContent=`SWIMMING: ${Math.max(0,15-wetTime).toFixed(1)}s LEFT`;
+
+    $("air").textContent=
+      `SWIMMING: ${Math.max(0,15-wetTime).toFixed(1)}s LEFT`;
 
     const slot=activeStack();
-    $("heldName").textContent=slot?NAMES[slot.type]:"BARE HANDS";
+
+    $("heldName").textContent=slot
+      ?NAMES[slot.type]:"BARE HANDS";
+
     $("heldDetail").textContent=slot
       ?TOOLS.has(slot.type)
         ?`${slot.tools[0].hp}/40 HP | ${slot.n} TOOL(S)`
@@ -2865,33 +3715,48 @@ async function main(){
       :"OPEN INVENTORY";
 
     const edible=foodIndex();
+
     $("eat").textContent=edible>=0
       ?`EAT ${NAMES[inventory[edible].type]}`:"EAT";
+
     $("eat").disabled=edible<0;
 
     $("attack").textContent=time<nextAttack
       ?`${(nextAttack-time).toFixed(1)}s`:"ATTACK";
+
     $("attack").disabled=time<nextAttack;
+
     $("craft").textContent="USE";
     $("mine").textContent="MINE";
 
     let text="";
 
     if(target?.type==="block"){
-      const b=target.block;text=NAMES[b.type];
+      const b=target.block;
+      text=NAMES[b.type];
 
-      if(b.type==="table")$("craft").textContent="CRAFT";
+      if(b.type==="table"){
+        $("craft").textContent="CRAFT";
+      }
 
       if(b.type==="stone"){
         $("mine").textContent="MINE STONE";
-        if(!holdingPickaxe())text="STONE — WOODEN PICKAXE REQUIRED";
+
+        if(!holdingPickaxe()){
+          text="STONE — WOODEN PICKAXE REQUIRED";
+        }
       }
 
       if(b.type==="ogger_trap"){
         const trap=devices.get(key(b.x,b.y,b.z));
+
         if(trap){
-          $("craft").textContent=trap.baited?"BAIT -":"BAIT +";
-          text=trap.baited?"OGGER TRAP — BAITED":"OGGER TRAP — NEEDS ONE BEEF";
+          $("craft").textContent=trap.baited
+            ?"BAIT -":"BAIT +";
+
+          text=trap.baited
+            ?"OGGER TRAP — BAITED"
+            :"OGGER TRAP — NEEDS ONE BEEF";
         }
       }
 
@@ -2903,7 +3768,9 @@ async function main(){
             text=`${NAMES[cookedType(fire.rawType)]} — READY`;
             $("craft").textContent="TAKE FOOD";
           }else{
-            text=`CAMPFIRE — COOKING ${Math.ceil(fire.readyAt-time)}s`;
+            text=
+              `CAMPFIRE — COOKING ${Math.ceil(fire.readyAt-time)}s`;
+
             $("craft").textContent="COOKING";
           }
         }else{
@@ -2913,49 +3780,89 @@ async function main(){
       }
 
       if(b.type==="bed"){
-        text=isNight()?"BED — SLEEP UNTIL MORNING":"BED — SLEEP AT NIGHT";
+        text=isNight()
+          ?"BED — SLEEP OR MINE TO PICK UP"
+          :"BED — MINE TO PICK UP / SLEEP AT NIGHT";
+
         $("craft").textContent="SLEEP";
+      }
+
+      if(["bed","campfire","ogger_trap"].includes(b.type)){
+        $("mine").textContent=
+          needsPickaxe(b.type)&&!holdingPickaxe()
+            ?"NEED PICK":"PICK UP";
       }
     }
 
     if(target?.type==="mob"){
       const mob=target.mob;
       const angry=mob.angry||(isNight()&&mob.nightAggro);
-      text=`${angry?"ANGRY ":""}${mob.kind.toUpperCase()} `+
+
+      text=
+        `${angry?"ANGRY ":""}${mob.kind.toUpperCase()} `+
         `${Math.max(0,mob.hp).toFixed(1)} HP`;
     }
 
-    $("target").textContent=text;show("target",!!text);
+    $("target").textContent=text;
+    show("target",!!text);
+
+    const duration=miningSeconds();
+
     show("mineBox",!!miningKey);
-    $("mineText").textContent=`MINING ${miningTime.toFixed(1)} / 5s`;
-    $("mineFill").style.width=`${Math.min(100,miningTime/5*100)}%`;
+
+    $("mineText").textContent=
+      `MINING ${miningTime.toFixed(1)} / ${duration}s`;
+
+    $("mineFill").style.width=
+      `${Math.min(100,miningTime/duration*100)}%`;
+
     renderQuick();
   }
 
   /* Buttons. */
 
   $("playButton").onclick=()=>{
-    mode="worlds";hidePanels();show("worlds",true);
-    selectWorlds=false;selectedWorlds.clear();renderWorlds();
+    mode="worlds";
+
+    hidePanels();
+    show("worlds",true);
+
+    selectWorlds=false;
+    selectedWorlds.clear();
+
+    renderWorlds();
   };
 
   $("worldsBack").onclick=()=>{
-    mode="home";hidePanels();show("home",true);
+    mode="home";
+    hidePanels();
+    show("home",true);
   };
 
   $("worldSettings").onclick=()=>{
-    selectWorlds=!selectWorlds;selectedWorlds.clear();renderWorlds();
+    selectWorlds=!selectWorlds;
+    selectedWorlds.clear();
+    renderWorlds();
   };
 
   $("deleteWorlds").onclick=()=>{
     if(!selectedWorlds.size)return;
+
     if(!confirm(
       `DELETE ${selectedWorlds.size} SELECTED WORLD(S)? THIS CANNOT BE UNDONE.`
     ))return;
 
-    if(current&&selectedWorlds.has(current.id))current=null;
-    records=records.filter(record=>!selectedWorlds.has(record.id));
-    selectedWorlds.clear();persist();renderWorlds();
+    if(current&&selectedWorlds.has(current.id)){
+      current=null;
+    }
+
+    records=records.filter(
+      record=>!selectedWorlds.has(record.id)
+    );
+
+    selectedWorlds.clear();
+    persist();
+    renderWorlds();
   };
 
   $("createWorld").onclick=()=>{
@@ -2964,17 +3871,25 @@ async function main(){
     const now=Date.now();
     let defaultNumber=1;
 
-    while(records.some(record=>record.name===`NEW WORLD ${defaultNumber}`)){
+    while(records.some(record=>
+      record.name===`NEW WORLD ${defaultNumber}`
+    )){
       defaultNumber++;
     }
 
     const record={
-      id:uid(),seed:uid(),
-      name:$("newWorldName").value.trim()||`NEW WORLD ${defaultNumber}`,
-      created:now,updated:now,state:null
+      id:uid(),
+      seed:uid(),
+      name:$("newWorldName").value.trim()||
+        `NEW WORLD ${defaultNumber}`,
+      created:now,
+      updated:now,
+      state:null
     };
 
-    records.push(record);$("newWorldName").value="";
+    records.push(record);
+    $("newWorldName").value="";
+
     openWorld(record);
   };
 
@@ -2988,17 +3903,22 @@ async function main(){
   $("closeInventory").onclick=closeInventory;
 
   $("hands").onclick=()=>{
-    active=-1;renderInventory();updateHand();renderHUD();
+    active=-1;
+    renderInventory();
+    updateHand();
+    renderHUD();
   };
 
   $("assign1").onclick=()=>assignQuick(20);
   $("assign2").onclick=()=>assignQuick(21);
   $("assign3").onclick=()=>assignQuick(22);
+
   $("storeQuick").onclick=storeQuick;
   $("inventoryEat").onclick=()=>eat(false);
   $("portableCraft").onclick=()=>openCraft(true);
   $("closeCraft").onclick=closeCraft;
   $("craftResult").onclick=craftItem;
+
   $("mine").onclick=()=>beginMining(false);
   $("place").onclick=()=>place();
   $("attack").onclick=attack;
@@ -3007,15 +3927,20 @@ async function main(){
   $("eat").onclick=()=>eat(false);
 
   $("crafting").addEventListener("click",event=>{
-    if(event.target===$("crafting")&&mode==="craft")closeCraft();
+    if(event.target===$("crafting")&&mode==="craft"){
+      closeCraft();
+    }
   });
 
   $("fullscreen").onclick=async()=>{
     try{
-      if(document.fullscreenElement)await document.exitFullscreen();
-      else if(document.documentElement.requestFullscreen){
+      if(document.fullscreenElement){
+        await document.exitFullscreen();
+      }else if(document.documentElement.requestFullscreen){
         await document.documentElement.requestFullscreen();
-      }else notify("USE SAFARI'S PAGE CONTROLS TO HIDE ITS TOOLBAR.");
+      }else{
+        notify("USE SAFARI'S PAGE CONTROLS TO HIDE ITS TOOLBAR.");
+      }
     }catch{
       notify("FULLSCREEN IS UNAVAILABLE HERE.");
     }
@@ -3024,7 +3949,9 @@ async function main(){
   /* Touch, mouse, and keyboard controls. */
 
   function releaseControls(){
-    held.clear();lookPointer=null;
+    held.clear();
+    lookPointer=null;
+
     document.querySelectorAll(".pressed").forEach(button=>{
       button.classList.remove("pressed");
     });
@@ -3036,12 +3963,16 @@ async function main(){
     button.addEventListener("pointerdown",event=>{
       event.preventDefault();
       if(mode!=="playing")return;
-      held.add(direction);button.classList.add("pressed");
+
+      held.add(direction);
+      button.classList.add("pressed");
+
       button.setPointerCapture(event.pointerId);
     });
 
     const end=()=>{
-      held.delete(direction);button.classList.remove("pressed");
+      held.delete(direction);
+      button.classList.remove("pressed");
     };
 
     button.addEventListener("pointerup",end);
@@ -3052,14 +3983,20 @@ async function main(){
   function requestMouse(){
     try{
       const result=canvas.requestPointerLock?.();
-      result?.catch?.(()=>notify("DRAG THE SCENE TO LOOK AROUND."));
+
+      result?.catch?.(()=>
+        notify("DRAG THE SCENE TO LOOK AROUND.")
+      );
     }catch{}
   }
 
-  canvas.addEventListener("contextmenu",event=>event.preventDefault());
+  canvas.addEventListener("contextmenu",event=>{
+    event.preventDefault();
+  });
 
   canvas.addEventListener("pointerdown",event=>{
     if(mode!=="playing")return;
+
     event.preventDefault();
 
     if(event.pointerType==="mouse"){
@@ -3070,18 +4007,30 @@ async function main(){
 
       if(event.button!==0)return;
 
-      if(document.pointerLockElement!==canvas&&canvas.requestPointerLock){
+      if(
+        document.pointerLockElement!==canvas&&
+        canvas.requestPointerLock
+      ){
         requestMouse();
         return;
       }
 
       updateAim();
+
       const heldType=activeStack()?.type;
 
       if(BLOCKS.includes(heldType)||heldType==="corn_seeds"){
         place();
-      }else if(target?.type==="block"&&
-        INTERACTABLE.has(target.block.type)){
+      }else if(
+        target?.type==="block"&&
+        holdingPickaxe()&&
+        ["bed","campfire","ogger_trap"].includes(target.block.type)
+      ){
+        beginMining(true);
+      }else if(
+        target?.type==="block"&&
+        INTERACTABLE.has(target.block.type)
+      ){
         openCraft(false,target.block);
       }else if(target?.type==="mob"){
         attack();
@@ -3090,23 +4039,38 @@ async function main(){
       }
     }else if(lookPointer===null){
       lookPointer=event.pointerId;
-      lastX=startX=event.clientX;lastY=startY=event.clientY;
-      touchMoved=false;canvas.setPointerCapture(event.pointerId);
+
+      lastX=startX=event.clientX;
+      lastY=startY=event.clientY;
+      touchMoved=false;
+
+      canvas.setPointerCapture(event.pointerId);
     }
   });
 
   canvas.addEventListener("pointermove",event=>{
-    if(mode!=="playing"||event.pointerId!==lookPointer)return;
-    if(Math.hypot(event.clientX-startX,event.clientY-startY)>8){
+    if(
+      mode!=="playing"||
+      event.pointerId!==lookPointer
+    )return;
+
+    if(
+      Math.hypot(
+        event.clientX-startX,event.clientY-startY
+      )>8
+    ){
       touchMoved=true;
     }
 
     yaw-=(event.clientX-lastX)*.005;
+
     pitch=Math.max(-1.25,Math.min(
       1.25,pitch-(event.clientY-lastY)*.005
     ));
 
-    lastX=event.clientX;lastY=event.clientY;
+    lastX=event.clientX;
+    lastY=event.clientY;
+
     updateCamera();
   });
 
@@ -3117,44 +4081,65 @@ async function main(){
 
       if(tapped){
         const rect=canvas.getBoundingClientRect();
+
         const hit=pick(
           (event.clientX-rect.left)/rect.width*2-1,
           -(event.clientY-rect.top)/rect.height*2+1
         );
 
-        if(hit?.type==="block"&&INTERACTABLE.has(hit.block.type)){
+        if(
+          hit?.type==="block"&&
+          INTERACTABLE.has(hit.block.type)
+        ){
           openCraft(false,hit.block);
         }
       }
     }
 
-    if(event.pointerType==="mouse"&&mouseMining)stopMining();
+    if(event.pointerType==="mouse"&&mouseMining){
+      stopMining();
+    }
   }
 
   canvas.addEventListener("pointerup",finishPointer);
+
   canvas.addEventListener("pointercancel",event=>{
     if(event.pointerId===lookPointer)lookPointer=null;
     if(mouseMining)stopMining();
   });
 
   document.addEventListener("pointerup",event=>{
-    if(event.pointerType==="mouse"&&mouseMining)stopMining();
+    if(event.pointerType==="mouse"&&mouseMining){
+      stopMining();
+    }
   });
 
   document.addEventListener("mousemove",event=>{
-    if(mode!=="playing"||document.pointerLockElement!==canvas)return;
+    if(
+      mode!=="playing"||
+      document.pointerLockElement!==canvas
+    )return;
+
     yaw-=event.movementX*.0027;
-    pitch=Math.max(-1.25,Math.min(1.25,pitch-event.movementY*.0027));
+
+    pitch=Math.max(-1.25,Math.min(
+      1.25,pitch-event.movementY*.0027
+    ));
+
     updateCamera();
   });
 
   document.addEventListener("pointerlockchange",()=>{
-    if(!document.pointerLockElement&&mode==="playing")pauseGame();
+    if(!document.pointerLockElement&&mode==="playing"){
+      pauseGame();
+    }
   });
 
   const movementKeys={
-    KeyW:"forward",ArrowUp:"forward",KeyS:"backward",ArrowDown:"backward",
-    KeyA:"left",ArrowLeft:"left",KeyD:"right",ArrowRight:"right"
+    KeyW:"forward",ArrowUp:"forward",
+    KeyS:"backward",ArrowDown:"backward",
+    KeyA:"left",ArrowLeft:"left",
+    KeyD:"right",ArrowRight:"right"
   };
 
   window.addEventListener("keydown",event=>{
@@ -3164,35 +4149,49 @@ async function main(){
       if(mode==="craft")closeCraft();
       else if(mode==="inventory")closeInventory();
       else if(mode==="playing")pauseGame();
+
       return;
     }
 
     if(event.code==="KeyI"&&!event.repeat){
       if(mode==="inventory")closeInventory();
       else if(mode==="playing")openInventory();
+
       return;
     }
 
     if(mode!=="playing")return;
 
     if(movementKeys[event.code]){
-      event.preventDefault();held.add(movementKeys[event.code]);return;
+      event.preventDefault();
+      held.add(movementKeys[event.code]);
+      return;
     }
 
     if(event.repeat)return;
-    if(event.code==="Space"){event.preventDefault();jump();}
+
+    if(event.code==="Space"){
+      event.preventDefault();
+      jump();
+    }
+
     if(event.code==="KeyE")openCraft(false);
     if(event.code==="KeyQ")eat(false);
     if(event.code==="KeyF")beginMining(false);
 
     if(/^Digit[1-3]$/.test(event.code)){
       active=19+Number(event.code.slice(-1));
-      stopMining();updateHand();renderHUD();
+
+      stopMining();
+      updateHand();
+      renderHUD();
     }
   });
 
   window.addEventListener("keyup",event=>{
-    if(movementKeys[event.code])held.delete(movementKeys[event.code]);
+    if(movementKeys[event.code]){
+      held.delete(movementKeys[event.code]);
+    }
   });
 
   window.addEventListener("blur",()=>{
@@ -3202,12 +4201,16 @@ async function main(){
 
   document.addEventListener("visibilitychange",()=>{
     if(document.hidden){
-      releaseControls();saveCurrent();
+      releaseControls();
+      saveCurrent();
+
       if(mode==="playing")pauseGame();
     }
   });
 
-  window.addEventListener("pagehide",()=>saveCurrent());
+  window.addEventListener("pagehide",()=>{
+    saveCurrent();
+  });
 
   function resize(){
     camera.aspect=innerWidth/innerHeight;
@@ -3228,10 +4231,13 @@ async function main(){
   COLORS.corn="#e6c34f";
   COLORS.corn_seeds="#9ba658";
 
-  if(!BLOCKS.includes("farmland"))BLOCKS.push("farmland");
+  if(!BLOCKS.includes("farmland")){
+    BLOCKS.push("farmland");
+  }
 
   const farmSoilCanvas=document.createElement("canvas");
   farmSoilCanvas.width=farmSoilCanvas.height=16;
+
   const farmSoilContext=farmSoilCanvas.getContext("2d");
   farmSoilContext.fillStyle="#715239";
   farmSoilContext.fillRect(0,0,16,16);
@@ -3258,6 +4264,7 @@ async function main(){
   farmSoilBatch.visible=false;
   farmSoilBatch.userData.cells=[];
   farmSoilBatch.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+
   scene.add(farmSoilBatch);
   batches.set("farmland",farmSoilBatch);
 
@@ -3279,7 +4286,10 @@ async function main(){
   }
 
   const farmWaterMaterial=new THREE.MeshLambertMaterial({
-    color:"#5294a4",transparent:true,opacity:.85,side:THREE.DoubleSide
+    color:"#5294a4",
+    transparent:true,
+    opacity:.85,
+    side:THREE.DoubleSide
   });
 
   const farmWaterGeometry=new THREE.PlaneGeometry(.98,.98);
@@ -3292,53 +4302,75 @@ async function main(){
   let farmNextRetry=0;
 
   let farmerRuntime={
-    path:[],goal:null,nextPlan:0,nextThink:0,mode:"home",
-    fieldIndex:0,plantUntil:0,nextIdle:0
+    path:[],
+    goal:null,
+    nextPlan:0,
+    nextThink:0,
+    mode:"home",
+    fieldIndex:0,
+    plantUntil:0,
+    nextIdle:0
   };
 
   function farmFeature(){
     return worldFeatures.farmerCamp||null;
   }
 
-  function farmPart(parent,w,h,d,x,y,z,material,clone=false){
+  function farmPart(
+    parent,w,h,d,x,y,z,material,clone=false
+  ){
     const mesh=new THREE.Mesh(
       sharedCube,clone?material.clone():material
     );
-    mesh.scale.set(w,h,d);mesh.position.set(x,y,z);
-    parent.add(mesh);return mesh;
+
+    mesh.scale.set(w,h,d);
+    mesh.position.set(x,y,z);
+    parent.add(mesh);
+
+    return mesh;
   }
 
   /* Corn crops. */
 
-  function plantCorn(x,y,z,plantedAt=time,matureAt=time+120){
+  function plantCorn(
+    x,y,z,plantedAt=time,matureAt=time+120
+  ){
     const id=key(x,y,z);
     if(cornPlants.has(id))return false;
 
     const ground=at(x,y,z);
 
-    if(!ground||!["dirt","farmland"].includes(ground.type)||
-      at(x,y+1,z))return false;
+    if(
+      !ground||
+      !["dirt","farmland"].includes(ground.type)||
+      at(x,y+1,z)
+    )return false;
 
     const root=new THREE.Group();
     root.position.set(x,y+.5,z);
 
     const stem=farmPart(
-      root,.065,1.1,.065,0,.55,0,farmMaterials.cornStem
+      root,.065,1.1,.065,0,.55,0,
+      farmMaterials.cornStem
     );
 
     const ears=[];
 
     for(const side of [-1,1]){
       const leaf=farmPart(
-        root,.42,.055,.12,side*.16,.48+side*.12,0,
+        root,.42,.055,.12,
+        side*.16,.48+side*.12,0,
         farmMaterials.cornLeaf
       );
+
       leaf.rotation.z=side*.38;
 
       const ear=farmPart(
-        root,.14,.31,.14,side*.10,.78+side*.08,0,
+        root,.14,.31,.14,
+        side*.10,.78+side*.08,0,
         farmMaterials.cornEar
       );
+
       ear.rotation.z=side*.14;
       ears.push(ear);
     }
@@ -3364,14 +4396,21 @@ async function main(){
 
   function harvestCorn(plant,brokenGround=false){
     if(!plant||!cornPlants.has(plant.id))return;
+
     const mature=time>=plant.matureAt;
     removeCorn(plant);
 
     if(mature){
-      receive({type:"corn"},plant.x,plant.y+.7,plant.z);
+      receive(
+        {type:"corn"},
+        plant.x,plant.y+.7,plant.z
+      );
     }
 
-    receive({type:"corn_seeds"},plant.x+.2,plant.y+.7,plant.z);
+    receive(
+      {type:"corn_seeds"},
+      plant.x+.2,plant.y+.7,plant.z
+    );
 
     if(!brokenGround){
       notify(mature
@@ -3379,15 +4418,19 @@ async function main(){
         :"COLLECTED CORN SEEDS. THE PLANT WAS STILL GROWING.");
     }
 
-    updateHand();renderHUD();
+    updateHand();
+    renderHUD();
   }
 
   function syncCornGround(){
     for(const plant of [...cornPlants.values()]){
       const ground=at(plant.x,plant.y,plant.z);
 
-      if(!ground||!["dirt","farmland"].includes(ground.type)||
-        at(plant.x,plant.y+1,plant.z)){
+      if(
+        !ground||
+        !["dirt","farmland"].includes(ground.type)||
+        at(plant.x,plant.y+1,plant.z)
+      ){
         harvestCorn(plant,true);
       }
     }
@@ -3395,13 +4438,20 @@ async function main(){
 
   function updateCornVisuals(){
     for(const plant of cornPlants.values()){
-      const duration=Math.max(1,plant.matureAt-plant.plantedAt);
-      const progress=Math.max(
-        0,Math.min(1,(time-plant.plantedAt)/duration)
+      const duration=Math.max(
+        1,plant.matureAt-plant.plantedAt
       );
 
+      const progress=Math.max(0,Math.min(
+        1,(time-plant.plantedAt)/duration
+      ));
+
       plant.root.scale.y=.35+progress*.65;
-      for(const ear of plant.ears)ear.visible=progress>=.6;
+
+      for(const ear of plant.ears){
+        ear.visible=progress>=.6;
+      }
+
       plant.root.updateMatrixWorld(true);
     }
   }
@@ -3410,21 +4460,30 @@ async function main(){
 
   function createFarmer(state={}){
     if(farmerActor)return;
+
     const camp=farmFeature();
     if(!camp?.placed||state.dead)return;
 
-    const root=new THREE.Group(),legs=[],arms=[];
+    const root=new THREE.Group();
+    const model=new THREE.Group();
+
+    root.add(model);
+
+    const legs=[];
+    const arms=[];
     const id="farmer:"+current.id;
 
     function part(w,h,d,x,y,z,color,limb=null){
       const mesh=farmPart(
-        root,w,h,d,x,y,z,farmMaterials[color],true
+        model,w,h,d,x,y,z,farmMaterials[color],true
       );
 
       mesh.userData.farmerId=id;
       mesh.userData.baseColor=mesh.material.color.clone();
+
       if(limb==="leg")legs.push(mesh);
       if(limb==="arm")arms.push(mesh);
+
       return mesh;
     }
 
@@ -3449,10 +4508,17 @@ async function main(){
       camp.home.x,camp.home.y,camp.home.z
     ];
 
-    root.position.set(position[0],position[1],position[2]);
+    root.position.set(
+      position[0],position[1],position[2]
+    );
 
     farmerActor={
-      id,kind:"farmer",root,legs,arms,
+      id,
+      kind:"farmer",
+      root,
+      model,
+      legs,
+      arms,
       hp:state.hp??8,
       heading:state.heading||0,
       lastHit:state.lastHit??-100,
@@ -3465,12 +4531,19 @@ async function main(){
     };
 
     root.rotation.y=farmerActor.heading;
+
     scene.add(root);
     root.updateMatrixWorld(true);
 
     farmerRuntime={
-      path:[],goal:null,nextPlan:0,nextThink:0,mode:"home",
-      fieldIndex:0,plantUntil:0,nextIdle:time+4
+      path:[],
+      goal:null,
+      nextPlan:0,
+      nextThink:0,
+      mode:"home",
+      fieldIndex:0,
+      plantUntil:0,
+      nextIdle:time+4
     };
   }
 
@@ -3492,17 +4565,26 @@ async function main(){
   }
 
   function farmerSaveState(){
-    if(!farmerActor)return farmFeature()?.farmer||null;
+    if(!farmerActor){
+      return farmFeature()?.farmer||null;
+    }
 
     const m=farmerActor;
 
     return{
-      dead:false,hp:m.hp,
+      dead:false,
+      hp:m.hp,
       position:[
-        m.root.position.x,m.root.position.y,m.root.position.z
+        m.root.position.x,
+        m.root.position.y,
+        m.root.position.z
       ],
-      heading:m.heading,lastHit:m.lastHit,quietUntil:m.quietUntil,
-      fleeFrom:m.fleeFrom,flashUntil:m.flashUntil,deadAt:m.deadAt
+      heading:m.heading,
+      lastHit:m.lastHit,
+      quietUntil:m.quietUntil,
+      fleeFrom:m.fleeFrom,
+      flashUntil:m.flashUntil,
+      deadAt:m.deadAt
     };
   }
 
@@ -3523,26 +4605,45 @@ async function main(){
     candidates.sort((a,b)=>{
       const da=Math.hypot(a.x-spawn.x,a.z-spawn.z);
       const db=Math.hypot(b.x-spawn.x,b.z-spawn.z);
+
       return Math.abs(da-16)-Math.abs(db-16);
     });
 
     for(const anchor of candidates){
-      const centerX=anchor.x+3.5,centerZ=anchor.z+2;
+      const centerX=anchor.x+3.5;
+      const centerZ=anchor.z+2;
 
-      if(Math.hypot(centerX-spawn.x,centerZ-spawn.z)<9)continue;
+      if(
+        Math.hypot(
+          centerX-spawn.x,centerZ-spawn.z
+        )<9
+      )continue;
 
       const footprint=[];
-      let valid=true,highest=-Infinity,lowest=Infinity;
+
+      let valid=true;
+      let highest=-Infinity;
+      let lowest=Infinity;
 
       for(let dx=0;dx<8&&valid;dx++){
         for(let dz=0;dz<5;dz++){
-          const tile=tiles.get(`${anchor.x+dx},${anchor.z+dz}`);
-          if(!tile){valid=false;break;}
+          const tile=tiles.get(
+            `${anchor.x+dx},${anchor.z+dz}`
+          );
+
+          if(!tile){
+            valid=false;
+            break;
+          }
 
           const surface=at(tile.x,tile.h,tile.z);
 
-          if(!surface||!["dirt","sand"].includes(surface.type)){
-            valid=false;break;
+          if(
+            !surface||
+            !["dirt","sand"].includes(surface.type)
+          ){
+            valid=false;
+            break;
           }
 
           highest=Math.max(highest,tile.h);
@@ -3557,9 +4658,12 @@ async function main(){
         for(let y=tile.h+1;y<=highest+8;y++){
           const block=at(tile.x,y,tile.z);
 
-          if(block&&
-            !(freshWorld&&["log","leaves"].includes(block.type))){
-            valid=false;break;
+          if(
+            block&&
+            !(freshWorld&&["log","leaves"].includes(block.type))
+          ){
+            valid=false;
+            break;
           }
         }
 
@@ -3578,6 +4682,7 @@ async function main(){
 
   function makeCampWater(){
     if(farmWaterRoot)scene.remove(farmWaterRoot);
+
     const camp=farmFeature();
     if(!camp?.placed)return;
 
@@ -3587,8 +4692,12 @@ async function main(){
       const mesh=new THREE.Mesh(
         farmWaterGeometry,farmWaterMaterial
       );
+
       mesh.rotation.x=-Math.PI/2;
-      mesh.position.set(pond.x,pond.y+.22,pond.z);
+      mesh.position.set(
+        pond.x,pond.y+.22,pond.z
+      );
+
       mesh.userData.pond=pond;
       farmWaterRoot.add(mesh);
     }
@@ -3596,16 +4705,16 @@ async function main(){
     scene.add(farmWaterRoot);
   }
 
-  /*
-   * Add a campfire once. If the player later mines it,
-   * campfireVersion prevents it from being generated again.
-   */
-
   function addCampfireToCamp(){
     const camp=farmFeature();
-    if(!camp?.placed||camp.campfireVersion===1)return false;
+
+    if(
+      !camp?.placed||
+      camp.campfireVersion===1
+    )return false;
 
     const a=camp.anchor;
+
     const candidates=[
       [a.x+3,a.z+5],
       [a.x+2,a.z+5],
@@ -3622,13 +4731,19 @@ async function main(){
       const y=Math.round(floor+.5);
       const ground=at(x,y-1,z);
 
-      if(!ground||!["dirt","sand"].includes(ground.type))continue;
+      if(
+        !ground||
+        !["dirt","sand"].includes(ground.type)
+      )continue;
+
       if(at(x,y,z)||at(x,y+1,z))continue;
       if(cornPlants.has(key(x,y-1,z)))continue;
 
       put(x,y,z,"campfire");
+
       camp.campfireVersion=1;
       camp.campfirePosition={x,y,z};
+
       return true;
     }
 
@@ -3637,6 +4752,7 @@ async function main(){
 
   function buildFarmerCamp(freshWorld=false){
     const camp=farmFeature();
+
     if(!camp?.won||camp.placed)return false;
 
     const site=findCampSite(freshWorld);
@@ -3652,7 +4768,11 @@ async function main(){
       if(freshWorld){
         for(let sy=tile.h+1;sy<=y+8;sy++){
           const block=at(tile.x,sy,tile.z);
-          if(block&&["log","leaves"].includes(block.type)){
+
+          if(
+            block&&
+            ["log","leaves"].includes(block.type)
+          ){
             blocks.delete(key(tile.x,sy,tile.z));
           }
         }
@@ -3665,10 +4785,21 @@ async function main(){
 
     const structure=[];
 
-    function campBlock(dx,dy,dz,type,structural=false){
-      const bx=x+dx,by=y+dy,bz=z+dz;
-      blocks.set(key(bx,by,bz),{x:bx,y:by,z:bz,type});
-      if(structural)structure.push(key(bx,by,bz));
+    function campBlock(
+      dx,dy,dz,type,structural=false
+    ){
+      const bx=x+dx;
+      const by=y+dy;
+      const bz=z+dz;
+
+      blocks.set(
+        key(bx,by,bz),
+        {x:bx,y:by,z:bz,type}
+      );
+
+      if(structural){
+        structure.push(key(bx,by,bz));
+      }
     }
 
     for(let dx=0;dx<4;dx++){
@@ -3676,8 +4807,12 @@ async function main(){
         campBlock(dx,0,dz,"log");
 
         for(let dy=1;dy<=3;dy++){
-          const wall=dx===0||dx===3||dz===0||dz===3;
-          const doorway=dx===1&&dz===3&&dy<=2;
+          const wall=
+            dx===0||dx===3||dz===0||dz===3;
+
+          const doorway=
+            dx===1&&dz===3&&dy<=2;
+
           const window=dy===2&&(
             (dx===2&&dz===0)||
             (dx===0&&dz===1)||
@@ -3695,7 +4830,8 @@ async function main(){
 
     campBlock(2,1,1,"table");
 
-    const fields=[],ponds=[];
+    const fields=[];
+    const ponds=[];
 
     for(let dz=0;dz<4;dz++){
       for(const dx of [5,7]){
@@ -3716,8 +4852,11 @@ async function main(){
     camp.ponds=ponds;
     camp.structure=structure;
     camp.nextPlantAt=time+120;
+
     camp.farmer={
-      dead:false,hp:8,position:[x+1,y+.5,z+4]
+      dead:false,
+      hp:8,
+      position:[x+1,y+.5,z+4]
     };
 
     addCampfireToCamp();
@@ -3726,7 +4865,10 @@ async function main(){
 
     for(const field of fields){
       if(random()<.75){
-        plantCorn(field.x,field.y,field.z,time-120,time);
+        plantCorn(
+          field.x,field.y,field.z,
+          time-120,time
+        );
       }
     }
 
@@ -3736,23 +4878,34 @@ async function main(){
 
   function campIntact(){
     const camp=farmFeature();
-    if(!camp?.placed||!camp.structure?.length)return false;
 
-    const remaining=camp.structure.filter(k=>blocks.has(k)).length;
-    return remaining>=Math.ceil(camp.structure.length*.45);
+    if(
+      !camp?.placed||
+      !camp.structure?.length
+    )return false;
+
+    const remaining=camp.structure.filter(
+      k=>blocks.has(k)
+    ).length;
+
+    return remaining>=Math.ceil(
+      camp.structure.length*.45
+    );
   }
-
-  /* Each world rolls once, including worlds from older versions. */
 
   function applyWorldUpdates(freshWorld=false){
     if(!current)return;
 
     if(!worldFeatures.farmerCamp){
-      const chance=
-        hashString(current.seed+"|wandering-farmer-v1")/4294967296;
+      const chance=hashString(
+        current.seed+"|wandering-farmer-v1"
+      )/4294967296;
 
       worldFeatures.farmerCamp={
-        version:1,checked:true,won:chance<.5,placed:false
+        version:1,
+        checked:true,
+        won:chance<.5,
+        placed:false
       };
     }
 
@@ -3762,39 +4915,48 @@ async function main(){
     if(!camp.placed){
       buildFarmerCamp(freshWorld);
     }else{
-      if(campIntact()&&addCampfireToCamp())rebuildTerrain();
+      if(campIntact()&&addCampfireToCamp()){
+        rebuildTerrain();
+      }
+
       makeCampWater();
-      if(!camp.farmer?.dead)createFarmer(camp.farmer||{});
+
+      if(!camp.farmer?.dead){
+        createFarmer(camp.farmer||{});
+      }
     }
   }
 
-  /* Farmer navigation. */
+  /* Farmer navigation uses the same body-width stair checks. */
 
   function farmerFloor(x,z,nearY){
     const camp=farmFeature();
 
     if(camp?.ponds?.some(pond=>
-      pond.x===Math.round(x)&&pond.z===Math.round(z)
-    ))return null;
-
-    const floor=floorNear(x,z,nearY,1.05,1.6);
-
-    if(floor===null||floor<WATER+.2||
-      bodyCollides(new THREE.Vector3(x,floor,z),.27,1.97)){
+      pond.x===Math.round(x)&&
+      pond.z===Math.round(z)
+    )){
       return null;
     }
 
-    return floor;
+    const floor=walkingFloor(
+      x,z,nearY,.27,1.97
+    );
+
+    return dryFloor(x,z,floor)?floor:null;
   }
 
   function farmerPath(goalX,goalZ){
     if(!farmerActor)return null;
 
     const p=farmerActor.root.position;
-    const sx=Math.round(p.x),sz=Math.round(p.z);
-    const gx=Math.round(goalX),gz=Math.round(goalZ);
-    const sy=farmerFloor(sx,sz,p.y);
 
+    const sx=Math.round(p.x);
+    const sz=Math.round(p.z);
+    const gx=Math.round(goalX);
+    const gz=Math.round(goalZ);
+
+    const sy=farmerFloor(sx,sz,p.y);
     if(sy===null)return null;
 
     const oggers=[...mobs.values()]
@@ -3802,7 +4964,8 @@ async function main(){
       .map(m=>m.root.position);
 
     const start={
-      x:sx,y:sy,z:sz,cost:0,
+      x:sx,y:sy,z:sz,
+      cost:0,
       score:Math.abs(gx-sx)+Math.abs(gz-sz),
       parent:null
     };
@@ -3811,8 +4974,13 @@ async function main(){
     const best=new Map([[`${sx},${sz}`,0]]);
     const steps=[[1,0],[-1,0],[0,1],[0,-1]];
 
-    for(let searched=0;open.length&&searched<600;searched++){
+    for(
+      let searched=0;
+      open.length&&searched<600;
+      searched++
+    ){
       open.sort((a,b)=>a.score-b.score);
+
       const node=open.shift();
 
       if(node.x===gx&&node.z===gz){
@@ -3820,7 +4988,10 @@ async function main(){
         let cursor=node;
 
         while(cursor.parent){
-          path.push({x:cursor.x,y:cursor.y,z:cursor.z});
+          path.push({
+            x:cursor.x,y:cursor.y,z:cursor.z
+          });
+
           cursor=cursor.parent;
         }
 
@@ -3828,27 +4999,46 @@ async function main(){
       }
 
       for(const [dx,dz] of steps){
-        const nx=node.x+dx,nz=node.z+dz;
-        if(Math.abs(nx-sx)>24||Math.abs(nz-sz)>24)continue;
+        const nx=node.x+dx;
+        const nz=node.z+dz;
 
-        const floor=farmerFloor(nx,nz,node.y);
+        if(
+          Math.abs(nx-sx)>24||
+          Math.abs(nz-sz)>24
+        )continue;
+
+        const floor=farmerFloor(
+          nx,nz,node.y
+        );
+
         if(floor===null)continue;
 
         let risk=0;
+
         for(const ogger of oggers){
-          const d=Math.hypot(nx-ogger.x,nz-ogger.z);
+          const d=Math.hypot(
+            nx-ogger.x,nz-ogger.z
+          );
+
           if(d<5)risk+=(5-d)*5;
         }
 
-        const cost=node.cost+1+Math.abs(floor-node.y)*.5+risk;
+        const cost=node.cost+1+
+          Math.abs(floor-node.y)*.5+risk;
+
         const id=`${nx},${nz}`;
 
-        if(best.has(id)&&best.get(id)<=cost)continue;
+        if(best.has(id)&&best.get(id)<=cost){
+          continue;
+        }
+
         best.set(id,cost);
 
         open.push({
-          x:nx,y:floor,z:nz,cost,
-          score:cost+Math.abs(gx-nx)+Math.abs(gz-nz),
+          x:nx,y:floor,z:nz,
+          cost,
+          score:cost+
+            Math.abs(gx-nx)+Math.abs(gz-nz),
           parent:node
         });
       }
@@ -3861,12 +5051,19 @@ async function main(){
     if(!farmerActor)return false;
 
     const same=farmerRuntime.goal&&Math.hypot(
-      farmerRuntime.goal.x-x,farmerRuntime.goal.z-z
+      farmerRuntime.goal.x-x,
+      farmerRuntime.goal.z-z
     )<.5;
 
-    if(!force&&same&&farmerRuntime.path.length&&
-      time<farmerRuntime.nextPlan)return true;
-    if(!force&&time<farmerRuntime.nextPlan)return false;
+    if(
+      !force&&same&&
+      farmerRuntime.path.length&&
+      time<farmerRuntime.nextPlan
+    )return true;
+
+    if(
+      !force&&time<farmerRuntime.nextPlan
+    )return false;
 
     const path=farmerPath(x,z);
     farmerRuntime.nextPlan=time+.9;
@@ -3875,53 +5072,84 @@ async function main(){
 
     farmerRuntime.goal={x,z};
     farmerRuntime.path=path;
+
     return true;
   }
 
   function fleeFarmer(from,distanceToRun=10){
     if(!farmerActor)return;
+
     const p=farmerActor.root.position;
-    const away=Math.atan2(p.x-from.x,p.z-from.z);
+    const away=Math.atan2(
+      p.x-from.x,p.z-from.z
+    );
 
     for(const radius of [distanceToRun,8,6]){
       for(const turn of [0,.4,-.4,.8,-.8,1.2,-1.2]){
         const angle=away+turn;
-        const x=Math.round(p.x+Math.sin(angle)*radius);
-        const z=Math.round(p.z+Math.cos(angle)*radius);
+
+        const x=Math.round(
+          p.x+Math.sin(angle)*radius
+        );
+
+        const z=Math.round(
+          p.z+Math.cos(angle)*radius
+        );
 
         if(setFarmerGoal(x,z,true)){
-          farmerRuntime.mode="flee";return;
+          farmerRuntime.mode="flee";
+          return;
         }
       }
     }
   }
 
   function farmerThink(){
-    const farmer=farmerActor,camp=farmFeature();
+    const farmer=farmerActor;
+    const camp=farmFeature();
+
     if(!farmer||!camp||farmer.hp<=0)return;
 
     const p=farmer.root.position;
 
     const threat=[...mobs.values()]
-      .filter(m=>m.kind==="ogger"&&m.hp>0&&Math.hypot(
-        m.root.position.x-p.x,m.root.position.z-p.z
-      )<6.5)
+      .filter(m=>
+        m.kind==="ogger"&&m.hp>0&&
+        Math.hypot(
+          m.root.position.x-p.x,
+          m.root.position.z-p.z
+        )<6.5
+      )
       .sort((a,b)=>
-        Math.hypot(a.root.position.x-p.x,a.root.position.z-p.z)-
-        Math.hypot(b.root.position.x-p.x,b.root.position.z-p.z)
+        Math.hypot(
+          a.root.position.x-p.x,
+          a.root.position.z-p.z
+        )-
+        Math.hypot(
+          b.root.position.x-p.x,
+          b.root.position.z-p.z
+        )
       )[0];
 
     const recentlyHit=
       time<farmer.quietUntil||
-      (time-farmer.lastHit<18&&Math.hypot(feet.x-p.x,feet.z-p.z)<5);
+      (
+        time-farmer.lastHit<18&&
+        Math.hypot(feet.x-p.x,feet.z-p.z)<5
+      );
 
     if(threat||recentlyHit){
-      if(farmerRuntime.mode!=="flee"||!farmerRuntime.path.length){
+      if(
+        farmerRuntime.mode!=="flee"||
+        !farmerRuntime.path.length
+      ){
         const from=threat
           ?threat.root.position
           :farmer.fleeFrom||feet;
+
         fleeFarmer(from,10);
       }
+
       return;
     }
 
@@ -3935,8 +5163,12 @@ async function main(){
     if(!campIntact()){
       farmerRuntime.mode="wander";
 
-      if(!farmerRuntime.path.length&&time>=farmerRuntime.nextIdle){
-        const angle=random()*Math.PI*2,radius=3+random()*4;
+      if(
+        !farmerRuntime.path.length&&
+        time>=farmerRuntime.nextIdle
+      ){
+        const angle=random()*Math.PI*2;
+        const radius=3+random()*4;
 
         setFarmerGoal(
           Math.round(p.x+Math.sin(angle)*radius),
@@ -3951,19 +5183,29 @@ async function main(){
     }
 
     if(farmerRuntime.mode==="farm"){
-      while(farmerRuntime.fieldIndex<camp.fields.length){
-        const plot=camp.fields[farmerRuntime.fieldIndex];
-        const ground=at(plot.x,plot.y,plot.z);
+      while(
+        farmerRuntime.fieldIndex<camp.fields.length
+      ){
+        const plot=camp.fields[
+          farmerRuntime.fieldIndex
+        ];
 
-        if(ground?.type!=="farmland"||
+        const ground=at(
+          plot.x,plot.y,plot.z
+        );
+
+        if(
+          ground?.type!=="farmland"||
           at(plot.x,plot.y+1,plot.z)||
-          cornPlants.has(key(plot.x,plot.y,plot.z))){
+          cornPlants.has(key(plot.x,plot.y,plot.z))
+        ){
           farmerRuntime.fieldIndex++;
           farmerRuntime.plantUntil=0;
           continue;
         }
 
-        const near=Math.hypot(p.x-plot.x,p.z-plot.z)<.65&&
+        const near=
+          Math.hypot(p.x-plot.x,p.z-plot.z)<.65&&
           Math.abs(p.y-(plot.y+.5))<1;
 
         if(near){
@@ -3972,8 +5214,13 @@ async function main(){
           if(!farmerRuntime.plantUntil){
             farmerRuntime.plantUntil=time+.5;
             farmer.workingUntil=time+.5;
-          }else if(time>=farmerRuntime.plantUntil){
-            plantCorn(plot.x,plot.y,plot.z);
+          }else if(
+            time>=farmerRuntime.plantUntil
+          ){
+            plantCorn(
+              plot.x,plot.y,plot.z
+            );
+
             farmerRuntime.fieldIndex++;
             farmerRuntime.plantUntil=0;
           }
@@ -3989,9 +5236,10 @@ async function main(){
       farmerRuntime.nextPlan=0;
     }
 
-    if(farmerRuntime.mode==="idleWalk"&&farmerRuntime.path.length){
-      return;
-    }
+    if(
+      farmerRuntime.mode==="idleWalk"&&
+      farmerRuntime.path.length
+    )return;
 
     const homeDistance=Math.hypot(
       p.x-camp.home.x,p.z-camp.home.z
@@ -4017,13 +5265,27 @@ async function main(){
 
     if(time>=farmerRuntime.nextIdle){
       const choices=[
-        {x:camp.anchor.x+1,z:camp.anchor.z+4},
-        {x:camp.anchor.x+2,z:camp.anchor.z+4},
-        {x:camp.home.x,z:camp.home.z}
+        {
+          x:camp.anchor.x+1,
+          z:camp.anchor.z+4
+        },
+        {
+          x:camp.anchor.x+2,
+          z:camp.anchor.z+4
+        },
+        {
+          x:camp.home.x,
+          z:camp.home.z
+        }
       ];
-      const choice=choices[Math.floor(random()*choices.length)];
 
-      if(setFarmerGoal(choice.x,choice.z,true)){
+      const choice=choices[
+        Math.floor(random()*choices.length)
+      ];
+
+      if(
+        setFarmerGoal(choice.x,choice.z,true)
+      ){
         farmerRuntime.mode="idleWalk";
       }
 
@@ -4036,9 +5298,14 @@ async function main(){
     if(!farmer)return;
 
     if(farmer.hp<=0){
-      if(farmer.deadAt!==null&&time>=farmer.deadAt){
-        disposeFarmer(true);saveCurrent();
+      if(
+        farmer.deadAt!==null&&
+        time>=farmer.deadAt
+      ){
+        disposeFarmer(true);
+        saveCurrent();
       }
+
       return;
     }
 
@@ -4049,53 +5316,82 @@ async function main(){
 
     const p=farmer.root.position;
     const node=farmerRuntime.path[0];
+
     let moving=false;
 
     if(node){
-      const dx=node.x-p.x,dz=node.z-p.z;
+      const dx=node.x-p.x;
+      const dz=node.z-p.z;
       const distanceToNode=Math.hypot(dx,dz);
 
       if(distanceToNode<.12){
-        p.x=node.x;p.z=node.z;
+        p.x=node.x;
+        p.z=node.z;
         farmerRuntime.path.shift();
       }else{
-        const speed=farmerRuntime.mode==="flee"?3.5:1.15;
-        const step=Math.min(distanceToNode,speed*dt);
+        const speed=farmerRuntime.mode==="flee"
+          ?3.5:1.15;
+
+        const step=Math.min(
+          distanceToNode,speed*dt
+        );
+
         const nx=p.x+dx/distanceToNode*step;
         const nz=p.z+dz/distanceToNode*step;
+
         const floor=farmerFloor(nx,nz,p.y);
 
-        if(floor===null){
+        const blockedLift=floor!==null&&
+          floor>p.y+.01&&
+          bodyCollides({
+            x:p.x,y:floor,z:p.z
+          },.27,1.97);
+
+        if(floor===null||blockedLift){
           farmerRuntime.path=[];
           farmerRuntime.nextPlan=time+.3;
         }else{
-          const crowded=[...mobs.values()].some(m=>m.hp>0&&Math.hypot(
-            m.root.position.x-nx,m.root.position.z-nz
-          )<.65);
+          const crowded=[...mobs.values()].some(m=>
+            m.hp>0&&
+            Math.abs(m.root.position.y-floor)<1.8&&
+            Math.hypot(
+              m.root.position.x-nx,
+              m.root.position.z-nz
+            )<.65
+          );
 
           if(!crowded){
-            p.x=nx;p.z=nz;
-            p.y+=(floor-p.y)*Math.min(1,dt*10);
+            const oldY=p.y;
+
+            p.set(nx,floor,nz);
+            farmer.model.position.y+=oldY-floor;
 
             const desired=Math.atan2(-dx,-dz);
+
             const difference=Math.atan2(
               Math.sin(desired-farmer.heading),
               Math.cos(desired-farmer.heading)
             );
 
-            farmer.heading+=difference*Math.min(1,dt*7);
+            farmer.heading+=difference*
+              Math.min(1,dt*7);
+
             moving=true;
           }
         }
       }
     }
 
+    farmer.model.position.y*=Math.exp(-12*dt);
     farmer.root.rotation.y=farmer.heading;
+
     const running=farmerRuntime.mode==="flee";
 
     farmer.legs.forEach((leg,i)=>{
       leg.rotation.x=moving
-        ?Math.sin(time*(running?15:8)+i*Math.PI)*(running ? .5 : .28)
+        ?Math.sin(
+          time*(running?15:8)+i*Math.PI
+        )*(running ? .5 : .28)
         :0;
     });
 
@@ -4103,37 +5399,61 @@ async function main(){
       arm.rotation.x=time<farmer.workingUntil
         ?-.8
         :moving
-          ?Math.sin(time*(running?15:8)+(i+1)*Math.PI)*.25
+          ?Math.sin(
+            time*(running?15:8)+(i+1)*Math.PI
+          )*.25
           :0;
     });
 
-    if(farmer.red&&time>=farmer.flashUntil){
+    if(
+      farmer.red&&time>=farmer.flashUntil
+    ){
       flashMob(farmer,false);
     }
 
     farmer.root.updateMatrixWorld(true);
   }
 
-  /* Extend interaction with corn and the farmer. */
+  /* Corn and farmer interaction. */
 
   const farmOriginalPick=pick;
 
   pick=function(nx=0,ny=0){
     const existing=farmOriginalPick(nx,ny);
-    farmPickRay.setFromCamera(new THREE.Vector2(nx,ny),camera);
+
+    farmPickRay.setFromCamera(
+      new THREE.Vector2(nx,ny),camera
+    );
+
     farmPickRay.far=existing?.distance??4.8;
 
-    const objects=[...cornPlants.values()].map(p=>p.root);
-    if(farmerActor?.hp>0)objects.push(farmerActor.root);
+    const objects=[...cornPlants.values()]
+      .map(p=>p.root);
 
-    const hit=farmPickRay.intersectObjects(objects,true)[0];
-    if(!hit)return existing;
-
-    if(hit.object.userData.farmerId&&farmerActor?.hp>0){
-      return{type:"mob",mob:farmerActor,distance:hit.distance};
+    if(farmerActor?.hp>0){
+      objects.push(farmerActor.root);
     }
 
-    const plant=cornPlants.get(hit.object.userData.cornKey);
+    const hit=farmPickRay.intersectObjects(
+      objects,true
+    )[0];
+
+    if(!hit)return existing;
+
+    if(
+      hit.object.userData.farmerId&&
+      farmerActor?.hp>0
+    ){
+      return{
+        type:"mob",
+        mob:farmerActor,
+        distance:hit.distance
+      };
+    }
+
+    const plant=cornPlants.get(
+      hit.object.userData.cornKey
+    );
 
     return plant
       ?{type:"crop",plant,distance:hit.distance}
@@ -4144,19 +5464,25 @@ async function main(){
 
   damageMob=function(mob,amount,source){
     if(mob!==farmerActor){
-      return farmOriginalDamage(mob,amount,source);
+      return farmOriginalDamage(
+        mob,amount,source
+      );
     }
 
     if(mob.hp<=0)return false;
 
-    mob.hp-=amount;mob.flashUntil=time+.5;
+    mob.hp-=amount;
+    mob.flashUntil=time+.5;
+
     flashMob(mob,true);
 
-    mob.lastHit=time;mob.quietUntil=time+6;
+    mob.lastHit=time;
+    mob.quietUntil=time+6;
     mob.fleeFrom={x:source.x,z:source.z};
 
     if(mob.hp<=.001){
-      mob.hp=0;mob.deadAt=time+.5;
+      mob.hp=0;
+      mob.deadAt=time+.5;
       farmerRuntime.path=[];
       return true;
     }
@@ -4169,10 +5495,14 @@ async function main(){
 
   beginMining=function(mouse=false){
     if(mode!=="playing")return;
+
     updateAim();
 
     if(target?.type==="crop"){
-      stopMining();harvestCorn(target.plant);updateAim();return;
+      stopMining();
+      harvestCorn(target.plant);
+      updateAim();
+      return;
     }
 
     farmOriginalMine(mouse);
@@ -4182,27 +5512,40 @@ async function main(){
 
   place=function(){
     if(mode!=="playing")return;
+
     const slot=activeStack();
 
     if(slot?.type!=="corn_seeds"){
-      farmOriginalPlace();return;
+      farmOriginalPlace();
+      return;
     }
 
     updateAim();
 
-    if(target?.type!=="block"||target.normal.y<.5||
-      !["dirt","farmland"].includes(target.block.type)){
-      notify("AIM AT THE TOP OF DIRT OR FARMLAND TO PLANT SEEDS.");
+    if(
+      target?.type!=="block"||
+      target.normal.y<.5||
+      !["dirt","farmland"].includes(target.block.type)
+    ){
+      notify(
+        "AIM AT THE TOP OF DIRT OR FARMLAND TO PLANT SEEDS."
+      );
       return;
     }
 
     const block=target.block;
 
-    if(!plantCorn(block.x,block.y,block.z)){
-      notify("THERE IS NO ROOM TO PLANT CORN THERE.");return;
+    if(
+      !plantCorn(block.x,block.y,block.z)
+    ){
+      notify("THERE IS NO ROOM TO PLANT CORN THERE.");
+      return;
     }
 
-    takeItem(active);updateHand();renderHUD();
+    takeItem(active);
+    updateHand();
+    renderHUD();
+
     notify("CORN PLANTED. IT GROWS IN TWO MINUTES.");
   };
 
@@ -4213,10 +5556,13 @@ async function main(){
 
     if(target?.type==="crop"){
       const mature=time>=target.plant.matureAt;
+
       $("target").textContent=mature
         ?"CORN — READY TO HARVEST"
         :"CORN — GROWING";
-      show("target",true);$("mine").textContent="HARVEST";
+
+      show("target",true);
+      $("mine").textContent="HARVEST";
     }
   };
 
@@ -4225,45 +5571,71 @@ async function main(){
   updateHand=function(){
     const type=activeStack()?.type;
 
-    if(!["corn","corn_seeds"].includes(type)){
-      farmOriginalHand();return;
+    if(
+      !["corn","corn_seeds"].includes(type)
+    ){
+      farmOriginalHand();
+      return;
     }
 
     const identity=`${active}:${type}`;
+
     if(handKey===identity)return;
     handKey=identity;
 
-    for(const child of [...hand.children])hand.remove(child);
+    for(const child of [...hand.children]){
+      hand.remove(child);
+    }
 
     if(type==="corn"){
-      farmPart(hand,.11,.27,.11,0,.02,0,farmMaterials.cornEar);
+      farmPart(
+        hand,.11,.27,.11,
+        0,.02,0,
+        farmMaterials.cornEar
+      );
 
       const leaf=farmPart(
-        hand,.09,.22,.05,-.06,-.05,0,farmMaterials.cornLeaf
+        hand,.09,.22,.05,
+        -.06,-.05,0,
+        farmMaterials.cornLeaf
       );
+
       leaf.rotation.z=-.35;
     }else{
-      farmPart(hand,.15,.07,.12,0,0,0,farmMaterials.cornSeed);
+      farmPart(
+        hand,.15,.07,.12,
+        0,0,0,
+        farmMaterials.cornSeed
+      );
     }
 
     hand.position.set(.31,-.28,-.62);
     hand.rotation.set(-.15,-.25,-.25);
   };
 
-  /* Preserve farmer and crop data alongside the existing world save. */
+  /* Preserve farmer and corn data in the same saved worlds. */
 
   const farmOriginalCapture=capture;
 
   capture=function(){
     const camp=farmFeature();
-    if(camp&&farmerActor)camp.farmer=farmerSaveState();
+
+    if(camp&&farmerActor){
+      camp.farmer=farmerSaveState();
+    }
 
     const data=farmOriginalCapture();
-    data.features=JSON.parse(JSON.stringify(worldFeatures));
+
+    data.features=JSON.parse(
+      JSON.stringify(worldFeatures)
+    );
 
     data.cornPlants=[...cornPlants.values()].map(plant=>({
-      x:plant.x,y:plant.y,z:plant.z,
-      plantedAt:plant.plantedAt,matureAt:plant.matureAt
+      x:plant.x,
+      y:plant.y,
+      z:plant.z,
+      plantedAt:plant.plantedAt,
+      matureAt:plant.matureAt
     }));
 
     return data;
@@ -4275,26 +5647,35 @@ async function main(){
     disposeFarmer(false);
 
     if(farmWaterRoot){
-      scene.remove(farmWaterRoot);farmWaterRoot=null;
+      scene.remove(farmWaterRoot);
+      farmWaterRoot=null;
     }
 
-    for(const plant of [...cornPlants.values()])removeCorn(plant);
+    for(const plant of [...cornPlants.values()]){
+      removeCorn(plant);
+    }
 
-    worldFeatures={};farmNextRetry=0;
+    worldFeatures={};
+    farmNextRetry=0;
+
     farmOriginalClear();
   };
 
   const farmOriginalRebuild=rebuildTerrain;
 
   rebuildTerrain=function(){
-    farmOriginalRebuild();syncCornGround();
+    farmOriginalRebuild();
+    syncCornGround();
   };
 
   const farmOriginalGenerate=generate;
 
   generate=function(seed){
     farmOriginalGenerate(seed);
-    if(current)applyWorldUpdates(true);
+
+    if(current){
+      applyWorldUpdates(true);
+    }
   };
 
   const farmOriginalRestore=restoreState;
@@ -4303,6 +5684,7 @@ async function main(){
     farmOriginalRestore(input);
 
     const data=input.legacy||input;
+
     worldFeatures=data.features
       ?JSON.parse(JSON.stringify(data.features))
       :{};
@@ -4318,64 +5700,94 @@ async function main(){
     updateCornVisuals();
   };
 
-  /* Initial scene and animation loop. */
+  /* Initial scene and main loop. */
 
   generate("corny-menu-forest");
+
   mode="home";
+
   show("loading",false);
   show("home",true);
-  hand.visible=false;
   show("notice",false);
+
+  hand.visible=false;
 
   let previous=performance.now();
 
   renderer.setAnimationLoop(now=>{
-    const dt=Math.min(Math.max(0,(now-previous)/1000),.1);
+    const dt=Math.min(
+      Math.max(0,(now-previous)/1000),.1
+    );
+
     previous=now;
 
     if(mode==="home"||mode==="worlds"){
       const angle=now*.00002;
+
       camera.position.set(
-        Math.sin(angle)*49,37,Math.cos(angle)*49
+        Math.sin(angle)*49,
+        37,
+        Math.cos(angle)*49
       );
+
       camera.lookAt(0,1,0);
-      hand.visible=false;outline.visible=false;
+
+      hand.visible=false;
+      outline.visible=false;
     }
 
     if(mode==="playing"&&!document.hidden){
       time+=dt;
       dayClock+=dt;
+
       updateSky();
 
       let remaining=dt;
 
       while(remaining>0&&hp>0){
         const step=Math.min(remaining,.025);
-        movePlayer(step);remaining-=step;
+        movePlayer(step);
+        remaining-=step;
       }
 
       updateCamera();
 
       if(hp>0){
         if(time>=nextAim){
-          updateAim();nextAim=time+.08;
+          updateAim();
+          nextAim=time+.08;
         }
 
         if(miningKey){
           const aimed=target?.type==="block"
-            ?key(target.block.x,target.block.y,target.block.z)
+            ?key(
+              target.block.x,
+              target.block.y,
+              target.block.z
+            )
             :null;
 
           const block=blocks.get(miningKey);
 
           if(aimed!==miningKey||!block){
             stopMining();
-            notify("MINING STOPPED. KEEP AIMING AT THE SAME BLOCK.");
-          }else if(block.type==="stone"&&!holdingPickaxe()){
-            stopMining();notify("KEEP HOLDING YOUR WOODEN PICKAXE.");
+
+            notify(
+              "MINING STOPPED. KEEP AIMING AT THE SAME BLOCK."
+            );
+          }else if(
+            needsPickaxe(block.type)&&
+            !holdingPickaxe()
+          ){
+            stopMining();
+
+            notify("KEEP HOLDING YOUR WOODEN PICKAXE.");
           }else{
             miningTime+=dt;
-            if(miningTime>=5)completeMining();
+
+            if(miningTime>=miningSeconds()){
+              completeMining();
+            }
           }
         }
 
@@ -4396,17 +5808,22 @@ async function main(){
         }
 
         if(time>=nextHeal){
-          if(hunger>0&&hp>0)hp=Math.min(4,hp+2);
+          if(hunger>0&&hp>0){
+            hp=Math.min(4,hp+2);
+          }
+
           nextHeal=time+30;
         }
 
         if(hp>0){
           if(time>=nextSpawn){
-            spawnWave();nextSpawn+=900;
+            spawnWave();
+            nextSpawn+=900;
           }
 
           if(time>=nextAI){
-            thinkMobs();nextAI=time+.45;
+            thinkMobs();
+            nextAI=time+.45;
           }
 
           moveMobs(dt);
@@ -4415,7 +5832,11 @@ async function main(){
 
           const camp=farmFeature();
 
-          if(camp?.won&&!camp.placed&&time>=farmNextRetry){
+          if(
+            camp?.won&&
+            !camp.placed&&
+            time>=farmNextRetry
+          ){
             buildFarmerCamp(false);
           }
 
@@ -4425,48 +5846,76 @@ async function main(){
           if(farmWaterRoot){
             for(const mesh of farmWaterRoot.children){
               const pond=mesh.userData.pond;
-              mesh.visible=!at(pond.x,pond.y,pond.z);
+
+              mesh.visible=!at(
+                pond.x,pond.y,pond.z
+              );
             }
           }
 
           for(let i=drops.length-1;i>=0;i--){
             const drop=drops[i];
+
             drop.mesh.position.y=
-              drop.y+Math.sin(time*3+drop.phase)*.07;
+              drop.y+Math.sin(
+                time*3+drop.phase
+              )*.07;
+
             drop.mesh.rotation.y+=dt;
 
-            if(Math.hypot(feet.x-drop.x,feet.z-drop.z)<1.35&&
+            if(
+              Math.hypot(
+                feet.x-drop.x,
+                feet.z-drop.z
+              )<1.35&&
               Math.abs(feet.y+.3-drop.y)<1.8&&
-              addMain(inventory,drop.item)){
+              addMain(inventory,drop.item)
+            ){
               scene.remove(drop.mesh);
               drops.splice(i,1);
-              notify(`PICKED UP ${NAMES[drop.item.type]}.`);
+
+              notify(
+                `PICKED UP ${NAMES[drop.item.type]}.`
+              );
+
               updateHand();
             }
           }
 
-          updateHand();hand.visible=true;
+          updateHand();
+          hand.visible=true;
+
           hand.position.y=-.28+
             (held.size?Math.sin(time*10)*.012:0);
+
           hand.rotation.z=-.25+
-            (time<swingUntil
-              ?Math.sin((swingUntil-time)/.3*Math.PI)*.9
-              :0);
+            (
+              time<swingUntil
+                ?Math.sin(
+                  (swingUntil-time)/.3*Math.PI
+                )*.9
+                :0
+            );
 
           if(time>=nextSave){
-            saveCurrent();nextSave=time+20;
+            saveCurrent();
+            nextSave=time+20;
           }
         }
 
-        $("damageTint").style.opacity=time<playerFlash?"1":"0";
+        $("damageTint").style.opacity=
+          time<playerFlash?"1":"0";
 
         if(time>=nextHUD){
-          renderHUD();nextHUD=time+.1;
+          renderHUD();
+          nextHUD=time+.1;
         }
       }
 
       if(hp<=0)die();
-    }else if(mode!=="home"&&mode!=="worlds"){
+    }else if(
+      mode!=="home"&&mode!=="worlds"
+    ){
       hand.visible=false;
     }
 
@@ -4478,3 +5927,4 @@ main().catch(window.showCornyError);
 </script>
 </body>
 </html>
+```
