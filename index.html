@@ -88,6 +88,7 @@ input{
 #health{color:#f1a68e}
 #hunger{color:#e4ca78}
 #worldName{font-size:24px}
+#dayPhase{font-size:19px;color:#e4ca78}
 #air{font-size:21px;color:#a8ddeb}
 .toolbar{display:flex;gap:7px;pointer-events:auto}
 .control{
@@ -104,6 +105,7 @@ input{
   position:absolute;top:calc(50% + 30px);left:50%;
   transform:translateX(-50%);padding:3px 10px;
   background:#11291dcc;font-size:21px;white-space:nowrap;
+  max-width:94vw;overflow:hidden;text-overflow:ellipsis;
 }
 #mineBox{
   position:absolute;top:calc(50% + 64px);left:50%;
@@ -259,6 +261,8 @@ input{
     <p class="small">
       iPad: drag to look, hold arrows to walk.<br>
       Computer: WASD, mouse, Space.<br>
+      Left-click: place held blocks.<br>
+      Right-click: eat selected quick-stack food.<br>
       Worlds save in this browser.
     </p>
   </div>
@@ -289,6 +293,7 @@ input{
         <span id="health"></span>
         <span id="hunger"></span>
       </div>
+      <div id="dayPhase"></div>
       <div id="air" class="hidden"></div>
     </div>
     <div class="toolbar">
@@ -320,8 +325,8 @@ input{
     <button id="place" class="control">PLACE</button>
     <button id="attack" class="control">ATTACK</button>
     <button id="jump" class="control">JUMP</button>
-    <button id="craft" class="control">CRAFT</button>
-    <button id="eat" class="control">EAT BEEF</button>
+    <button id="craft" class="control">USE</button>
+    <button id="eat" class="control">EAT</button>
   </div>
 </div>
 
@@ -332,7 +337,9 @@ input{
     <button id="saveButton" class="secondary full">SAVE WORLD</button>
     <button id="goHome" class="secondary full">SAVE AND GO TO HOMEPAGE</button>
     <p class="small">
-      I: inventory / E: interact / Q: eat<br>
+      I: inventory / E: use / Q: eat / F: mine<br>
+      Left-click: place held blocks or interact.<br>
+      Right-click: eat selected quick-stack food.<br>
       1, 2, 3: quick stacks / Space: jump / Esc: menu
     </p>
   </div>
@@ -361,7 +368,7 @@ input{
     <div class="row">
       <button id="hands" class="secondary">BARE HANDS</button>
       <button id="portableCraft" class="secondary">QUICK CRAFTING</button>
-      <button id="inventoryEat" class="secondary">EAT BEEF</button>
+      <button id="inventoryEat" class="secondary">EAT</button>
     </div>
     <button id="closeInventory" class="primary full">BACK TO GAME</button>
   </div>
@@ -369,11 +376,8 @@ input{
 
 <div id="crafting" class="overlay hidden">
   <div class="panel wide">
-    <button
-      id="closeCraft"
-      class="secondary full craftExit"
-      aria-label="Exit crafting"
-    >X — EXIT CRAFTING</button>
+    <button id="closeCraft" class="secondary full craftExit"
+      aria-label="Exit crafting">X — EXIT CRAFTING</button>
     <h2 id="craftTitle">CRAFTING</h2>
     <div class="craftLayout">
       <div>
@@ -435,28 +439,46 @@ async function main(){
 
   const $=id=>document.getElementById(id);
   const show=(id,on)=>$(id).classList.toggle("hidden",!on);
+
+  /* Keep this key so existing saved worlds remain available. */
   const SAVE_KEY="corny-worlds-v2";
   const WATER=-.22;
+  const DAY_LENGTH=300;
+  const CYCLE_LENGTH=600;
+  const COOK_TIME=10;
 
   const BLOCKS=[
-    "dirt","sand","log","leaves","table","stone","ogger_trap"
+    "dirt","sand","log","leaves","table","stone","ogger_trap",
+    "wool","bed","campfire"
   ];
 
   const TOOLS=new Set(["wooden_dagger","wooden_pickaxe"]);
 
   const NAMES={
-    dirt:"DIRT",sand:"SAND",log:"PINE LOG",leaves:"PINE LEAVES",
+    dirt:"DIRT",sand:"SAND",log:"PINE LOGS",leaves:"PINE LEAVES",
     table:"BUILDING TABLE",stone:"STONE",ogger_trap:"OGGER TRAP",
-    beef:"BEEF",wooden_dagger:"WOODEN DAGGER",
-    wooden_pickaxe:"WOODEN PICKAXE"
+    beef:"BEEF",lamb:"LAMB",wool:"WOOL",bed:"BED",campfire:"CAMPFIRE",
+    cooked_beef:"COOKED BEEF",cooked_lamb:"COOKED LAMB",
+    wooden_dagger:"WOODEN DAGGER",wooden_pickaxe:"WOODEN PICKAXE"
   };
 
   const COLORS={
     dirt:"#8b6949",sand:"#dcc48b",log:"#805438",leaves:"#3a643f",
     table:"#b8874a",stone:"#92958c",ogger_trap:"#8a7860",
-    beef:"#b9614e",wooden_dagger:"#ba9058",wooden_pickaxe:"#ba9058"
+    beef:"#b9614e",lamb:"#c17a70",cooked_beef:"#754535",
+    cooked_lamb:"#94654b",wool:"#e5e0d2",bed:"#60819a",
+    campfire:"#625d52",wooden_dagger:"#ba9058",wooden_pickaxe:"#ba9058"
   };
 
+  const FOOD={
+    corn:{food:1},
+    beef:{food:2,fastHeal:true},
+    lamb:{food:2,fastHeal:true},
+    cooked_beef:{food:2,fullHeal:true},
+    cooked_lamb:{food:2,fullHeal:true}
+  };
+
+  const INTERACTABLE=new Set(["table","ogger_trap","campfire","bed"]);
   const key=(x,y,z)=>`${x},${y},${z}`;
   const canvas=$("game");
 
@@ -473,7 +495,9 @@ async function main(){
   const camera=new THREE.PerspectiveCamera(74,1,.05,190);
   camera.rotation.order="YXZ";
   scene.add(camera);
-  scene.add(new THREE.HemisphereLight("#fff0d5","#687255",2.1));
+
+  const skyLight=new THREE.HemisphereLight("#fff0d5","#687255",2.1);
+  scene.add(skyLight);
 
   const sun=new THREE.DirectionalLight("#ffe8c0",1.9);
   sun.position.set(30,45,15);
@@ -489,10 +513,16 @@ async function main(){
   ocean.position.y=WATER;
   scene.add(ocean);
 
+  const daySky=new THREE.Color("#a8cbd6");
+  const nightSky=new THREE.Color("#111c30");
+  const daySea=new THREE.Color("#397b91");
+  const nightSea=new THREE.Color("#193a52");
+
   const blocks=new Map();
   const batches=new Map();
   const mobs=new Map();
   const devices=new Map();
+  const campfires=new Map();
   const drops=[];
   const landColumns=new Set();
   const sharedCube=new THREE.BoxGeometry(1,1,1);
@@ -503,12 +533,16 @@ async function main(){
   for(const [name,color] of Object.entries({
     cream:"#ece3cd",brown:"#876042",dark:"#343b30",green:"#849e55",
     shirt:"#625947",eye:"#17241a",muzzle:"#c5a188",tooth:"#e9ddb8",
-    wood:"#b98d55",skin:"#c39b6a",metal:"#7a8073",darkMetal:"#404b42"
+    wood:"#b98d55",skin:"#c39b6a",metal:"#7a8073",darkMetal:"#404b42",
+    wool:"#e8e4d9",sheepFace:"#827b6c"
   })){
     materials[name]=new THREE.MeshLambertMaterial({color});
   }
 
+  const fireOrange=new THREE.MeshBasicMaterial({color:"#ed8034"});
+  const fireYellow=new THREE.MeshBasicMaterial({color:"#ffd16b"});
   const lootMaterials={};
+
   for(const [type,color] of Object.entries(COLORS)){
     lootMaterials[type]=new THREE.MeshLambertMaterial({color});
   }
@@ -537,6 +571,22 @@ async function main(){
       }
     }
 
+    if(type==="bed"){
+      ctx.fillStyle="#eee8d7";
+      ctx.fillRect(1,1,14,5);
+      ctx.fillStyle="#355268";
+      ctx.fillRect(0,14,16,2);
+    }
+
+    if(type==="wool"){
+      for(let y=0;y<16;y+=4){
+        for(let x=0;x<16;x+=4){
+          ctx.fillStyle=(x+y)%8===0?"#ffffff24":"#00000010";
+          ctx.fillRect(x,y,3,3);
+        }
+      }
+    }
+
     const texture=new THREE.CanvasTexture(c);
     texture.magFilter=THREE.NearestFilter;
     texture.minFilter=THREE.NearestFilter;
@@ -545,7 +595,12 @@ async function main(){
   }
 
   function blockGeometry(type){
-    const geometry=new THREE.BoxGeometry(1,1,1);
+    const geometry=type==="campfire"
+      ?new THREE.BoxGeometry(.94,.22,.94)
+      :new THREE.BoxGeometry(1,1,1);
+
+    if(type==="campfire")geometry.translate(0,-.39,0);
+
     const normals=geometry.attributes.normal;
     const colors=[];
 
@@ -554,7 +609,7 @@ async function main(){
       const color=new THREE.Color(
         type==="dirt"?(ny>.5?"#7d9654":"#8c6847"):"#ffffff"
       );
-      color.multiplyScalar(ny<-.5?.72:1);
+      color.multiplyScalar(ny<-.5 ? .72 : 1);
       colors.push(color.r,color.g,color.b);
     }
 
@@ -594,6 +649,7 @@ async function main(){
   let land=[],spawn={x:0,y:.5,z:0},rngState=1,nextMobID=1;
   let hp=4,hunger=4,time=0,nextHunger=180,nextHeal=30;
   let nextSpawn=900,nextAI=.5,nextSave=20,nextHUD=0,nextAim=0;
+  let dayClock=0,nextStarve=1,previousNight=false;
   let yaw=0,pitch=-.4,vy=0,grounded=true,wetTime=0,nextAttack=0;
   let swingUntil=0,playerFlash=0,stoneAdded=false;
   let target=null,miningKey=null,miningTime=0,mouseMining=false;
@@ -659,7 +715,9 @@ async function main(){
 
   function rebuildTerrain(){
     const grouped=Object.fromEntries(BLOCKS.map(type=>[type,[]]));
-    for(const b of blocks.values())grouped[b.type].push(b);
+    for(const b of blocks.values()){
+      if(grouped[b.type])grouped[b.type].push(b);
+    }
 
     for(const type of BLOCKS){
       const mesh=batches.get(type),cells=grouped[type];
@@ -680,6 +738,81 @@ async function main(){
     }
 
     syncDevices();
+    syncCampfires();
+  }
+
+  /* Day, night, and sleeping. */
+
+  function dayPhase(){
+    return ((dayClock%CYCLE_LENGTH)+CYCLE_LENGTH)%CYCLE_LENGTH;
+  }
+
+  function isNight(){
+    return dayPhase()>=DAY_LENGTH;
+  }
+
+  function clearNightAggression(){
+    for(const mob of mobs.values()){
+      if(mob.kind!=="ogger")continue;
+      mob.nightAggro=false;
+      if(!mob.angry){
+        mob.goal=null;
+        mob.goalAt=0;
+        mob.prey=null;
+      }
+    }
+  }
+
+  function updateSky(){
+    const phase=dayPhase();
+    let brightness=1;
+
+    if(phase>=240&&phase<300){
+      brightness=1-(phase-240)/60;
+    }else if(phase>=300&&phase<540){
+      brightness=0;
+    }else if(phase>=540){
+      brightness=(phase-540)/60;
+    }
+
+    scene.background.copy(nightSky).lerp(daySky,brightness);
+    scene.fog.color.copy(scene.background);
+    ocean.material.color.copy(nightSea).lerp(daySea,brightness);
+
+    skyLight.intensity=.45+brightness*1.65;
+    sun.intensity=.12+brightness*1.78;
+    sun.color.set(brightness>.35?"#ffe8c0":"#a7bfea");
+
+    const angle=phase/CYCLE_LENGTH*Math.PI*2;
+    sun.position.set(
+      Math.sin(angle)*35,
+      15+Math.abs(Math.cos(angle))*35,
+      Math.cos(angle)*25
+    );
+
+    const night=isNight();
+    if(previousNight&&!night)clearNightAggression();
+    previousNight=night;
+  }
+
+  function sleepInBed(){
+    if(mode!=="playing")return;
+
+    if(!isNight()){
+      notify("YOU CAN SLEEP WHEN NIGHT FALLS.");
+      return;
+    }
+
+    stopMining();
+    dayClock=(Math.floor(dayClock/CYCLE_LENGTH)+1)*CYCLE_LENGTH;
+    clearNightAggression();
+    nextAI=time;
+    updateSky();
+    updateAim();
+    renderHUD();
+    saveCurrent();
+
+    notify("YOU SLEPT UNTIL MORNING.");
   }
 
   /* Inventory: 20 main stacks and 3 quick stacks. */
@@ -853,9 +986,24 @@ async function main(){
     for(let i=20;i<23;i++){
       $("quickBar").append(slotButton(i,active,index=>{
         if(mode!=="playing")return;
-        active=index;updateHand();renderHUD();
+        active=index;
+        stopMining();
+        updateHand();
+        renderHUD();
       }));
     }
+  }
+
+  function foodIndex(quickOnly=false){
+    const type=activeStack()?.type;
+
+    if(quickOnly){
+      return active>=20&&active<23&&FOOD[type]?active:-1;
+    }
+
+    return FOOD[type]
+      ?active
+      :inventory.findIndex(slot=>slot&&FOOD[slot.type]);
   }
 
   function renderInventory(){
@@ -879,7 +1027,11 @@ async function main(){
         (TOOLS.has(slot.type)?` — ${slot.tools[0].hp}/40 HP`:"")
       :"BARE HANDS SELECTED";
 
-    $("inventoryEat").disabled=total("beef")===0;
+    const edible=foodIndex();
+    $("inventoryEat").disabled=edible<0;
+    $("inventoryEat").textContent=edible>=0
+      ?`EAT ${NAMES[inventory[edible].type]}`:"NO FOOD";
+
     renderQuick();
   }
 
@@ -953,11 +1105,26 @@ async function main(){
         part(.23,.07,.07,side*.18,1.76,-.36,"brown");
         part(.085,.13,.06,side*.14,1.33,-.49,"tooth");
       }
+    }else if(kind==="sheep"){
+      part(.94,.72,1.18,0,.94,0,"wool");
+      part(.50,.49,.45,0,1.08,-.71,"sheepFace");
+      part(.54,.18,.46,0,1.34,-.64,"wool");
+      part(.38,.19,.20,0,.93,-.98,"sheepFace");
+
+      for(const side of [-1,1]){
+        for(const end of [-1,1]){
+          part(.18,.57,.19,side*.29,.29,end*.40,"sheepFace",true);
+        }
+        part(.12,.15,.19,side*.30,1.13,-.68,"sheepFace");
+        part(.07,.07,.026,side*.15,1.13,-.945,"eye");
+      }
+
+      part(.14,.20,.15,0,.92,.66,"wool");
     }else{
       const horse=kind==="horse",color=horse?"brown":"cream";
 
       part(.82,.67,horse?1.38:1.15,0,.89,0,color);
-      part(.48,horse?.65:.52,.52,0,horse?1.27:1.12,-.68,color);
+      part(.48,horse ? .65 : .52,.52,0,horse?1.27:1.12,-.68,color);
       part(.45,.23,.24,0,horse?1.08:.96,-.96,horse?"brown":"muzzle");
 
       for(const side of [-1,1]){
@@ -979,8 +1146,9 @@ async function main(){
 
     const mob={
       id,kind,root,legs,hp:state.hp??(kind==="ogger"?6:8),
-      angry:!!state.angry,prey:state.prey||null,
-      nextBite:state.nextBite??0,
+      angry:!!state.angry,
+      nightAggro:!!state.nightAggro,
+      prey:state.prey||null,nextBite:state.nextBite??0,
       goal:null,goalAt:0,heading:state.heading||0,speed:0,
       fleeUntil:state.fleeUntil||0,fleeFrom:state.fleeFrom||null,
       fleeing:false,flashUntil:0,red:false,biteUntil:0,
@@ -989,7 +1157,8 @@ async function main(){
     };
 
     root.rotation.y=mob.heading;
-    mobs.set(id,mob);scene.add(root);
+    mobs.set(id,mob);
+    scene.add(root);
     return mob;
   }
 
@@ -997,7 +1166,8 @@ async function main(){
     mob.root.traverse(object=>{
       if(object.isMesh)object.material.dispose();
     });
-    scene.remove(mob.root);mobs.delete(mob.id);
+    scene.remove(mob.root);
+    mobs.delete(mob.id);
   }
 
   function flashMob(mob,on){
@@ -1018,11 +1188,16 @@ async function main(){
     const p=mob.root.position;
 
     if(mob.deathLoot==="animal"){
-      for(let i=0;i<2;i++){
-        addDrop(
-          {type:random()<.05?"leaves":"beef"},
-          p.x+(i?-.22:.22),p.y+.3,p.z
-        );
+      if(mob.kind==="sheep"){
+        addDrop({type:"lamb"},p.x-.22,p.y+.3,p.z);
+        addDrop({type:"wool"},p.x+.22,p.y+.3,p.z);
+      }else{
+        for(let i=0;i<2;i++){
+          addDrop(
+            {type:random()<.05?"leaves":"beef"},
+            p.x+(i?-.22:.22),p.y+.3,p.z
+          );
+        }
       }
     }
 
@@ -1082,6 +1257,122 @@ async function main(){
         devices.set(k,createDevice(block));
       }
     }
+  }
+
+  /* Campfires hold one piece of meat at a time. */
+
+  function cookedType(raw){
+    return raw==="beef"?"cooked_beef":
+      raw==="lamb"?"cooked_lamb":null;
+  }
+
+  function campfireOutput(fire){
+    if(!fire.rawType)return null;
+    return{
+      type:time>=fire.readyAt?cookedType(fire.rawType):fire.rawType
+    };
+  }
+
+  function createCampfire(block){
+    const root=new THREE.Group();
+    root.position.set(block.x,block.y,block.z);
+
+    function piece(w,h,d,x,y,z,material){
+      const mesh=new THREE.Mesh(sharedCube,material);
+      mesh.scale.set(w,h,d);mesh.position.set(x,y,z);
+      root.add(mesh);return mesh;
+    }
+
+    const logA=piece(.72,.13,.16,0,-.22,0,materials.brown);
+    const logB=piece(.72,.13,.16,0,-.16,0,materials.wood);
+    logA.rotation.y=.65;
+    logB.rotation.y=-.65;
+
+    const flameA=piece(.28,.36,.24,0,.02,0,fireOrange);
+    const flameB=piece(.14,.26,.14,.05,.01,-.02,fireYellow);
+    flameA.rotation.z=.15;
+    flameB.rotation.z=-.22;
+
+    piece(.06,.50,.06,-.35,-.02,0,materials.darkMetal);
+    piece(.06,.50,.06,.35,-.02,0,materials.darkMetal);
+    piece(.76,.04,.04,0,.22,0,materials.darkMetal);
+
+    const meat=piece(.24,.11,.19,0,.31,0,lootMaterials.beef);
+    meat.visible=false;
+    scene.add(root);
+
+    return{
+      x:block.x,y:block.y,z:block.z,root,flameA,flameB,meat,
+      rawType:null,readyAt:0
+    };
+  }
+
+  function syncCampfires(){
+    for(const [k,fire] of campfires){
+      if(blocks.get(k)?.type!=="campfire"){
+        scene.remove(fire.root);
+        campfires.delete(k);
+      }
+    }
+
+    for(const [k,block] of blocks){
+      if(block.type==="campfire"&&!campfires.has(k)){
+        campfires.set(k,createCampfire(block));
+      }
+    }
+  }
+
+  function updateCampfires(){
+    for(const fire of campfires.values()){
+      fire.flameA.scale.y=.36+Math.sin(time*11+fire.x)*.055;
+      fire.flameB.scale.y=.26+Math.cos(time*14+fire.z)*.045;
+      fire.meat.visible=!!fire.rawType;
+
+      if(fire.rawType){
+        const type=time>=fire.readyAt
+          ?cookedType(fire.rawType):fire.rawType;
+        fire.meat.material=lootMaterials[type];
+      }
+    }
+  }
+
+  function interactCampfire(k){
+    if(mode!=="playing")return;
+    const fire=campfires.get(k);
+    if(!fire)return;
+    stopMining();
+
+    if(fire.rawType){
+      if(time<fire.readyAt){
+        notify(`COOKING: ${Math.ceil(fire.readyAt-time)} SECONDS LEFT.`);
+        return;
+      }
+
+      const item=campfireOutput(fire);
+      const kept=receive(item,fire.x+.4,fire.y+.5,fire.z);
+      fire.rawType=null;
+      fire.readyAt=0;
+      fire.meat.visible=false;
+
+      notify(kept
+        ?`${NAMES[item.type]} COLLECTED. EAT IT TO RESTORE ALL HEALTH.`
+        :"INVENTORY FULL. THE COOKED FOOD DROPPED BESIDE THE FIRE.");
+    }else{
+      const type=activeStack()?.type;
+
+      if(type!=="beef"&&type!=="lamb"){
+        notify("HOLD BEEF OR LAMB, THEN USE THE CAMPFIRE.");
+        return;
+      }
+
+      takeItem(active);
+      fire.rawType=type;
+      fire.readyAt=time+COOK_TIME;
+
+      notify(`COOKING ${NAMES[type]}. COME BACK IN TEN SECONDS.`);
+    }
+
+    updateCampfires();updateHand();renderHUD();saveCurrent();
   }
 
   /* Fast terrain picking. */
@@ -1174,11 +1465,15 @@ async function main(){
   function clearWorld(){
     for(const mob of [...mobs.values()])removeMob(mob);
     for(const device of devices.values())scene.remove(device.root);
+    for(const fire of campfires.values())scene.remove(fire.root);
 
-    devices.clear();clearDrops();blocks.clear();landColumns.clear();
+    devices.clear();campfires.clear();
+    clearDrops();blocks.clear();landColumns.clear();
+
     land=[];inventory=Array(23).fill(null);active=-1;
     craftSlots=Array(9).fill(null);craftSource=-1;craftStamp=0;
     hp=4;hunger=4;time=0;nextHunger=180;nextHeal=30;
+    dayClock=0;nextStarve=1;previousNight=false;
     nextSpawn=900;nextAI=.5;nextSave=20;nextHUD=0;nextAim=0;
     yaw=0;pitch=-.4;vy=0;grounded=true;wetTime=0;nextAttack=0;
     swingUntil=0;playerFlash=0;nextMobID=1;stoneAdded=false;
@@ -1282,6 +1577,7 @@ async function main(){
 
     put(0,1,-2,"table");
     addStoneLayers();rebuildTerrain();spawnWave();updateCamera();
+    updateSky();
   }
 
   /* Collision and player movement. */
@@ -1396,7 +1692,7 @@ async function main(){
     }
   }
 
-  /* Animal spawning. */
+  /* Animal spawning, including updates to existing worlds. */
 
   function spawnOne(kind,zone){
     for(let attempt=0;attempt<80;attempt++){
@@ -1427,7 +1723,7 @@ async function main(){
       return d>=5&&d<=15;
     });
 
-    for(const kind of ["cow","horse"]){
+    for(const kind of ["cow","horse","sheep"]){
       for(let i=0;i<8;i++){
         const population=[...mobs.values()]
           .filter(mob=>mob.kind===kind&&mob.hp>0).length;
@@ -1442,9 +1738,14 @@ async function main(){
       floorNear(tile.x,tile.z,tile.h+.5,0,0)!==null
     );
 
+    const kinds=["cow","horse","sheep"];
+
     for(let i=0;i+30<=candidates.length;i+=30){
       if(random()<.4){
-        spawnOne(random()<.5?"cow":"horse",candidates.slice(i,i+30));
+        spawnOne(
+          kinds[Math.floor(random()*kinds.length)],
+          candidates.slice(i,i+30)
+        );
       }
     }
 
@@ -1475,7 +1776,7 @@ async function main(){
       if(y!==null&&y>WATER+.2&&
         !bodyCollides(new THREE.Vector3(x,y,z),.36,1.85)){
         mob.goal={x,z};
-        mob.goalAt=time+(away?0.9:3+random()*4);
+        mob.goalAt=time+(away?.9:3+random()*4);
         return;
       }
     }
@@ -1524,12 +1825,13 @@ async function main(){
   function thinkMobs(){
     const all=[...mobs.values()].filter(mob=>mob.hp>0);
     const oggers=all.filter(mob=>mob.kind==="ogger");
+    const night=isNight();
 
     for(const mob of all){
       const p=mob.root.position;
 
       if(mob.kind!=="ogger"){
-        const threat=oggers
+        const threat=mob.kind==="sheep"?null:oggers
           .filter(other=>distance(p,other.root.position)<7)
           .sort((a,b)=>
             distance(p,a.root.position)-distance(p,b.root.position)
@@ -1557,6 +1859,16 @@ async function main(){
         continue;
       }
 
+      if(!night){
+        mob.nightAggro=false;
+      }else if(!mob.nightAggro&&distance(p,feet)<12&&
+        Math.abs(p.y-feet.y)<3){
+        const eyes=p.clone();eyes.y+=1.5;
+        const playerBody=feet.clone();playerBody.y+=1;
+
+        if(lineClear(eyes,playerBody))mob.nightAggro=true;
+      }
+
       const lure=nearestTrap(p);
 
       if(lure){
@@ -1567,13 +1879,15 @@ async function main(){
       }
 
       let prey=null,goal=null;
+      const chasingPlayer=mob.angry||(night&&mob.nightAggro);
 
-      if(mob.angry){
+      if(chasingPlayer){
         mob.prey=null;
         goal={x:feet.x,y:feet.y,z:feet.z};
       }else{
         prey=all.filter(other=>
-          other.kind!=="ogger"&&distance(p,other.root.position)<10
+          (other.kind==="cow"||other.kind==="horse")&&
+          distance(p,other.root.position)<10
         ).sort((a,b)=>
           distance(p,a.root.position)-distance(p,b.root.position)
         )[0];
@@ -1600,10 +1914,10 @@ async function main(){
           if(!lineClear(origin,destination))continue;
           mob.nextBite=time+2;mob.biteUntil=time+.6;
 
-          if(mob.angry){
+          if(chasingPlayer){
             hp=Math.max(0,hp-.5);playerFlash=time+.5;
             deathReason="AN OGGER GOT YOU";
-            notify("AN ANGRY OGGER BIT YOU.");
+            notify("AN OGGER BIT YOU.");
           }else if(prey){
             damageMob(prey,.5,{x:p.x,z:p.z,player:false});
           }
@@ -1674,7 +1988,7 @@ async function main(){
       mob.legs.forEach((leg,i)=>{
         leg.rotation.x=moving
           ?Math.sin(time*(mob.speed>2?15:8)+i*Math.PI+mob.phase)*
-            (mob.speed>2?.5:.27)
+            (mob.speed>2 ? .5 : .27)
           :0;
       });
 
@@ -1789,6 +2103,12 @@ async function main(){
       }
     }
 
+    if(block.type==="campfire"){
+      const fire=campfires.get(miningKey);
+      const item=fire?campfireOutput(fire):null;
+      if(item)receive(item,block.x+.3,block.y+.3,block.z);
+    }
+
     const kept=receive(
       {type:block.type},block.x,block.y+.2,block.z
     );
@@ -1833,7 +2153,13 @@ async function main(){
       y+.5>mob.root.position.y&&y-.5<mob.root.position.y+1.9
     );
 
-    if(playerOverlap||mobOverlap){
+    const farmerOverlap=farmerActor?.hp>0&&
+      Math.abs(farmerActor.root.position.x-x)<.8&&
+      Math.abs(farmerActor.root.position.z-z)<.8&&
+      y+.5>farmerActor.root.position.y&&
+      y-.5<farmerActor.root.position.y+1.97;
+
+    if(playerOverlap||mobOverlap||farmerOverlap){
       notify("THAT SPACE IS OCCUPIED.");return;
     }
 
@@ -1843,7 +2169,9 @@ async function main(){
 
     notify(item.type==="ogger_trap"
       ?"TRAP PLACED. AIM AT IT AND PRESS BAIT +."
-      :`PLACED ${NAMES[item.type]}.`);
+      :item.type==="bed"
+        ?"BED PLACED. AIM AT IT AND PRESS SLEEP AT NIGHT."
+        :`PLACED ${NAMES[item.type]}.`);
   }
 
   function attack(){
@@ -1886,21 +2214,34 @@ async function main(){
     updateAim();
   }
 
-  function eat(){
+  function eat(quickOnly=false){
     if(!["playing","inventory"].includes(mode))return;
 
-    const index=activeStack()?.type==="beef"
-      ?active:inventory.findIndex(slot=>slot?.type==="beef");
+    const index=foodIndex(quickOnly);
 
     if(index<0){
-      notify("YOU NEED BEEF TO EAT.");return;
+      notify(quickOnly
+        ?"SELECT FOOD IN QUICK STACK 1, 2 OR 3 FIRST."
+        :"YOU NEED CORN, BEEF OR LAMB TO EAT.");
+      return;
     }
 
-    takeItem(index);hunger=Math.min(4,hunger+2);
-    nextHeal=Math.min(nextHeal,time+10);
+    const type=inventory[index].type;
+    const info=FOOD[type];
 
-    notify("ATE BEEF. +2 FOOD. HEALING WITHIN TEN SECONDS.");
-    updateHand();
+    takeItem(index);
+    hunger=Math.min(4,hunger+info.food);
+    nextStarve=time+1;
+
+    if(info.fullHeal){
+      hp=4;
+      notify(`ATE ${NAMES[type]}. ALL FOUR HEALTH POINTS RESTORED.`);
+    }else{
+      if(info.fastHeal)nextHeal=Math.min(nextHeal,time+10);
+      notify(`ATE ${NAMES[type]}. +${info.food} FOOD.`);
+    }
+
+    updateHand();renderHUD();
     if(mode==="inventory")renderInventory();
   }
 
@@ -1922,8 +2263,10 @@ async function main(){
         :"BAIT REMOVED. THE BEEF DROPPED BESIDE THE TRAP.");
     }else{
       const index=inventory.findIndex(slot=>slot?.type==="beef");
+
       if(index<0){
-        notify("YOU NEED ONE BEEF TO BAIT THE TRAP.");return;
+        notify("TRAPS NEED ONE RAW BEEF. LAMB CANNOT BE USED AS BAIT.");
+        return;
       }
 
       takeItem(index);trap.baited=true;trap.bait.visible=true;
@@ -1975,6 +2318,7 @@ async function main(){
 
         if(matches(cells,"log"))return{type:"table"};
         if(matches(cells,"stone"))return{type:"ogger_trap"};
+        if(craftSize===3&&matches(cells,"wool"))return{type:"bed"};
       }
     }
 
@@ -1995,8 +2339,8 @@ async function main(){
       ?"QUICK CRAFTING":"BUILDING TABLE";
 
     $("craftInstructions").textContent=craftSize===2
-      ?"FOUR LOGS IN A SQUARE: TABLE. FOUR STONE IN A SQUARE: OGGER TRAP."
-      :"DAGGER: THREE LOGS LEFT TO RIGHT. PICKAXE: TWO ROWS OF THREE LOGS. TABLE: FOUR LOGS IN A SQUARE. TRAP: FOUR STONE IN A SQUARE.";
+      ?"FOUR PINE LOGS IN A SQUARE: TABLE. FOUR STONE IN A SQUARE: OGGER TRAP."
+      :"DAGGER: THREE PINE LOGS LEFT TO RIGHT. PICKAXE: TWO ROWS OF THREE PINE LOGS. TABLE: FOUR PINE LOGS IN A SQUARE. TRAP: FOUR STONE IN A SQUARE. BED: FOUR WOOL IN A SQUARE.";
 
     $("craftGrid").style.gridTemplateColumns=`repeat(${craftSize},1fr)`;
     $("craftGrid").replaceChildren();
@@ -2068,8 +2412,18 @@ async function main(){
         return;
       }
 
+      if(directBlock?.type==="campfire"){
+        interactCampfire(key(directBlock.x,directBlock.y,directBlock.z));
+        return;
+      }
+
+      if(directBlock?.type==="bed"){
+        sleepInBed();
+        return;
+      }
+
       if(directBlock?.type!=="table"){
-        notify("AIM AT A TABLE. QUICK CRAFTING IS IN YOUR INVENTORY.");
+        notify("AIM AT A TABLE, TRAP, CAMPFIRE OR BED.");
         return;
       }
     }
@@ -2129,8 +2483,8 @@ async function main(){
       piece(.055,.13,.055,0,-.15,0,materials.brown);
     }else if(BLOCKS.includes(type)){
       piece(.23,.23,.23,0,0,0,batches.get(type).material);
-    }else if(type==="beef"){
-      piece(.20,.12,.12,0,0,0,lootMaterials.beef);
+    }else if(FOOD[type]){
+      piece(.20,.12,.12,0,0,0,lootMaterials[type]);
     }else{
       piece(.13,.23,.14,0,-.06,0,materials.skin);
     }
@@ -2177,12 +2531,13 @@ async function main(){
 
   function capture(){
     return{
-      version:3,
+      version:4,
       stoneLayerVersion:1,
       inventory:JSON.parse(JSON.stringify(inventory)),
       active,
       escrow:craftSlots.filter(Boolean).map(slot=>({...slot.item})),
       hp,hunger,time,nextHunger,nextHeal,nextSpawn,nextAttack,wetTime,
+      dayClock,nextStarve,
       feet:[feet.x,feet.y,feet.z],
       yaw,pitch,spawn:{...spawn},
       land:land.map(tile=>({...tile})),
@@ -2193,7 +2548,8 @@ async function main(){
       mobs:[...mobs.values()].map(mob=>({
         id:mob.id,kind:mob.kind,
         x:mob.root.position.x,y:mob.root.position.y,z:mob.root.position.z,
-        hp:mob.hp,angry:mob.angry,prey:mob.prey,nextBite:mob.nextBite,
+        hp:mob.hp,angry:mob.angry,nightAggro:mob.nightAggro,
+        prey:mob.prey,nextBite:mob.nextBite,
         heading:mob.heading,fleeUntil:mob.fleeUntil,fleeFrom:mob.fleeFrom,
         deadAt:mob.deadAt,deathLoot:mob.deathLoot
       })),
@@ -2203,6 +2559,9 @@ async function main(){
       traps:[...devices].map(([k,trap])=>({
         key:k,baited:trap.baited,nextCatch:trap.nextCatch,
         snapAt:trap.snapAt,catches:trap.catches
+      })),
+      campfires:[...campfires].map(([k,fire])=>({
+        key:k,rawType:fire.rawType,readyAt:fire.readyAt
       }))
     };
   }
@@ -2250,6 +2609,9 @@ async function main(){
     yaw=data.yaw||0;pitch=data.pitch||0;
     nextMobID=data.nextMobID||data.nextID||1;
     deathReason=data.deathReason||"YOU WERE DEFEATED";
+    dayClock=Number.isFinite(data.dayClock)?data.dayClock:0;
+    nextStarve=Number.isFinite(data.nextStarve)
+      ?data.nextStarve:time+1;
 
     if(Array.isArray(data.inventory)){
       inventory=normaliseInventory(data.inventory);
@@ -2270,7 +2632,7 @@ async function main(){
     addStoneLayers();rebuildTerrain();
 
     for(const state of data.mobs||[]){
-      if(!["cow","horse","ogger"].includes(state.kind))continue;
+      if(!["cow","horse","sheep","ogger"].includes(state.kind))continue;
       const health=state.hp??state.health??(state.kind==="ogger"?6:8);
       if(health<=0&&!state.deathLoot)continue;
       makeMob(state.kind,state.x,state.y??.5,state.z,{...state,hp:health});
@@ -2291,13 +2653,25 @@ async function main(){
       device.bait.visible=device.baited;
     }
 
+    for(const saved of data.campfires||[]){
+      const fire=campfires.get(saved.key);
+      if(!fire)continue;
+      fire.rawType=["beef","lamb"].includes(saved.rawType)
+        ?saved.rawType:null;
+      fire.readyAt=Number(saved.readyAt)||0;
+    }
+
     for(const item of data.escrow||[]){
       if(NAMES[item.type])receive(item);
     }
 
     nextAI=time+.5;nextSave=time+20;nextHUD=0;nextAim=0;
     vy=0;grounded=false;
-    ensureAnimals();updateCamera();updateHand();
+
+    ensureAnimals();
+    if(!isNight())clearNightAggression();
+    previousNight=isNight();
+    updateCamera();updateHand();updateSky();updateCampfires();
   }
 
   /* Homepage and world selection. */
@@ -2380,6 +2754,7 @@ async function main(){
         hidePanels();mode="dead";
         show("hud",true);show("death",true);
         $("deathTitle").textContent=deathReason;
+        renderHUD();
       }else enterPlay();
 
       saveCurrent();
@@ -2425,11 +2800,13 @@ async function main(){
     saveCurrent();document.exitPointerLock?.();
     hidePanels();show("death",true);
     $("deathTitle").textContent=deathReason;
+    renderHUD();
   }
 
   function respawn(){
     hp=4;hunger=4;wetTime=0;vy=0;
     nextHeal=time+30;nextHunger=time+180;nextAttack=time;
+    nextStarve=time+1;playerFlash=0;
 
     let chosen=null;
 
@@ -2465,6 +2842,17 @@ async function main(){
     $("worldName").textContent=current?.name||"NEW WORLD";
     $("health").textContent=`HP ${Math.max(0,hp).toFixed(1)} / 4`;
     $("hunger").textContent=`FOOD ${hunger} / 4`;
+
+    const phase=dayPhase();
+    const remaining=Math.max(0,Math.ceil(
+      isNight()?CYCLE_LENGTH-phase:DAY_LENGTH-phase
+    ));
+    const minutes=Math.floor(remaining/60);
+    const seconds=String(remaining%60).padStart(2,"0");
+
+    $("dayPhase").textContent=
+      `${isNight()?"NIGHT":"DAY"} — ${minutes}:${seconds} LEFT`;
+
     show("air",wetTime>0);
     $("air").textContent=`SWIMMING: ${Math.max(0,15-wetTime).toFixed(1)}s LEFT`;
 
@@ -2476,16 +2864,23 @@ async function main(){
         :`${slot.n} ITEM(S) | INVENTORY`
       :"OPEN INVENTORY";
 
+    const edible=foodIndex();
+    $("eat").textContent=edible>=0
+      ?`EAT ${NAMES[inventory[edible].type]}`:"EAT";
+    $("eat").disabled=edible<0;
+
     $("attack").textContent=time<nextAttack
       ?`${(nextAttack-time).toFixed(1)}s`:"ATTACK";
     $("attack").disabled=time<nextAttack;
-    $("craft").textContent="CRAFT";
+    $("craft").textContent="USE";
     $("mine").textContent="MINE";
 
     let text="";
 
     if(target?.type==="block"){
       const b=target.block;text=NAMES[b.type];
+
+      if(b.type==="table")$("craft").textContent="CRAFT";
 
       if(b.type==="stone"){
         $("mine").textContent="MINE STONE";
@@ -2499,11 +2894,34 @@ async function main(){
           text=trap.baited?"OGGER TRAP — BAITED":"OGGER TRAP — NEEDS ONE BEEF";
         }
       }
+
+      if(b.type==="campfire"){
+        const fire=campfires.get(key(b.x,b.y,b.z));
+
+        if(fire?.rawType){
+          if(time>=fire.readyAt){
+            text=`${NAMES[cookedType(fire.rawType)]} — READY`;
+            $("craft").textContent="TAKE FOOD";
+          }else{
+            text=`CAMPFIRE — COOKING ${Math.ceil(fire.readyAt-time)}s`;
+            $("craft").textContent="COOKING";
+          }
+        }else{
+          text="CAMPFIRE — HOLD BEEF OR LAMB TO COOK";
+          $("craft").textContent="COOK";
+        }
+      }
+
+      if(b.type==="bed"){
+        text=isNight()?"BED — SLEEP UNTIL MORNING":"BED — SLEEP AT NIGHT";
+        $("craft").textContent="SLEEP";
+      }
     }
 
     if(target?.type==="mob"){
       const mob=target.mob;
-      text=`${mob.angry?"ANGRY ":""}${mob.kind.toUpperCase()} `+
+      const angry=mob.angry||(isNight()&&mob.nightAggro);
+      text=`${angry?"ANGRY ":""}${mob.kind.toUpperCase()} `+
         `${Math.max(0,mob.hp).toFixed(1)} HP`;
     }
 
@@ -2577,16 +2995,16 @@ async function main(){
   $("assign2").onclick=()=>assignQuick(21);
   $("assign3").onclick=()=>assignQuick(22);
   $("storeQuick").onclick=storeQuick;
-  $("inventoryEat").onclick=eat;
+  $("inventoryEat").onclick=()=>eat(false);
   $("portableCraft").onclick=()=>openCraft(true);
   $("closeCraft").onclick=closeCraft;
   $("craftResult").onclick=craftItem;
   $("mine").onclick=()=>beginMining(false);
-  $("place").onclick=place;
+  $("place").onclick=()=>place();
   $("attack").onclick=attack;
   $("jump").onclick=jump;
   $("craft").onclick=()=>openCraft(false);
-  $("eat").onclick=eat;
+  $("eat").onclick=()=>eat(false);
 
   $("crafting").addEventListener("click",event=>{
     if(event.target===$("crafting")&&mode==="craft")closeCraft();
@@ -2645,19 +3063,31 @@ async function main(){
     event.preventDefault();
 
     if(event.pointerType==="mouse"){
-      if(document.pointerLockElement!==canvas&&canvas.requestPointerLock){
-        requestMouse();return;
+      if(event.button===2){
+        eat(true);
+        return;
       }
-      if(event.button===2){place();return;}
+
       if(event.button!==0)return;
 
-      updateAim();
+      if(document.pointerLockElement!==canvas&&canvas.requestPointerLock){
+        requestMouse();
+        return;
+      }
 
-      if(target?.type==="block"&&
-        ["table","ogger_trap"].includes(target.block.type)){
+      updateAim();
+      const heldType=activeStack()?.type;
+
+      if(BLOCKS.includes(heldType)||heldType==="corn_seeds"){
+        place();
+      }else if(target?.type==="block"&&
+        INTERACTABLE.has(target.block.type)){
         openCraft(false,target.block);
-      }else if(target?.type==="mob")attack();
-      else beginMining(true);
+      }else if(target?.type==="mob"){
+        attack();
+      }else{
+        beginMining(true);
+      }
     }else if(lookPointer===null){
       lookPointer=event.pointerId;
       lastX=startX=event.clientX;lastY=startY=event.clientY;
@@ -2692,8 +3122,7 @@ async function main(){
           -(event.clientY-rect.top)/rect.height*2+1
         );
 
-        if(hit?.type==="block"&&
-          ["table","ogger_trap"].includes(hit.block.type)){
+        if(hit?.type==="block"&&INTERACTABLE.has(hit.block.type)){
           openCraft(false,hit.block);
         }
       }
@@ -2753,11 +3182,12 @@ async function main(){
     if(event.repeat)return;
     if(event.code==="Space"){event.preventDefault();jump();}
     if(event.code==="KeyE")openCraft(false);
-    if(event.code==="KeyQ")eat();
+    if(event.code==="KeyQ")eat(false);
+    if(event.code==="KeyF")beginMining(false);
 
     if(/^Digit[1-3]$/.test(event.code)){
       active=19+Number(event.code.slice(-1));
-      updateHand();renderHUD();
+      stopMining();updateHand();renderHUD();
     }
   });
 
@@ -2976,7 +3406,7 @@ async function main(){
     }
   }
 
-  /* The farmer is not part of the ogger prey list. */
+  /* The farmer is separate from ogger prey. */
 
   function createFarmer(state={}){
     if(farmerActor)return;
@@ -3067,17 +3497,12 @@ async function main(){
     const m=farmerActor;
 
     return{
-      dead:false,
-      hp:m.hp,
+      dead:false,hp:m.hp,
       position:[
         m.root.position.x,m.root.position.y,m.root.position.z
       ],
-      heading:m.heading,
-      lastHit:m.lastHit,
-      quietUntil:m.quietUntil,
-      fleeFrom:m.fleeFrom,
-      flashUntil:m.flashUntil,
-      deadAt:m.deadAt
+      heading:m.heading,lastHit:m.lastHit,quietUntil:m.quietUntil,
+      fleeFrom:m.fleeFrom,flashUntil:m.flashUntil,deadAt:m.deadAt
     };
   }
 
@@ -3158,7 +3583,7 @@ async function main(){
 
     farmWaterRoot=new THREE.Group();
 
-    for(const pond of camp.ponds){
+    for(const pond of camp.ponds||[]){
       const mesh=new THREE.Mesh(
         farmWaterGeometry,farmWaterMaterial
       );
@@ -3169,6 +3594,45 @@ async function main(){
     }
 
     scene.add(farmWaterRoot);
+  }
+
+  /*
+   * Add a campfire once. If the player later mines it,
+   * campfireVersion prevents it from being generated again.
+   */
+
+  function addCampfireToCamp(){
+    const camp=farmFeature();
+    if(!camp?.placed||camp.campfireVersion===1)return false;
+
+    const a=camp.anchor;
+    const candidates=[
+      [a.x+3,a.z+5],
+      [a.x+2,a.z+5],
+      [a.x-1,a.z+3],
+      [a.x+4,a.z+4],
+      [a.x-1,a.z+1],
+      [a.x+3,a.z+6]
+    ];
+
+    for(const [x,z] of candidates){
+      const floor=floorNear(x,z,a.y+.5,1,2);
+      if(floor===null||floor<WATER+.2)continue;
+
+      const y=Math.round(floor+.5);
+      const ground=at(x,y-1,z);
+
+      if(!ground||!["dirt","sand"].includes(ground.type))continue;
+      if(at(x,y,z)||at(x,y+1,z))continue;
+      if(cornPlants.has(key(x,y-1,z)))continue;
+
+      put(x,y,z,"campfire");
+      camp.campfireVersion=1;
+      camp.campfirePosition={x,y,z};
+      return true;
+    }
+
+    return false;
   }
 
   function buildFarmerCamp(freshWorld=false){
@@ -3256,6 +3720,7 @@ async function main(){
       dead:false,hp:8,position:[x+1,y+.5,z+4]
     };
 
+    addCampfireToCamp();
     rebuildTerrain();
     makeCampWater();
 
@@ -3297,6 +3762,7 @@ async function main(){
     if(!camp.placed){
       buildFarmerCamp(freshWorld);
     }else{
+      if(campIntact()&&addCampfireToCamp())rebuildTerrain();
       makeCampWater();
       if(!camp.farmer?.dead)createFarmer(camp.farmer||{});
     }
@@ -3374,8 +3840,7 @@ async function main(){
           if(d<5)risk+=(5-d)*5;
         }
 
-        const cost=
-          node.cost+1+Math.abs(floor-node.y)*.5+risk;
+        const cost=node.cost+1+Math.abs(floor-node.y)*.5+risk;
         const id=`${nx},${nz}`;
 
         if(best.has(id)&&best.get(id)<=cost)continue;
@@ -3630,7 +4095,7 @@ async function main(){
 
     farmer.legs.forEach((leg,i)=>{
       leg.rotation.x=moving
-        ?Math.sin(time*(running?15:8)+i*Math.PI)*(running?.5:.28)
+        ?Math.sin(time*(running?15:8)+i*Math.PI)*(running ? .5 : .28)
         :0;
     });
 
@@ -3741,42 +4206,10 @@ async function main(){
     notify("CORN PLANTED. IT GROWS IN TWO MINUTES.");
   };
 
-  const farmOriginalEat=eat;
-
-  eat=function(){
-    if(!["playing","inventory"].includes(mode))return;
-
-    if(activeStack()?.type!=="corn"){
-      farmOriginalEat();return;
-    }
-
-    takeItem(active);hunger=Math.min(4,hunger+1);
-    updateHand();notify("ATE CORN. +1 FOOD.");
-
-    if(mode==="inventory")renderInventory();
-    renderHUD();
-  };
-
-  $("mine").onclick=()=>beginMining(false);
-  $("place").onclick=()=>place();
-  $("eat").onclick=()=>eat();
-  $("inventoryEat").onclick=()=>eat();
-
-  const farmOriginalInventory=renderInventory;
-
-  renderInventory=function(){
-    farmOriginalInventory();
-
-    const cornSelected=activeStack()?.type==="corn";
-    $("inventoryEat").textContent=cornSelected?"EAT CORN":"EAT BEEF";
-    $("inventoryEat").disabled=cornSelected?false:total("beef")===0;
-  };
-
   const farmOriginalHUD=renderHUD;
 
   renderHUD=function(){
     farmOriginalHUD();
-    $("eat").textContent=activeStack()?.type==="corn"?"EAT CORN":"EAT BEEF";
 
     if(target?.type==="crop"){
       const mature=time>=target.plant.matureAt;
@@ -3817,13 +4250,12 @@ async function main(){
     hand.rotation.set(-.15,-.25,-.25);
   };
 
-  /* Save and restore the new feature without replacing old terrain. */
+  /* Preserve farmer and crop data alongside the existing world save. */
 
   const farmOriginalCapture=capture;
 
   capture=function(){
     const camp=farmFeature();
-
     if(camp&&farmerActor)camp.farmer=farmerSaveState();
 
     const data=farmOriginalCapture();
@@ -3883,44 +4315,7 @@ async function main(){
     }
 
     applyWorldUpdates(false);
-  };
-
-  /* Add farmer and crop updates to the same animation loop. */
-
-  const farmOriginalSetLoop=renderer.setAnimationLoop.bind(renderer);
-
-  renderer.setAnimationLoop=function(callback){
-    if(!callback)return farmOriginalSetLoop(null);
-
-    let previousFarmFrame=performance.now();
-
-    return farmOriginalSetLoop((now,frame)=>{
-      const dt=Math.min(
-        Math.max(0,(now-previousFarmFrame)/1000),.1
-      );
-
-      previousFarmFrame=now;
-      callback(now,frame);
-
-      if(mode==="playing"&&!document.hidden&&hp>0){
-        const camp=farmFeature();
-
-        if(camp?.won&&!camp.placed&&time>=farmNextRetry){
-          buildFarmerCamp(false);
-        }
-
-        moveFarmer(dt);
-      }
-
-      updateCornVisuals();
-
-      if(farmWaterRoot){
-        for(const mesh of farmWaterRoot.children){
-          const pond=mesh.userData.pond;
-          mesh.visible=!at(pond.x,pond.y,pond.z);
-        }
-      }
-    });
+    updateCornVisuals();
   };
 
   /* Initial scene and animation loop. */
@@ -3935,7 +4330,7 @@ async function main(){
   let previous=performance.now();
 
   renderer.setAnimationLoop(now=>{
-    const dt=Math.min((now-previous)/1000,.1);
+    const dt=Math.min(Math.max(0,(now-previous)/1000),.1);
     previous=now;
 
     if(mode==="home"||mode==="worlds"){
@@ -3949,6 +4344,9 @@ async function main(){
 
     if(mode==="playing"&&!document.hidden){
       time+=dt;
+      dayClock+=dt;
+      updateSky();
+
       let remaining=dt;
 
       while(remaining>0&&hp>0){
@@ -3982,53 +4380,85 @@ async function main(){
         }
 
         if(time>=nextHunger){
-          hunger=Math.max(0,hunger-1);nextHunger+=180;
+          hunger=Math.max(0,hunger-1);
+          nextHunger+=180;
+        }
+
+        if(hunger<=0){
+          if(time>=nextStarve){
+            hp=Math.max(0,hp-.5);
+            nextStarve=time+1;
+            playerFlash=time+.3;
+            deathReason="YOU STARVED";
+          }
+        }else{
+          nextStarve=time+1;
         }
 
         if(time>=nextHeal){
-          hp=Math.min(4,hp+2);nextHeal=time+30;
+          if(hunger>0&&hp>0)hp=Math.min(4,hp+2);
+          nextHeal=time+30;
         }
 
-        if(time>=nextSpawn){
-          spawnWave();nextSpawn+=900;
-        }
+        if(hp>0){
+          if(time>=nextSpawn){
+            spawnWave();nextSpawn+=900;
+          }
 
-        if(time>=nextAI){
-          thinkMobs();nextAI=time+.45;
-        }
+          if(time>=nextAI){
+            thinkMobs();nextAI=time+.45;
+          }
 
-        moveMobs(dt);
-        updateDevices();
+          moveMobs(dt);
+          updateDevices();
+          updateCampfires();
 
-        for(let i=drops.length-1;i>=0;i--){
-          const drop=drops[i];
-          drop.mesh.position.y=
-            drop.y+Math.sin(time*3+drop.phase)*.07;
-          drop.mesh.rotation.y+=dt;
+          const camp=farmFeature();
 
-          if(Math.hypot(feet.x-drop.x,feet.z-drop.z)<1.35&&
-            Math.abs(feet.y+.3-drop.y)<1.8&&
-            addMain(inventory,drop.item)){
-            scene.remove(drop.mesh);
-            drops.splice(i,1);
-            notify(`PICKED UP ${NAMES[drop.item.type]}.`);
-            updateHand();
+          if(camp?.won&&!camp.placed&&time>=farmNextRetry){
+            buildFarmerCamp(false);
+          }
+
+          moveFarmer(dt);
+          updateCornVisuals();
+
+          if(farmWaterRoot){
+            for(const mesh of farmWaterRoot.children){
+              const pond=mesh.userData.pond;
+              mesh.visible=!at(pond.x,pond.y,pond.z);
+            }
+          }
+
+          for(let i=drops.length-1;i>=0;i--){
+            const drop=drops[i];
+            drop.mesh.position.y=
+              drop.y+Math.sin(time*3+drop.phase)*.07;
+            drop.mesh.rotation.y+=dt;
+
+            if(Math.hypot(feet.x-drop.x,feet.z-drop.z)<1.35&&
+              Math.abs(feet.y+.3-drop.y)<1.8&&
+              addMain(inventory,drop.item)){
+              scene.remove(drop.mesh);
+              drops.splice(i,1);
+              notify(`PICKED UP ${NAMES[drop.item.type]}.`);
+              updateHand();
+            }
+          }
+
+          updateHand();hand.visible=true;
+          hand.position.y=-.28+
+            (held.size?Math.sin(time*10)*.012:0);
+          hand.rotation.z=-.25+
+            (time<swingUntil
+              ?Math.sin((swingUntil-time)/.3*Math.PI)*.9
+              :0);
+
+          if(time>=nextSave){
+            saveCurrent();nextSave=time+20;
           }
         }
 
-        updateHand();hand.visible=true;
-        hand.position.y=-.28+
-          (held.size?Math.sin(time*10)*.012:0);
-        hand.rotation.z=-.25+
-          (time<swingUntil
-            ?Math.sin((swingUntil-time)/.3*Math.PI)*.9
-            :0);
-
         $("damageTint").style.opacity=time<playerFlash?"1":"0";
-
-        if(time>=nextSave){
-          saveCurrent();nextSave=time+20;
-        }
 
         if(time>=nextHUD){
           renderHUD();nextHUD=time+.1;
