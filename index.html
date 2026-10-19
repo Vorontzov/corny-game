@@ -1,11 +1,9 @@
 <!doctype html>
 <!--
 Corny Game — complete index.html.
-Cooperative multiplayer prototype: up to four players.
-The host must keep this page open.
-Multiplayer uses PeerJS/WebRTC and public signaling.
-Some networks need a TURN relay, which is not configured here.
-Live multiplayer browser testing has not been performed in this chat.
+Includes saved player names, three starter skins, and cooperative multiplayer.
+The multiplayer host must keep the game open.
+Live browser testing has not been performed in this chat.
 -->
 <html lang="en">
 <head>
@@ -42,6 +40,7 @@ p{font-size:21px;line-height:1.2;color:#d3d8b9;margin:12px 0}
 .full{width:100%}
 .row{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
 input{width:100%;padding:10px;background:#10281d;color:var(--cream);border:2px solid #7e9460;font-size:25px}
+input[readonly]{color:#e4ca78;background:#173326}
 #worldList{display:grid;gap:10px;margin:20px 0;text-align:left}
 .worldCard{width:100%;display:flex;gap:14px;justify-content:space-between;align-items:center;padding:14px;background:#244932;border:2px solid #627950;color:var(--cream);text-align:left}
 .worldCard.selected{border-color:var(--gold);background:#615632}
@@ -98,6 +97,16 @@ input{width:100%;padding:10px;background:#10281d;color:var(--cream);border:2px s
 #errorText{font:16px/1.4 "Courier New",monospace;white-space:pre-wrap;overflow-wrap:anywhere;text-align:left}
 #roomCode{letter-spacing:5px;text-transform:uppercase}
 #netCodeText{font-size:38px;letter-spacing:4px;color:var(--gold)}
+#home h1{margin:15px 0;font-size:clamp(58px,10vw,88px)}
+.profileBox{padding:14px;margin:14px 0;background:#10291d;border:2px solid #627950}
+.profileBox label{display:block;margin-bottom:7px;color:var(--gold);font-size:23px}
+#homeUsername{text-align:center}
+.skinGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.skinChoice{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:143px;padding:9px 4px;background:#1c3b29;color:var(--cream);border:2px solid #60764e;font-size:19px;line-height:1}
+.skinChoice.selected{border-color:var(--gold);background:#514b2a;box-shadow:inset 0 0 0 1px var(--gold)}
+.skinChoice svg{display:block;width:66px;height:88px;image-rendering:pixelated}
+.skinChoice .skinStatus{font-size:15px;color:#d9bd72}
+#profileHint{margin:9px 0 0;font-size:18px}
 @media(max-width:780px){
 .panel{padding:18px}.craftLayout{grid-template-columns:1fr}
 #craftGrid{width:220px}.craftSlot{height:61px}
@@ -106,6 +115,8 @@ input{width:100%;padding:10px;background:#10281d;color:var(--cream);border:2px s
 .inventoryGrid{gap:5px}.slot{min-height:80px;font-size:16px}
 .card{font-size:18px}.stats{font-size:20px;gap:10px}
 .toolbar .control{font-size:18px;padding:6px}
+.skinChoice{font-size:17px;min-height:137px}
+.profileBox{padding:10px}
 }
 @media(max-height:530px){
 .panel{max-height:95dvh;padding:14px}h1{font-size:64px;margin:14px 0}
@@ -114,6 +125,7 @@ h2{font-size:34px}p{font-size:18px}.slot{min-height:64px}
 #notice{bottom:166px}#actions{grid-template-columns:repeat(3,72px)}
 #walk{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(2,40px)}
 .control{font-size:19px;min-height:40px}
+.skinChoice svg{height:68px;width:51px}.skinChoice{min-height:110px}
 }
 </style>
 </head>
@@ -135,15 +147,32 @@ h2{font-size:34px}p{font-size:18px}.slot{min-height:64px}
   <div class="panel">
     <div class="eyebrow">YOUR WORLD. YOUR ADVENTURE.</div>
     <h1>CORNY<br>GAME</h1>
-    <p>Explore a forest.<br>Dig deeper. Build something new.</p>
+
+    <div class="profileBox">
+      <label for="homeUsername">YOUR USERNAME</label>
+      <input
+        id="homeUsername"
+        maxlength="16"
+        autocomplete="nickname"
+        autocapitalize="off"
+        spellcheck="false"
+        placeholder="Type your name"
+        aria-describedby="profileHint"
+      >
+      <p>CHOOSE YOUR STARTER SKIN</p>
+      <div id="skinChoices" class="skinGrid" aria-label="Starter skins"></div>
+      <p id="profileHint" class="small">Enter a username to play.</p>
+    </div>
+
     <button id="playButton" class="primary full">PLAY</button>
     <button id="joinHome" class="secondary full">JOIN MULTIPLAYER</button>
+
     <p class="small">
       iPad: drag to look, hold arrows to walk.<br>
       Computer: WASD, mouse, Space.<br>
       Left-click: place blocks. Right-click: eat quick-stack food.<br>
       Mine button or F: mine and pick up blocks.<br>
-      Worlds save in this browser.
+      Your name, skin, and worlds save on this device.
     </p>
   </div>
 </div>
@@ -170,9 +199,9 @@ h2{font-size:34px}p{font-size:18px}.slot{min-height:64px}
     <div class="eyebrow">PLAY TOGETHER</div>
     <h2>JOIN A FRIEND</h2>
     <p>Up to four players can share one world.</p>
-    <label for="playerName">YOUR NAME</label>
-    <input id="playerName" maxlength="16" placeholder="Player">
-    <p></p>
+    <label for="playerName">YOUR USERNAME</label>
+    <input id="playerName" maxlength="16" readonly aria-label="Username selected on the home screen">
+    <p class="small">Choose your name and skin on the home screen.</p>
     <label for="roomCode">ROOM CODE</label>
     <input id="roomCode" maxlength="8" autocomplete="off" spellcheck="false" placeholder="ABCDEFGH">
     <button id="joinRoom" class="primary full">JOIN WORLD</button>
@@ -234,7 +263,7 @@ h2{font-size:34px}p{font-size:18px}.slot{min-height:64px}
 
     <div id="hostControls">
       <p>PLAY WITH FRIENDS</p>
-      <input id="hostName" maxlength="16" placeholder="Your name">
+      <input id="hostName" maxlength="16" readonly aria-label="Your username">
       <button id="hostRoom" class="secondary full">HOST MULTIPLAYER</button>
     </div>
 
@@ -439,7 +468,7 @@ function blockGeometry(type){
  for(let i=0;i<normals.count;i++){
   const ny=normals.getY(i);
   const color=new THREE.Color(type==="dirt"?(ny>.5?"#7d9654":"#8c6847"):"#ffffff");
-  color.multiplyScalar(ny<-.5?.72:1);colors.push(color.r,color.g,color.b);
+  color.multiplyScalar(ny<-.5 ? .72 : 1);colors.push(color.r,color.g,color.b);
  }
  g.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));return g;
 }
@@ -476,7 +505,7 @@ let worldFeatures={},farmerActor=null,farmWaterRoot=null,farmNextRetry=0;
 let farmerRuntime={path:[],goal:null,nextPlan:0,nextThink:0,mode:"home",fieldIndex:0,plantUntil:0,nextIdle:0};
 let netRole="",netActing=null,netPending=null;
 const feet=new THREE.Vector3(0,.5,0),held=new Set(),matrix=new THREE.Matrix4();
-const mouseRay=new THREE.Raycaster(),farmPickRay=new THREE.Raycaster();
+const mouseRay=new THREE.Raycaster();
 
 function notify(text){
  if(netActing){netSend(netActing.conn,{t:"note",text});return;}
@@ -714,7 +743,7 @@ function makeMob(kind,x,y,z,state={}){
  }else{
   const horse=kind==="horse",color=horse?"brown":"cream";
   part(.82,.67,horse?1.38:1.15,0,.89,0,color);
-  part(.48,horse?.65:.52,.52,0,horse?1.27:1.12,-.68,color);
+  part(.48,horse ? .65 : .52,.52,0,horse?1.27:1.12,-.68,color);
   part(.45,.23,.24,0,horse?1.08:.96,-.96,horse?"brown":"muzzle");
   for(const s of [-1,1]){
    for(const e of [-1,1])part(.18,.58,.19,s*.27,.29,e*.45,"dark",true);
@@ -1069,7 +1098,7 @@ function chooseGoal(m,away=null){
   const a=away?Math.atan2(p.x-away.x,p.z-away.z)+(random()-.5)*1.4:m.heading+(random()-.5)*3;
   const r=away?4+random()*4:2+random()*4;
   const x=p.x+Math.sin(a)*r,z=p.z+Math.cos(a)*r,f=walkingFloor(x,z,p.y,.36,1.85);
-  if(dryFloor(x,z,f)){m.goal={x,z};m.goalAt=time+(away?.9:3+random()*4);return;}
+  if(dryFloor(x,z,f)){m.goal={x,z};m.goalAt=time+(away ? .9 : 3+random()*4);return;}
  }
  m.goal=null;m.goalAt=time+.8;
 }
@@ -1159,7 +1188,7 @@ function moveMobs(dt){
   }
   m.model.position.y*=Math.exp(-12*dt);m.root.rotation.y=m.heading;
   m.root.rotation.x=time<m.biteUntil?Math.sin((m.biteUntil-time)*13)*.2:0;
-  m.legs.forEach((leg,i)=>leg.rotation.x=moving?Math.sin(time*(m.speed>2?15:8)+i*Math.PI+m.phase)*(m.speed>2?.5:.27):0);
+  m.legs.forEach((leg,i)=>leg.rotation.x=moving?Math.sin(time*(m.speed>2?15:8)+i*Math.PI+m.phase)*(m.speed>2 ? .5 : .27):0);
   if(m.red&&time>=m.flashUntil)flashMob(m,false);
  }
 }
@@ -1720,7 +1749,7 @@ function moveFarmer(dt){
  }
  f.model.position.y*=Math.exp(-12*dt);f.root.rotation.y=f.heading;
  const running=farmerRuntime.mode==="flee";
- f.legs.forEach((leg,i)=>leg.rotation.x=moving?Math.sin(time*(running?15:8)+i*Math.PI)*(running?.5:.28):0);
+ f.legs.forEach((leg,i)=>leg.rotation.x=moving?Math.sin(time*(running?15:8)+i*Math.PI)*(running ? .5 : .28):0);
  f.arms.forEach((arm,i)=>arm.rotation.x=time<f.workingUntil?-.8:moving?Math.sin(time*(running?15:8)+(i+1)*Math.PI)*.25:0);
  if(f.red&&time>=f.flashUntil)flashMob(f,false);
  f.root.updateMatrixWorld(true);
@@ -2056,13 +2085,8 @@ window.addEventListener("pagehide",()=>saveCurrent());
 function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight,false);}
 window.addEventListener("resize",resize);resize();
 
-/*
- * Multiplayer.
- * World mutations run on the host. Visitors keep their own personal
- * inventory and health. This is intended for cooperative friend rooms,
- * not a competitive game with anti-cheat protection.
- */
-const NET_VERSION=1;
+/* Multiplayer. */
+const NET_VERSION=2;
 const netClients=new Map(),netAvatars=new Map(),netChanges=new Map();
 let netPeer=null,netConnection=null,netCode="",netRoster=[],netEpoch=0;
 let netSDK=null,netNextSend=0,netNextPose=0,netSequence=0,netJoinTimer=null;
@@ -2118,9 +2142,7 @@ function netPerson(id,name,s){
 }
 function netPeople(){
  const host=netHostPose||{feet:feet.toArray(),yaw,hp};
- if(netRole==="guest"){
-  return netRoster.map(p=>netPerson(p.id,p.name,p));
- }
+ if(netRole==="guest")return netRoster.map(p=>netPerson(p.id,p.name,p));
  const list=[netPerson("host",netName,host)];
  if(netRole==="host")for(const e of netClients.values())if(e.ready&&netValidPose(e.pose))list.push(netPerson(e.id,e.name,e.pose));
  return list;
@@ -2129,8 +2151,7 @@ function netAggroTarget(m,night){
  const people=netPeople().filter(p=>p.hp>0),p=m.root.position;
  if(!night){m.nightAggro=false;m.nightTarget=null;}
  if(m.angry){
-  const wanted=m.angerTarget||"host";
-  const target=people.find(o=>o.id===wanted);
+  const wanted=m.angerTarget||"host",target=people.find(o=>o.id===wanted);
   if(target)return target;
  }
  if(!night)return null;
@@ -2143,16 +2164,13 @@ function netAggroTarget(m,night){
   if(distance(p,person.position)>=12||Math.abs(p.y-person.position.y)>=3)continue;
   const a=p.clone();a.y+=1.5;
   const b=person.position.clone();b.y+=1;
-  if(lineClear(a,b)){
-   m.nightAggro=true;m.nightTarget=person.id;return person;
-  }
+  if(lineClear(a,b)){m.nightAggro=true;m.nightTarget=person.id;return person;}
  }
  return null;
 }
 function netHurtPlayer(person,amount){
  if(person.id==="host"){
-  hp=Math.max(0,hp-amount);playerFlash=time+.5;deathReason="AN OGGER GOT YOU";
-  notify("AN OGGER BIT YOU.");
+  hp=Math.max(0,hp-amount);playerFlash=time+.5;deathReason="AN OGGER GOT YOU";notify("AN OGGER BIT YOU.");
  }else{
   const e=netClients.get(person.id);
   if(e){e.pose.hp=Math.max(0,(Number(e.pose.hp)||0)-amount);netSend(e.conn,{t:"hurt",amount});}
@@ -2163,8 +2181,7 @@ function netUI(){
  show("netBadge",activeRoom);
  const count=netRole==="host"?1+[...netClients.values()].filter(e=>e.ready).length:netRoster.length;
  $("netBadge").textContent=activeRoom?`CO-OP ${count||1}/4 | ${netCode}`:"";
- show("hostControls",!activeRoom);
- show("roomControls",activeRoom);
+ show("hostControls",!activeRoom);show("roomControls",activeRoom);
  $("netCodeText").textContent=netCode;
  $("netRoomDetail").textContent=netRole==="host"
   ?"KEEP THIS GAME OPEN SO FRIENDS CAN STAY CONNECTED. SHARED CHANGES SAVE TO THIS WORLD."
@@ -2349,11 +2366,6 @@ function netNearBlock(k){
  const center=new THREE.Vector3(b.x,b.y,b.z);
  return origin.distanceTo(center)<=5.7&&lineClear(origin,center,k);
 }
-
-/*
- * Temporarily use a visitor's personal state while running a world action.
- * UI and saves are suppressed for this short synchronous operation.
- */
 function netWithPlayer(e,s,fn){
  const old={
   inventory,active,hp,hunger,nextHunger,nextHeal,nextAttack,wetTime,
@@ -2615,7 +2627,9 @@ function netAnimate(dt){
  const people=netPeople().filter(p=>p.id!==local),ids=new Set();
  for(const person of people){
   ids.add(person.id);let a=netAvatars.get(person.id);
-  if(a&&a.name!==person.name){netDisposeAvatar(a);netAvatars.delete(person.id);a=null;}
+  if(a&&(a.name!==person.name||a.skin!==person.skin)){
+   netDisposeAvatar(a);netAvatars.delete(person.id);a=null;
+  }
   if(!a){a=netMakeAvatar(person);netAvatars.set(person.id,a);}
   const moved=a.root.position.distanceTo(person.position)>.025;
   a.root.visible=person.hp>0;
@@ -2691,6 +2705,330 @@ $("stopRoom").onclick=()=>{
  saveCurrent();netStop(true);notify("MULTIPLAYER ENDED. YOUR WORLD IS STILL SAVED.");
 };
 
+/* Player profile and three starter skins. */
+const PROFILE_KEY="corny-player-profile-v1";
+const SKINS=[
+ {
+  id:"pine",name:"FOREST SCOUT",
+  shirt:"#4f7952",trousers:"#66513b",boots:"#3f392f",
+  skin:"#c99c74",hair:"#60422e",hat:"#395f43"
+ },
+ {
+  id:"corn",name:"CORN FARMER",
+  shirt:"#dfba57",trousers:"#66513b",boots:"#40372e",
+  skin:"#8d5b3f",hair:"#302821",hat:"#d2b574"
+ },
+ {
+  id:"ocean",name:"OCEAN SCOUT",
+  shirt:"#537f9b",trousers:"#354c61",boots:"#303b43",
+  skin:"#dbb48e",hair:"#453b32",hat:"#ece6d1"
+ }
+];
+function skinById(id){
+ return SKINS.find(s=>s.id===id)||SKINS[0];
+}
+function cleanUsername(value){
+ return Array.from(
+  String(value??"").replace(/[\u0000-\u001f\u007f<>]/g,"").trim()
+ ).slice(0,16).join("");
+}
+function migratePlayerProfile(raw,legacy){
+ const s=raw&&typeof raw==="object"?raw:{};
+ return{
+  username:cleanUsername(s.username||legacy||""),
+  skin:skinById(s.skin).id
+ };
+}
+let playerProfile=migratePlayerProfile(null,null);
+try{
+ playerProfile=migratePlayerProfile(
+  JSON.parse(localStorage.getItem(PROFILE_KEY)||"null"),
+  localStorage.getItem("corny-player-name")
+ );
+}catch{}
+
+const localPlayerSkin=new THREE.MeshLambertMaterial({
+ color:skinById(playerProfile.skin).skin
+});
+const localPlayerShirt=new THREE.MeshLambertMaterial({
+ color:skinById(playerProfile.skin).shirt
+});
+
+function savePlayerProfile(){
+ try{
+  localStorage.setItem(PROFILE_KEY,JSON.stringify(playerProfile));
+  localStorage.setItem("corny-player-name",playerProfile.username);
+ }catch{}
+}
+function syncPlayerIdentity(){
+ netName=playerProfile.username||"PLAYER";
+ $("playerName").value=netName;
+ $("hostName").value=netName;
+
+ const ready=!!playerProfile.username;
+ $("playButton").disabled=!ready;
+ $("joinHome").disabled=!ready;
+
+ $("profileHint").textContent=ready
+  ?`${skinById(playerProfile.skin).name} — SAVED ON THIS DEVICE`
+  :"ENTER A USERNAME TO PLAY.";
+
+ localPlayerSkin.color.set(skinById(playerProfile.skin).skin);
+ localPlayerShirt.color.set(skinById(playerProfile.skin).shirt);
+}
+function makeSkinPreview(skin){
+ const ns="http://www.w3.org/2000/svg";
+ const svg=document.createElementNS(ns,"svg");
+ svg.setAttribute("viewBox","0 0 72 96");
+ svg.setAttribute("role","img");
+ svg.setAttribute("aria-label",skin.name);
+ svg.setAttribute("shape-rendering","crispEdges");
+
+ function rect(x,y,w,h,fill){
+  const r=document.createElementNS(ns,"rect");
+  r.setAttribute("x",x);r.setAttribute("y",y);
+  r.setAttribute("width",w);r.setAttribute("height",h);
+  r.setAttribute("fill",fill);svg.append(r);
+ }
+
+ rect(20,61,14,25,skin.trousers);
+ rect(38,61,14,25,skin.trousers);
+ rect(19,83,15,9,skin.boots);
+ rect(38,83,15,9,skin.boots);
+ rect(20,35,32,31,skin.shirt);
+ rect(9,36,11,25,skin.shirt);
+ rect(52,36,11,25,skin.shirt);
+ rect(9,56,11,10,skin.skin);
+ rect(52,56,11,10,skin.skin);
+ rect(22,11,28,27,skin.skin);
+ rect(22,8,28,9,skin.hair);
+ rect(28,23,3,4,"#202a24");
+ rect(42,23,3,4,"#202a24");
+
+ if(skin.id==="pine"){
+  rect(19,7,34,8,skin.hat);
+  rect(17,14,38,3,skin.hat);
+  rect(24,36,5,30,"#a98654");
+ }else if(skin.id==="corn"){
+  rect(12,7,48,5,skin.hat);
+  rect(24,0,24,9,skin.hat);
+  rect(25,45,22,21,skin.trousers);
+  rect(25,35,5,25,skin.trousers);
+  rect(42,35,5,25,skin.trousers);
+ }else{
+  rect(20,4,32,11,skin.hat);
+  rect(20,14,32,3,"#354c61");
+  rect(20,42,32,4,"#eee8d7");
+  rect(20,53,32,4,"#eee8d7");
+ }
+ return svg;
+}
+function renderPlayerProfile(){
+ $("homeUsername").value=playerProfile.username;
+ $("skinChoices").replaceChildren();
+
+ for(const skin of SKINS){
+  const button=document.createElement("button");
+  const selected=playerProfile.skin===skin.id;
+  button.type="button";
+  button.className="skinChoice"+(selected?" selected":"");
+  button.setAttribute("aria-pressed",String(selected));
+  button.append(makeSkinPreview(skin));
+
+  const name=document.createElement("span");
+  name.textContent=skin.name;
+  const status=document.createElement("span");
+  status.className="skinStatus";
+  status.textContent=selected?"SELECTED":"CHOOSE";
+  button.append(name,status);
+
+  button.onclick=()=>{
+   playerProfile.skin=skin.id;
+   savePlayerProfile();
+   renderPlayerProfile();
+   handKey="";
+   updateHand();
+  };
+
+  $("skinChoices").append(button);
+ }
+ syncPlayerIdentity();
+}
+function commitPlayerProfile(){
+ playerProfile.username=cleanUsername($("homeUsername").value);
+ playerProfile.skin=skinById(playerProfile.skin).id;
+ $("homeUsername").value=playerProfile.username;
+ savePlayerProfile();
+ syncPlayerIdentity();
+
+ if(!playerProfile.username){
+  $("profileHint").textContent="ENTER A USERNAME TO PLAY.";
+  $("homeUsername").focus();
+  return false;
+ }
+ return true;
+}
+$("homeUsername").addEventListener("input",()=>{
+ playerProfile.username=cleanUsername($("homeUsername").value);
+ savePlayerProfile();
+ syncPlayerIdentity();
+});
+$("homeUsername").addEventListener("blur",()=>{
+ $("homeUsername").value=playerProfile.username;
+});
+$("homeUsername").addEventListener("keydown",e=>{
+ if(e.key==="Enter"){
+  e.preventDefault();
+  if(commitPlayerProfile())$("playButton").click();
+ }
+});
+
+const profileOriginalPlay=$("playButton").onclick;
+$("playButton").onclick=()=>{
+ if(commitPlayerProfile())profileOriginalPlay();
+};
+const profileOriginalJoinHome=$("joinHome").onclick;
+$("joinHome").onclick=()=>{
+ if(commitPlayerProfile())profileOriginalJoinHome();
+};
+$("hostRoom").onclick=()=>{
+ if(commitPlayerProfile())netStartHost();
+};
+$("joinRoom").onclick=()=>{
+ if(commitPlayerProfile())netStartJoin();
+};
+
+/* Carry skin IDs in personal states and public player snapshots. */
+const profileOriginalNetProfile=netProfile;
+netProfile=function(){
+ const data=profileOriginalNetProfile();
+ data.name=netActing?.name||playerProfile.username||"PLAYER";
+ data.skin=skinById(
+  netActing?netActing.pose?.skin:playerProfile.skin
+ ).id;
+ return data;
+};
+
+const profileOriginalNetPerson=netPerson;
+netPerson=function(id,name,state){
+ const person=profileOriginalNetPerson(id,name,state);
+ person.name=cleanUsername(name)||"PLAYER";
+ const fallback=id==="host"&&netRole!=="guest"
+  ?playerProfile.skin:"pine";
+ person.skin=skinById(state.skin||fallback).id;
+ return person;
+};
+
+const profileOriginalNetFrame=netFrame;
+netFrame=function(){
+ const packet=profileOriginalNetFrame();
+ const appearances=new Map(
+  netPeople().map(p=>[p.id,p.skin])
+ );
+ for(const p of packet.players){
+  p.skin=skinById(appearances.get(p.id)).id;
+ }
+ return packet;
+};
+
+/* Match the visible bare hand to the selected skin. */
+const profileOriginalHand=updateHand;
+updateHand=function(){
+ if(netActing)return;
+ profileOriginalHand();
+
+ if(!activeStack()){
+  for(const part of hand.children){
+   if(part.isMesh&&!part.userData.playerSleeve){
+    part.material=localPlayerSkin;
+   }
+  }
+  if(!hand.children.some(p=>p.userData.playerSleeve)){
+   const sleeve=cube(
+    hand,.14,.11,.15,0,-.20,0,localPlayerShirt
+   );
+   sleeve.userData.playerSleeve=true;
+  }
+ }
+};
+
+/* Render the selected starter outfit for other players. */
+netMakeAvatar=function(person){
+ const skin=skinById(person.skin);
+ const root=new THREE.Group(),legs=[];
+
+ function part(parent,w,h,d,x,y,z,color){
+  return cube(
+   parent,w,h,d,x,y,z,
+   new THREE.MeshLambertMaterial({color})
+  );
+ }
+
+ part(root,.55,.65,.30,0,.95,0,skin.shirt);
+ part(root,.42,.43,.42,0,1.49,0,skin.skin);
+ part(root,.44,.12,.44,0,1.68,.015,skin.hair);
+
+ for(const side of [-1,1]){
+  const leg=new THREE.Group();
+  leg.position.set(side*.15,.65,0);
+  root.add(leg);
+  part(leg,.20,.55,.23,0,-.29,0,skin.trousers);
+  part(leg,.22,.13,.31,0,-.59,-.035,skin.boots);
+  legs.push(leg);
+
+  part(root,.17,.43,.20,side*.36,1.045,0,skin.shirt);
+  part(root,.17,.18,.20,side*.36,.74,0,skin.skin);
+  part(root,.06,.06,.022,side*.11,1.53,-.222,"#202a24");
+ }
+
+ if(skin.id==="pine"){
+  part(root,.50,.10,.50,0,1.77,0,skin.hat);
+  part(root,.54,.04,.22,0,1.72,-.20,skin.hat);
+  part(root,.065,.60,.025,-.14,.95,-.17,"#a98654");
+  part(root,.34,.40,.16,0,.99,.23,"#806343");
+ }else if(skin.id==="corn"){
+  part(root,.72,.05,.64,0,1.75,0,skin.hat);
+  part(root,.43,.16,.43,0,1.84,0,skin.hat);
+  part(root,.25,.38,.028,0,.88,-.168,skin.trousers);
+  for(const side of [-1,1]){
+   part(root,.06,.48,.03,side*.15,1.08,-.17,skin.trousers);
+  }
+ }else{
+  part(root,.48,.12,.48,0,1.77,0,skin.hat);
+  part(root,.50,.04,.50,0,1.72,0,"#354c61");
+  part(root,.52,.035,.20,0,1.70,-.20,skin.hat);
+  part(root,.56,.07,.025,0,1.10,-.166,"#eee8d7");
+  part(root,.56,.07,.025,0,.89,-.166,"#eee8d7");
+ }
+
+ const c=document.createElement("canvas");
+ c.width=256;c.height=64;
+ const ctx=c.getContext("2d");
+ ctx.fillStyle="#10271ee8";ctx.fillRect(0,0,256,64);
+ ctx.fillStyle="#f3e7c1";
+ ctx.font='32px "VT323", monospace';
+ ctx.textAlign="center";
+ ctx.fillText(cleanUsername(person.name)||"PLAYER",128,43);
+
+ const texture=new THREE.CanvasTexture(c);
+ const label=new THREE.Sprite(
+  new THREE.SpriteMaterial({map:texture,depthWrite:false})
+ );
+ label.position.y=2.20;
+ label.scale.set(1.8,.45,1);
+ root.add(label);
+ root.position.copy(person.position);
+ scene.add(root);
+
+ return{
+  root,legs,
+  name:person.name,
+  skin:skin.id
+ };
+};
+
+renderPlayerProfile();
+
 /* Simulation helpers and startup. */
 function updateSurvival(){
  if(time>=nextHunger){hunger=Math.max(0,hunger-1);nextHunger+=180;}
@@ -2762,4 +3100,3 @@ main().catch(window.showCornyError);
 </script>
 </body>
 </html>
-```
