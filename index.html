@@ -5,7 +5,8 @@ Existing saved worlds keep the same storage key.
 Boat recipe: three pine logs vertically.
 Chest recipe: nine pine logs filling the building table.
 Multiplayer requires the host to keep the game open.
-Browser and live multiplayer testing remain necessary.
+Aquatic temple expansion. Wear aquatic gear from the inventory.
+Swim up with Space and down with C, or use the on-screen controls.
 -->
 <html lang="en">
 <head>
@@ -139,10 +140,10 @@ input[readonly]{color:#e4ca78}
 <button id="playButton" class="primary full">PLAY</button>
 <button id="joinHome" class="secondary full">JOIN MULTIPLAYER</button>
 <p class="small">iPad: drag to look. Hold arrows to walk.<br>
-Computer: WASD, mouse, Space.<br>
+Computer: WASD, mouse, Space. Swim: Space rises, C dives.<br>
 Left-click: place. Right-click: eat quick-stack food.<br>
 F: mine / E: use / Q: eat / I: inventory.<br>
-Your name, skin, and worlds save on this device.</p>
+Aquatic gear: select it in inventory, then WEAR.<br>Healing: drink in inventory or throw with ATTACK.<br>Revival potions rescue you automatically when carried.<br>Your name, skin, and worlds save on this device.</p>
 </div></div>
 
 <div id="worlds" class="overlay hidden"><div class="panel">
@@ -182,6 +183,7 @@ Your name, skin, and worlds save on this device.</p>
 <button id="leave" class="control">MENU</button>
 </div>
 </div>
+<div id="aquaticBoss" class="hidden" style="position:absolute;top:112px;left:50%;transform:translateX(-50%);width:min(470px,85vw);text-align:center;background:#102b39dd;padding:7px;border:2px solid #67dadc"><div id="aquaticBossTitle"></div><div class="track"><div id="aquaticBossFill" style="height:100%;background:#4de1ce"></div></div><div id="aquaticBossPhase" class="small"></div></div>
 <div id="crosshair">+</div><div id="target" class="hidden"></div>
 <div id="mineBox" class="hidden"><span id="mineText"></span><div class="track"><div id="mineFill"></div></div></div>
 <button id="heldItem"><span id="heldName"></span><small id="heldDetail"></small></button>
@@ -194,8 +196,8 @@ Your name, skin, and worlds save on this device.</p>
 </div>
 <div id="actions">
 <button id="mine" class="control">MINE</button><button id="place" class="control">PLACE</button>
-<button id="attack" class="control">ATTACK</button><button id="jump" class="control">JUMP</button>
-<button id="craft" class="control">USE</button><button id="eat" class="control">EAT</button>
+<button id="attack" class="control">ATTACK</button><button id="jump" class="control" data-move="rise">JUMP</button>
+<button id="dive" class="control hidden" data-move="dive">DIVE</button><button id="craft" class="control">USE</button><button id="eat" class="control">EAT</button>
 </div>
 </div>
 
@@ -217,7 +219,7 @@ In multiplayer, the shared world keeps running.</p>
 </div></div>
 
 <div id="inventory" class="overlay hidden"><div class="panel">
-<h2>INVENTORY</h2><p>20 MAIN STACKS. 15 MATCHING ITEMS PER STACK.</p>
+<h2>INVENTORY</h2><div id="equipmentStatus" class="small"></div><div class="row"><button id="equipItem" class="secondary">WEAR SELECTED</button><button id="removeHelmet" class="secondary">REMOVE HELMET</button><button id="removeArmor" class="secondary">REMOVE ARMOR</button><button id="drinkPotion" class="secondary">DRINK HEALING</button></div><p>20 MAIN STACKS. 15 MATCHING ITEMS PER STACK.</p>
 <div id="inventoryGrid" class="inventoryGrid"></div>
 <p>QUICK INVENTORY — 3 EXTRA STACKS</p><div id="quickInventory" class="quickInventory"></div>
 <div class="row">
@@ -284,12 +286,13 @@ const $=id=>document.getElementById(id);
 const show=(id,on)=>$(id).classList.toggle("hidden",!on);
 const clone=o=>JSON.parse(JSON.stringify(o));
 const SAVE_KEY="corny-worlds-v2",PROFILE_KEY="corny-player-profile-v1";
-const WATER=-.22,LIMIT=192,NET_VERSION=3;
-const BLOCKS=["dirt","sand","log","leaves","table","stone","ogger_trap","wool","bed","campfire","farmland","sandstone","cactus","chest"];
-const KINDS=["cow","horse","sheep","ogger","dweller","sandwitch"];
+const WATER=-.22,LIMIT=192,NET_VERSION=4;
+const BLOCKS=["dirt","sand","log","leaves","table","stone","ogger_trap","wool","bed","campfire","farmland","sandstone","cactus","chest","smooth_stone","marked_stone","glass","keycard_scanner","bullseye","stonefish_block","gold_block","throne"];
+const KINDS=["cow","horse","sheep","ogger","dweller","sandwitch","oggerfish","stonefish","knightfish","aquatic_ruler"];
 const TOOLS=new Set(["wooden_dagger","wooden_pickaxe","poison_potion"]);
-const USE_BLOCKS=new Set(["table","ogger_trap","campfire","bed","chest"]);
+const USE_BLOCKS=new Set(["table","ogger_trap","campfire","bed","chest","keycard_scanner","throne"]);
 const NAMES={
+ aquatic_keycard:"AQUATIC KEY CARD",aquatic_helmet:"AQUATIC HELMET",aquatic_armor:"AQUATIC ARMOR",healing_potion:"HEALING POTION",revival_potion:"REVIVAL POTION",smooth_stone:"SMOOTH STONE",marked_stone:"MARKED STONE",glass:"GLASS",keycard_scanner:"KEY CARD SCANNER",bullseye:"BULLSEYE",stonefish_block:"STONE",gold_block:"BLOCK OF GOLD",throne:"AQUATIC THRONE",
  dirt:"DIRT",sand:"SAND",log:"PINE LOGS",leaves:"PINE LEAVES",table:"BUILDING TABLE",
  stone:"STONE",ogger_trap:"OGGER TRAP",wool:"WOOL",bed:"BED",campfire:"CAMPFIRE",
  farmland:"FARMLAND",sandstone:"SANDSTONE",cactus:"CACTUS",chest:"CHEST",boat:"BOAT",
@@ -298,6 +301,7 @@ const NAMES={
  wooden_dagger:"WOODEN DAGGER",wooden_pickaxe:"WOODEN PICKAXE",poison_potion:"POISON POTION"
 };
 const COLORS={
+ aquatic_keycard:"#47d9dd",aquatic_helmet:"#65e2ee",aquatic_armor:"#3295b6",healing_potion:"#ff76a5",revival_potion:"#b89aff",smooth_stone:"#aaaead",marked_stone:"#49777d",glass:"#9ce3e8",keycard_scanner:"#263f49",bullseye:"#e5d9bb",stonefish_block:"#92958c",gold_block:"#ffd566",throne:"#365e6a",
  dirt:"#8b6949",sand:"#dcc48b",log:"#805438",leaves:"#3a643f",table:"#b8874a",
  stone:"#92958c",ogger_trap:"#8a7860",wool:"#e5e0d2",bed:"#60819a",campfire:"#625d52",
  farmland:"#715239",sandstone:"#c9aa73",cactus:"#60814a",chest:"#a7753d",boat:"#91633e",
@@ -362,6 +366,7 @@ function cube(parent,w,h,d,x,y,z,material){
  const m=new THREE.Mesh(sharedCube,material);m.scale.set(w,h,d);m.position.set(x,y,z);parent.add(m);return m;
 }
 function texture(type){
+ if(type==="stonefish_block")type="stone";
  const c=document.createElement("canvas");c.width=c.height=16;const x=c.getContext("2d");
  x.fillStyle=type==="dirt"?"#ffffff":COLORS[type];x.fillRect(0,0,16,16);
  for(let i=0;i<65;i++){x.fillStyle=Math.random()<.5?"#00000018":"#ffffff18";x.fillRect(Math.random()*16|0,Math.random()*16|0,type==="log"?1:2,type==="log"?4:1);}
@@ -380,6 +385,11 @@ function texture(type){
   x.fillStyle="#3d6337";for(let n=2;n<16;n+=4)x.fillRect(n,0,1,16);
   x.fillStyle="#e6d9a6";for(let n=0;n<8;n++)x.fillRect((n*7)%15,(n*5)%15,2,1);
  }
+ if(type==="marked_stone"||type==="throne"){x.strokeStyle="#8ee7e0";x.lineWidth=2;x.strokeRect(3,3,10,10);x.fillStyle="#62bfbf";x.fillRect(7,0,2,16);}
+ if(type==="smooth_stone"){x.strokeStyle="#788785";x.strokeRect(0,0,16,16);}
+ if(type==="keycard_scanner"){x.fillStyle="#70ffce";x.fillRect(3,3,10,5);x.fillStyle="#080f15";x.fillRect(3,11,10,2);}
+ if(type==="bullseye"){for(const [r,c] of [[7,"#b34436"],[5,"#f2e5c7"],[3,"#b34436"],[1,"#f2e5c7"]]){x.fillStyle=c;x.beginPath();x.arc(8,8,r,0,Math.PI*2);x.fill();}}
+ if(type==="glass"){x.clearRect(0,0,16,16);x.fillStyle="#b9faff44";x.fillRect(0,0,16,16);x.strokeStyle="#caefff";x.strokeRect(0,0,16,16);x.fillStyle="#eaffff";x.fillRect(3,3,2,6);}
  const t=new THREE.CanvasTexture(c);t.magFilter=t.minFilter=THREE.NearestFilter;t.colorSpace=THREE.SRGBColorSpace;return t;
 }
 for(const type of BLOCKS){
@@ -391,7 +401,7 @@ for(const type of BLOCKS){
   c.multiplyScalar(ny<-.5?.72:1);colors.push(c.r,c.g,c.b);
  }
  g.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));
- const m=new THREE.InstancedMesh(g,new THREE.MeshLambertMaterial({map:texture(type),vertexColors:true}),type==="stone"?60000:24000);
+ const m=new THREE.InstancedMesh(g,new THREE.MeshLambertMaterial({map:texture(type),vertexColors:true,transparent:type==="glass",opacity:type==="glass"?.34:1,depthWrite:type!=="glass"}),type==="stone"?60000:24000);
  m.count=0;m.visible=false;m.userData.cells=[];m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
  batches.set(type,m);scene.add(m);
 }
@@ -401,6 +411,7 @@ const ray=new THREE.Raycaster(),matrix=new THREE.Matrix4(),feet=new THREE.Vector
 let records=[],current=null,mode="home",selectWorlds=false,selectedWorlds=new Set();
 let inventory=Array(23).fill(null),active=-1,craftSlots=Array(9).fill(null),craftSize=3,craftSource=-1,craftStamp=0,openChestKey=null;
 let land=[],spawn={x:0,y:.5,z:0},rngState=1,nextMobID=1,stoneAdded=false;
+let equipment={helmet:null,armor:null},revivalShieldUntil=0;
 let hp=4,hunger=4,time=0,dayClock=0,nextHunger=180,nextHeal=30,nextSpawn=900,nextStarve=1,nextCactus=0;
 let nextAI=.5,nextSave=20,nextHUD=0,nextAim=0,nextAttack=0;
 let yaw=0,pitch=-.4,vy=0,grounded=true,wetTime=0,playerStepOffset=0,mountedBoat=null;
@@ -496,6 +507,7 @@ function foodIndex(quick=false){
  return FOOD[t]?active:inventory.findIndex(s=>s&&FOOD[s.type]);
 }
 function renderInventory(){
+ renderEquipment();
  if(netActing)return;$("inventoryGrid").replaceChildren();$("quickInventory").replaceChildren();
  const choose=i=>{active=i;renderInventory();updateHand();renderHUD();};
  for(let i=0;i<20;i++)$("inventoryGrid").append(slotButton(inventory,i,active,choose));
@@ -561,7 +573,8 @@ function makeMob(kind,x,y,z,state={}){
   const mat=mats[color].clone(),m=cube(model,w,h,d,a,b,c,mat);
   m.userData.mobId=id;m.userData.baseColor=mat.color.clone();if(leg)legs.push(m);return m;
  }
- if(["ogger","sandwitch","dweller"].includes(kind)){
+ if(isAquaticKind(kind)){buildAquaticModel(kind,model,id,legs);}
+ else if(["ogger","sandwitch","dweller"].includes(kind)){
   const witch=kind==="sandwitch",dw=kind==="dweller";
   part(.68,.8,.44,0,1,0,witch?"robe":dw?"wrap":"shirt");
   part(.58,.5,.56,0,1.62,-.02,witch||dw?"skin":"green");
@@ -596,7 +609,7 @@ function makeMob(kind,x,y,z,state={}){
   else part(.52,.18,.48,0,1.35,-.65,"wool");
  }
  const m={
-  id,kind,root,model,legs,hp:state.hp??(kind==="sandwitch"?15:kind==="ogger"?6:8),
+  id,kind,root,model,legs,hp:state.hp??(isAquaticKind(kind)?aquaticMaxHP(kind):kind==="sandwitch"?15:kind==="ogger"?6:8),
   angry:!!state.angry,angerTarget:state.angerTarget||null,nightAggro:!!state.nightAggro,nightTarget:state.nightTarget||null,
   prey:state.prey||null,nextBite:state.nextBite||0,heading:state.heading||0,goal:null,goalAt:0,speed:0,
   fleeUntil:state.fleeUntil||0,fleeFrom:state.fleeFrom||null,fleeing:false,
@@ -604,7 +617,7 @@ function makeMob(kind,x,y,z,state={}){
   deadAt:state.deadAt??null,deathLoot:state.deathLoot||null,nextCast:state.nextCast??time+3,castUntil:state.castUntil||0,
   home:state.home||null
  };
- root.rotation.y=m.heading;mobs.set(id,m);scene.add(root);return m;
+ syncAquaticMobState(m,state);root.rotation.y=m.heading;mobs.set(id,m);scene.add(root);return m;
 }
 function removeMob(m){m.root.traverse(o=>{if(o.isMesh)o.material.dispose();});scene.remove(m.root);mobs.delete(m.id);}
 function flashMob(m,on){
@@ -639,12 +652,14 @@ function damageMob(m,amount,source){
   if(m.hp<=.001){m.hp=0;m.deadAt=time+.5;farmerRuntime.path=[];return true;}
   fleeFarmer(m.fleeFrom);return false;
  }
- if(!["ogger","sandwitch"].includes(m.kind)){
+ if(isAquaticKind(m.kind)&&m.kind!=="aquatic_ruler"){m.angry=true;m.angerTarget=source.owner||netActing?.id||"host";m.goalAt=0;}
+ if(!isAquaticKind(m.kind)&&!["ogger","sandwitch"].includes(m.kind)){
   m.fleeUntil=time+8;m.fleeFrom={x:source.x,z:source.z};m.goalAt=0;chooseGoal(m,m.fleeFrom);
  }
  if(m.hp<=.001){
   m.hp=0;m.deadAt=time+.5;m.goal=null;
   m.deathLoot=source.player&&["cow","horse","sheep"].includes(m.kind)?"animal":null;
+  if(m.kind==="aquatic_ruler"){defeatAquaticRuler(m);clearAquaticCombat();}
   if(m.kind==="sandwitch"){
    const d=worldFeatures.desert;if(d){d.sandwitchDefeated=true;unlockShipChest();notify("THE SANDWITCH WAS DEFEATED. THE SHIPWRECK CHEST IS UNLOCKED!");}
   }
@@ -675,7 +690,8 @@ function createFire(b){
  const a=cube(root,.28,.36,.24,0,.02,0,fireOrange),c=cube(root,.14,.26,.14,.05,.01,-.02,fireYellow);
  cube(root,.06,.5,.06,-.35,-.02,0,mats.darkMetal);cube(root,.06,.5,.06,.35,-.02,0,mats.darkMetal);cube(root,.76,.04,.04,0,.22,0,mats.darkMetal);
  const meat=cube(root,.24,.11,.19,0,.31,0,lootMats.beef);meat.visible=false;scene.add(root);
- return{x:b.x,y:b.y,z:b.z,root,a,c,meat,rawType:null,readyAt:0};
+ const smoke=[];for(let i=0;i<9;i++){const material=new THREE.MeshBasicMaterial({color:"#c4cecf",transparent:true,opacity:.3,depthWrite:false});const puff=cube(root,.17,.17,.17,0,.6,0,material);smoke.push(puff);}
+ return{x:b.x,y:b.y,z:b.z,root,a,c,meat,smoke,rawType:null,readyAt:0};
 }
 function syncFires(){
  for(const [k,f] of fires)if(blocks.get(k)?.type!=="campfire"){scene.remove(f.root);fires.delete(k);}
@@ -683,6 +699,7 @@ function syncFires(){
 }
 function updateFires(){
  for(const f of fires.values()){
+  for(let i=0;i<f.smoke.length;i++){const q=f.smoke[i],age=(time*.36+i/f.smoke.length)%1;q.position.set(Math.sin(age*4+f.x)*age*.7,.45+age*3.5,Math.cos(age*3+f.z)*age*.35);q.scale.setScalar(.12+age*.55);q.material.opacity=(1-age)*.3;}
   f.a.scale.y=.36+Math.sin(time*11+f.x)*.055;f.c.scale.y=.26+Math.cos(time*14+f.z)*.045;f.meat.visible=!!f.rawType;
   if(f.rawType)f.meat.material=lootMats[time>=f.readyAt?cookedType(f.rawType):f.rawType];
  }
@@ -789,12 +806,12 @@ function updateCamera(){camera.position.set(feet.x,feet.y+1.62+playerStepOffset,
 function movePlayer(dt){
  playerStepOffset*=Math.exp(-12*dt);
  if(mountedBoat&&boats.has(mountedBoat)){moveBoat(dt);return;}
- mountedBoat=null;const wet=!onIsland()&&feet.y<WATER+.08;
+ mountedBoat=null;const wet=feet.y<WATER-.05;
  let f=(held.has("forward")?1:0)-(held.has("backward")?1:0),s=(held.has("right")?1:0)-(held.has("left")?1:0);
- const len=Math.max(1,Math.hypot(f,s));f/=len;s/=len;const speed=wet?1.05:3.35;
+ const len=Math.max(1,Math.hypot(f,s));f/=len;s/=len;const speed=wet?3.0:3.35;
  function axis(a,d){
   if(Math.abs(d)<1e-9)return;const next=feet.clone();next[a]+=d;
-  if(grounded&&!wet&&vy<=0){
+  if((grounded||wet)&&vy<=3){
    const floor=entityStep(feet,next.x,next.z,.27,1.7);
    if(floor!==null){playerStepOffset+=feet.y-floor;feet.set(next.x,floor,next.z);vy=0;grounded=true;return;}
   }
@@ -802,21 +819,25 @@ function movePlayer(dt){
  }
  axis("x",(-Math.sin(yaw)*f+Math.cos(yaw)*s)*speed*dt);
  axis("z",(-Math.cos(yaw)*f-Math.sin(yaw)*s)*speed*dt);
- if(wet){vy+=(WATER-.85-feet.y)*14*dt;vy*=Math.exp(-4*dt);}else vy-=14*dt;
+ if(wet){
+  const vertical=(held.has("rise")?1:0)-(held.has("dive")?1:0);
+  const swim=vertical?vertical*2.7:Math.sin(pitch)*f*2.4;
+  vy+=(swim-vy)*Math.min(1,dt*8);
+ }else vy-=14*dt;
  const next=feet.clone();next.y+=vy*dt;
  if(bodyCollides(next)){
   if(vy<0){const top=landingHeight(next,feet.y);grounded=top!==null;if(top!==null)feet.y=top;}
   vy=0;
  }else{feet.y=next.y;grounded=false;}
- if(onIsland()||(grounded&&feet.y>WATER+.25))wetTime=0;else if(wet||wetTime>0)wetTime+=dt;
+ if(feet.y+1.62>=WATER||equipment.helmet==="aquatic_helmet")wetTime=0;else wetTime+=dt;
  if(wetTime>=15){hp=0;deathReason="YOU DROWNED";}
- if(feet.y<-30){hp=0;deathReason="YOU FELL TOO FAR";}
- $("waterTint").style.opacity=wet?".8":"0";
+ if(feet.y<-62){hp=0;deathReason="YOU FELL TOO FAR";}
+ $("waterTint").style.opacity=feet.y+1.62<WATER?".8":"0";
 }
 function jump(){
  if(mode!=="playing")return;
  if(mountedBoat){useBoat(mountedBoat,"leave");return;}
- if(!onIsland()&&feet.y<WATER+.08){vy=3.8;grounded=false;}else if(grounded){vy=6;grounded=false;}
+ if(feet.y<WATER+.08){vy=3.8;grounded=false;}else if(grounded){vy=6;grounded=false;}
 }
 function updateCactus(){
  if(hp<=0||time<nextCactus)return;
@@ -930,9 +951,9 @@ function eat(quick=false){
  updateHand();renderHUD();if(mode==="inventory")renderInventory();
 }
 const holdingPickaxe=()=>activeStack()?.type==="wooden_pickaxe"&&activeStack().tools[0].hp>0;
-const needsPickaxe=t=>["stone","sandstone","ogger_trap","campfire"].includes(t);
+const needsPickaxe=t=>["stone","sandstone","ogger_trap","campfire","smooth_stone","marked_stone","keycard_scanner","stonefish_block","gold_block","throne"].includes(t);
 const miningSeconds=()=>holdingPickaxe()?2.5:5;
-const hitDamage=(kind,type)=>(["ogger","sandwitch"].includes(kind)?1:8/6)*(type==="wooden_dagger"?2:1);
+const hitDamage=(kind,type)=>kind==="aquatic_ruler"?(type==="wooden_dagger"?1:.5):isAquaticKind(kind)?(type==="wooden_dagger"?2:1):(["ogger","sandwitch"].includes(kind)?1:8/6)*(type==="wooden_dagger"?2:1);
 function stopMining(){miningKey=null;miningTime=0;mouseMining=false;}
 function wearHeldTool(type,charge=false){
  const s=activeStack();if(s?.type!==type)return false;const t=s.tools[0];
@@ -944,7 +965,7 @@ function beginMining(mouse=false){
  if(target?.type==="crop"){harvestCorn(target.plant);return;}
  if(target?.type==="boat"){useBoat(target.boat.id,"pickup");return;}
  if(target?.type!=="block"){notify("AIM AT A NEARBY BLOCK.");return;}
- const b=target.block;if(needsPickaxe(b.type)&&!holdingPickaxe()){notify(`HOLD A WOODEN PICKAXE TO COLLECT ${NAMES[b.type]}.`);return;}
+ const b=target.block;if(b.type==="stonefish_block"){if(netRole==="guest")netRequest("awaken",{key:key(b.x,b.y,b.z)});else awakenStonefish(b);return;}if(needsPickaxe(b.type)&&!holdingPickaxe()){notify(`HOLD A WOODEN PICKAXE TO COLLECT ${NAMES[b.type]}.`);return;}
  miningKey=key(b.x,b.y,b.z);miningTime=0;mouseMining=mouse;
  if(netRole==="guest")netSend(netConnection,{t:"mineStart",key:miningKey,pose:netProfile()});
  notify(`KEEP AIMING FOR ${miningSeconds()} SECONDS.`);
@@ -975,7 +996,7 @@ function place(){
   takeItem(active);updateHand();notify("CORN PLANTED. IT GROWS IN TWO MINUTES.");return;
  }
  const x=b.x+Math.round(n.x),y=b.y+Math.round(n.y),z=b.z+Math.round(n.z);
- if(at(x,y,z)||Math.abs(x)>LIMIT||Math.abs(z)>LIMIT||y<-24||y>40){notify("YOU CANNOT PLACE THERE.");return;}
+ if(at(x,y,z)||Math.abs(x)>LIMIT||Math.abs(z)>LIMIT||y<-60||y>40){notify("YOU CANNOT PLACE THERE.");return;}
  const player=Math.abs(x-feet.x)<.77&&Math.abs(z-feet.z)<.77&&y+.5>feet.y&&y-.5<feet.y+1.7;
  const actors=[...mobs.values()];if(farmerActor)actors.push(farmerActor);
  const mob=actors.some(m=>m.hp>0&&Math.abs(m.root.position.x-x)<.9&&Math.abs(m.root.position.z-z)<.9&&y+.5>m.root.position.y&&y-.5<m.root.position.y+2);
@@ -985,8 +1006,8 @@ function place(){
 }
 function attack(){
  if(mode!=="playing"||netPending)return;if(time<nextAttack){notify("WAIT FOR YOUR ATTACK COOLDOWN.");return;}
- if(activeStack()?.type==="poison_potion"){throwPotion();return;}
- updateAim();if(target?.type!=="mob"){notify("AIM AT A NEARBY CREATURE.");return;}
+ if(["poison_potion","healing_potion"].includes(activeStack()?.type)){throwPotion();return;}
+ updateAim();if(target?.type==="block"&&target.block.type==="bullseye"){nextAttack=time+.4;swingUntil=time+.3;notify("BULLSEYE! PRACTICE HIT LANDED.");return;}if(target?.type!=="mob"){notify("AIM AT A NEARBY CREATURE.");return;}
  if(netRole==="guest"){netRequest("attack",{id:target.mob.id});nextAttack=time+2;swingUntil=time+.3;return;}
  strikeMob(target.mob);
 }
@@ -1003,22 +1024,29 @@ function strikeMob(victim){
 
 /* Poison bottles and Sandwitch spikes. */
 function createProjectile(state){
- const mesh=new THREE.Mesh(new THREE.BoxGeometry(.16,.25,.16),poisonMat);
+ const mesh=new THREE.Mesh(new THREE.BoxGeometry(.16,.25,.16),state.kind==="healing_potion"?lootMats.healing_potion:poisonMat);
  mesh.position.fromArray(state.p);scene.add(mesh);const p={...state,mesh};projectiles.set(p.id,p);return p;
 }
 function throwPotion(){
- if(activeStack()?.type!=="poison_potion")return;
+ const potionType=activeStack()?.type;if(!["poison_potion","healing_potion"].includes(potionType))return;
  if(netRole==="guest"){netRequest("potion",{});nextAttack=time+2;return;}
  if(time<nextAttack)return;
  updateCamera();const d=new THREE.Vector3();camera.getWorldDirection(d);const p=camera.position.clone().addScaledVector(d,.45);
- createProjectile({id:uid(),p:p.toArray(),v:d.multiplyScalar(10).toArray(),owner:netActing?.id||"host",until:time+3});
- wearHeldTool("poison_potion",true);nextAttack=time+2;swingUntil=time+.3;updateHand();
+ createProjectile({id:uid(),kind:potionType,p:p.toArray(),v:d.multiplyScalar(10).toArray(),owner:netActing?.id||"host",until:time+3});
+ if(potionType==="poison_potion")wearHeldTool("poison_potion",true);else takeItem(active);nextAttack=time+2;swingUntil=time+.3;updateHand();
 }
 function poisonBurst(p){
  const position=new THREE.Vector3().fromArray(p.p);
- const enemy=[...mobs.values()].filter(m=>m.hp>0&&["ogger","sandwitch"].includes(m.kind)&&m.root.position.clone().add(new THREE.Vector3(0,1,0)).distanceTo(position)<1.7)
+ if(p.kind==="healing_potion"){
+  const revived=reviveAquaticRuler(position);
+  if(!revived)for(const person of netPeople())if(person.position.clone().add(new THREE.Vector3(0,1,0)).distanceTo(position)<3){
+   if(person.id==="host")hp=Math.min(4,hp+2);else{const e=netClients.get(person.id);if(e){e.pose.hp=Math.min(4,(e.pose.hp||0)+2);netSend(e.conn,{t:"heal",amount:2});}}
+  }
+  scene.remove(p.mesh);p.mesh.geometry.dispose();projectiles.delete(p.id);return;
+ }
+ const enemy=[...mobs.values()].filter(m=>m.hp>0&&["ogger","sandwitch","oggerfish","stonefish","knightfish","aquatic_ruler"].includes(m.kind)&&m.root.position.clone().add(new THREE.Vector3(0,1,0)).distanceTo(position)<1.7)
   .sort((a,b)=>a.root.position.distanceTo(position)-b.root.position.distanceTo(position))[0];
- if(enemy)damageMob(enemy,enemy.hp,{x:position.x,z:position.z,player:true,owner:p.owner});
+ if(enemy)damageMob(enemy,enemy.kind==="aquatic_ruler"?10:enemy.hp,{x:position.x,z:position.z,player:true,owner:p.owner});
  const mat=new THREE.MeshBasicMaterial({color:"#8bdc50",transparent:true,opacity:.55});
  const mesh=new THREE.Mesh(new THREE.SphereGeometry(.65,8,6),mat);mesh.position.copy(position);scene.add(mesh);effects.push({mesh,until:time+.3});
  scene.remove(p.mesh);p.mesh.geometry.dispose();projectiles.delete(p.id);
@@ -1032,11 +1060,11 @@ function updateProjectiles(dt){
   if(length>0){
    const dir=delta.clone().normalize(),terrain=terrainRay(from,dir,length);
    ray.set(from,dir);ray.far=terrain?terrain.distance:length;
-   const roots=[...mobs.values()].filter(m=>m.hp>0&&["ogger","sandwitch"].includes(m.kind)).map(m=>{m.root.updateMatrixWorld(true);return m.root;});
+   const roots=[...mobs.values()].filter(m=>m.hp>0&&["ogger","sandwitch","oggerfish","stonefish","knightfish","aquatic_ruler"].includes(m.kind)).map(m=>{m.root.updateMatrixWorld(true);return m.root;});
    const hit=ray.intersectObjects(roots,true)[0];if(hit)impact=hit.point;else if(terrain)impact=from.clone().addScaledVector(dir,terrain.distance);
   }
   p.p=(impact||next).toArray();p.v=v.toArray();p.mesh.position.fromArray(p.p);p.mesh.rotation.z+=dt*5;
-  if(impact||time>=p.until||next.y<WATER)poisonBurst(p);
+  if(impact||time>=p.until||next.y<-61)poisonBurst(p);
  }
 }
 function createSpikeWave(state){
@@ -1064,7 +1092,7 @@ function updateSpikes(){
   if(active&&netRole!=="guest")for(const p of netPeople()){
    if(p.hp<=0||w.hit.has(p.id))continue;
    if(w.points.some(a=>Math.hypot(a.x-p.position.x,a.z-p.position.z)<.8&&Math.abs(p.position.y-a.y)<1.8)){
-    w.hit.add(p.id);netHurtPlayer(p,.5,"THE SANDWITCH'S SPIKES GOT YOU");
+    w.hit.add(p.id);netHurtPlayer(p,.5,w.reason||"THE SANDWITCH'S SPIKES GOT YOU",!!w.aquatic);
    }
   }
   if(time>w.until){scene.remove(w.root);spikes.delete(w.id);}
@@ -1124,6 +1152,7 @@ function openCraft(portable=false,direct=null){
   if(!direct){if(mountedBoat)useBoat(mountedBoat,"leave");else notify("AIM AT SOMETHING TO USE.");return;}
   const k=key(direct.x,direct.y,direct.z);
   if(direct.type==="ogger_trap"){useTrap(k);return;}if(direct.type==="campfire"){useFire(k);return;}
+  if(direct.type==="keycard_scanner"){useAquaticScanner(k);return;}if(direct.type==="throne"){notify("THROW A HEALING POTION AT THE THRONE TO REVIVE THE AQUATIC RULER.");return;}
   if(direct.type==="bed"){sleepInBed(k);return;}if(direct.type==="chest"){openStorage(k);return;}
   if(direct.type!=="table"){notify("AIM AT A TABLE, CHEST, BOAT, TRAP, FIRE OR BED.");return;}
  }
@@ -1142,7 +1171,9 @@ function updateHand(){
  const p=(w,h,d,x,y,z,m)=>cube(hand,w,h,d,x,y,z,m);
  if(t==="wooden_pickaxe"){p(.045,.39,.045,0,-.04,0,mats.brown);p(.29,.065,.06,0,.14,0,mats.wood);}
  else if(t==="wooden_dagger"){p(.055,.3,.03,0,.07,0,mats.wood);p(.15,.035,.05,0,-.075,0,mats.brown);p(.055,.13,.055,0,-.15,0,mats.brown);}
- else if(t==="poison_potion"){p(.13,.20,.13,0,0,0,poisonMat);p(.07,.09,.07,0,.14,0,mats.wood);}
+ else if(["poison_potion","healing_potion","revival_potion"].includes(t)){p(.13,.20,.13,0,0,0,lootMats[t]);p(.07,.09,.07,0,.14,0,mats.wood);}
+ else if(t==="aquatic_keycard"){p(.24,.14,.025,0,0,0,lootMats[t]);p(.17,.025,.028,0,-.035,-.01,mats.dark);}
+ else if(t==="aquatic_helmet"||t==="aquatic_armor"){p(.25,.27,.2,0,0,0,lootMats[t]);}
  else if(t==="boat"){p(.27,.08,.37,0,0,0,mats.brown);p(.04,.12,.37,-.14,.07,0,mats.wood);p(.04,.12,.37,.14,.07,0,mats.wood);}
  else if(t==="corn"){p(.11,.27,.11,0,.02,0,mats.cornEar);p(.09,.22,.05,-.06,-.05,0,mats.cornLeaf).rotation.z=-.35;}
  else if(t==="corn_seeds")p(.15,.07,.12,0,0,0,mats.cornSeed);
@@ -1458,11 +1489,12 @@ function applyWorldUpdates(fresh=false){
   if(!c.placed)buildFarmerCamp(fresh);
   else{if(campIntact()&&addCampfireToCamp())rebuildTerrain();if(!c.farmer?.dead)createFarmer(c.farmer||{});}
  }
- ensureDesert();makeWaterRoots();
+ ensureDesert();ensureAquaticTemple();makeWaterRoots();
 }
 
 /* World generation. */
 function clearWorld(){
+ clearAquaticCombat();
  for(const m of [...mobs.values()])removeMob(m);disposeFarmer(false);
  for(const map of [devices,fires,boats,projectiles,spikes]){for(const v of map.values())scene.remove(v.root||v.mesh);map.clear();}
  for(const p of [...cornPlants.values()])removeCorn(p);
@@ -1471,6 +1503,7 @@ function clearWorld(){
  for(const d of drops)scene.remove(d.mesh);drops.length=0;
  for(const e of effects){scene.remove(e.mesh);e.mesh.geometry.dispose();e.mesh.material.dispose();}effects.length=0;
  blocks.clear();chests.clear();landColumns.clear();worldFeatures={};farmNextRetry=0;
+ equipment={helmet:null,armor:null};revivalShieldUntil=0;
  land=[];inventory=Array(23).fill(null);active=-1;craftSlots=Array(9).fill(null);craftSource=-1;craftStamp=0;openChestKey=null;
  hp=4;hunger=4;time=0;dayClock=0;nextHunger=180;nextHeal=30;nextSpawn=900;nextStarve=1;nextCactus=0;
  nextAI=.5;nextSave=20;nextHUD=0;nextAim=0;nextAttack=0;
@@ -1550,6 +1583,7 @@ function nearestTrap(p){
 function thinkMobs(){
  if(netRole==="guest")return;const all=[...mobs.values()].filter(m=>m.hp>0),oggers=all.filter(m=>m.kind==="ogger");
  for(const m of all){
+  if(isAquaticKind(m.kind))continue;
   const p=m.root.position;
   if(m.kind==="sandwitch"){
    const player=netPeople().filter(a=>a.hp>0&&distance(p,a.position)<18).sort((a,b)=>distance(p,a.position)-distance(p,b.position))[0];
@@ -1594,6 +1628,7 @@ function thinkMobs(){
 function moveMobs(dt){
  if(netRole==="guest")return;
  for(const m of [...mobs.values()]){
+  if(isAquaticKind(m.kind))continue;
   if(m.hp<=0){if(m.deadAt!==null&&time>=m.deadAt)finishMobDeath(m);continue;}
   const p=m.root.position;let moving=false;
   if(m.goal&&!(m.kind==="sandwitch"&&time<m.castUntil)){
@@ -1643,7 +1678,7 @@ function persist(){
  catch{notify("COULD NOT SAVE. BROWSER STORAGE MAY BE FULL.");return false;}
 }
 function mobState(m){
- return{id:m.id,kind:m.kind,x:m.root.position.x,y:m.root.position.y,z:m.root.position.z,hp:m.hp,
+ return{...aquaticMobState(m),id:m.id,kind:m.kind,x:m.root.position.x,y:m.root.position.y,z:m.root.position.z,hp:m.hp,
   angry:m.angry,angerTarget:m.angerTarget,nightAggro:m.nightAggro,nightTarget:m.nightTarget,
   prey:m.prey,nextBite:m.nextBite,heading:m.heading,fleeUntil:m.fleeUntil,fleeFrom:m.fleeFrom,
   deadAt:m.deadAt,deathLoot:m.deathLoot,flashUntil:m.flashUntil,castUntil:m.castUntil,nextCast:m.nextCast,home:m.home};
@@ -1653,7 +1688,7 @@ function boatStates(){return[...boats.values()].map(b=>({id:b.id,x:b.x,z:b.z,hea
 function capture(){
  if(farmFeature()&&farmerActor)farmFeature().farmer=farmerSaveState();
  return{
-  version:7,stoneLayerVersion:1,inventory:clone(inventory),active,escrow:craftSlots.filter(Boolean).map(s=>({...s.item})),
+  version:8,aquaticHazards:aquaticHazardStates(),stoneLayerVersion:1,equipment:{...equipment},revivalShieldUntil,inventory:clone(inventory),active,escrow:craftSlots.filter(Boolean).map(s=>({...s.item})),
   hp,hunger,time,dayClock,nextHunger,nextHeal,nextSpawn,nextAttack,nextStarve,nextCactus,wetTime,mountedBoat,
   feet:feet.toArray(),yaw,pitch,spawn:{...spawn},land:land.map(t=>({...t})),rngState,nextMobID,deathReason,
   blocks:[...blocks.values()].map(b=>[b.x,b.y,b.z,b.type]),mobs:[...mobs.values()].map(mobState),
@@ -1674,6 +1709,7 @@ function restoreState(input){
  for(const row of d.blocks||[]){const [x,y,z,t]=row;if(BLOCKS.includes(t)&&[x,y,z].every(Number.isInteger))put(x,y,z,t);}
  land=Array.isArray(d.land)?d.land:[...blocks.values()].filter(b=>b.y===0).map(b=>({x:b.x,z:b.z,h:0}));
  spawn=d.spawn||(legacy?{x:10,y:.5,z:10}:{x:0,y:.5,z:0});feet.fromArray(d.feet||[spawn.x,spawn.y,spawn.z]);
+ equipment=normaliseEquipment(d.equipment);revivalShieldUntil=d.revivalShieldUntil||0;
  hp=d.hp??d.health??4;hunger=d.hunger??4;time=d.time||0;dayClock=d.dayClock||0;
  nextHunger=d.nextHunger??time+180;nextHeal=d.nextHeal??d.nextHealing??time+30;nextSpawn=d.nextSpawn??time+900;
  nextAttack=d.nextAttack||0;nextStarve=d.nextStarve??time+1;nextCactus=d.nextCactus||0;wetTime=d.wetTime||0;
@@ -1698,7 +1734,7 @@ function restoreState(input){
  mountedBoat=d.mountedBoat&&boats.has(d.mountedBoat)?d.mountedBoat:null;
  if(mountedBoat){boats.get(mountedBoat).occupant="host";feet.set(boats.get(mountedBoat).x,WATER+.12,boats.get(mountedBoat).z);wetTime=0;}
  nextAI=time+.5;nextSave=time+20;nextHUD=0;nextAim=0;vy=0;grounded=false;playerStepOffset=0;
- ensureAnimals();applyWorldUpdates(false);makeWaterRoots();if(!isNight())clearNightAggression();
+ ensureAnimals();applyWorldUpdates(false);syncAquaticHazards(d.aquaticHazards||[]);makeWaterRoots();if(!isNight())clearNightAggression();
  previousNight=isNight();updateCamera();updateHand();updateSky();updateFires();updateCornVisuals();
 }
 
@@ -1777,6 +1813,7 @@ function openInventory(){if(mode!=="playing"||netPending)return;mode="inventory"
 function closeInventory(){show("inventory",false);mode="playing";updateHand();renderHUD();}
 function die(){
  if(mode==="dead")return;
+ if(tryRevival())return;
  if(mountedBoat&&boats.has(mountedBoat)){boats.get(mountedBoat).occupant=null;mountedBoat=null;}
  refundCraft();stopMining();releaseControls();mode="dead";saveCurrent();document.exitPointerLock?.();hidePanels();show("death",true);$("deathTitle").textContent=deathReason;renderHUD();
 }
@@ -1794,16 +1831,18 @@ function renderHUD(){
  if(netActing)return;
  $("worldName").textContent=current?.name||"NEW WORLD";$("health").textContent=`HP ${Math.max(0,hp).toFixed(2)} / 4`;$("hunger").textContent=`FOOD ${hunger} / 4`;
  const p=dayPhase(),r=Math.max(0,Math.ceil(isNight()?600-p:300-p));$("dayPhase").textContent=`${isNight()?"NIGHT":"DAY"} — ${Math.floor(r/60)}:${String(r%60).padStart(2,"0")} LEFT`;
- show("air",wetTime>0||!!mountedBoat);$("air").textContent=mountedBoat?"SAILING — NO DROWNING TIMER":`SWIMMING: ${Math.max(0,15-wetTime).toFixed(1)}s LEFT`;
+ show("air",feet.y<WATER||!!mountedBoat);$("air").textContent=mountedBoat?"SAILING — NO DROWNING TIMER":equipment.helmet?"AQUATIC HELMET — UNLIMITED AIR":`AIR: ${Math.max(0,15-wetTime).toFixed(1)}s — SPACE UP / C DOWN`;
+ updateAquaticBossHUD();
  const s=activeStack();$("heldName").textContent=s?NAMES[s.type]:"BARE HANDS";$("heldDetail").textContent=s?(s.tools?`${toolText(s)} | ${s.n} ITEM(S)`:`${s.n} ITEM(S) | INVENTORY`):"OPEN INVENTORY";
  const f=foodIndex();$("eat").textContent=f<0?"EAT":`EAT ${NAMES[inventory[f].type]}`;$("eat").disabled=f<0;
- $("attack").textContent=time<nextAttack?`${(nextAttack-time).toFixed(1)}s`:s?.type==="poison_potion"?"THROW":"ATTACK";$("attack").disabled=time<nextAttack;
- $("jump").textContent=mountedBoat?"EXIT BOAT":"JUMP";$("craft").textContent="USE";$("mine").textContent="MINE";
+ $("attack").textContent=time<nextAttack?`${(nextAttack-time).toFixed(1)}s`:["poison_potion","healing_potion"].includes(s?.type)?"THROW":"ATTACK";$("attack").disabled=time<nextAttack;
+ $("jump").textContent=mountedBoat?"EXIT BOAT":feet.y<WATER?"RISE":"JUMP";show("dive",feet.y<WATER+.5&&!mountedBoat);$("craft").textContent="USE";$("mine").textContent="MINE";
  let text="";
  if(target?.type==="block"){
   const b=target.block;text=NAMES[b.type];
   if(b.type==="table")$("craft").textContent="CRAFT";
   if(b.type==="chest")$("craft").textContent="OPEN";
+  if(b.type==="keycard_scanner")$("craft").textContent="SCAN CARD";
   if(["stone","sandstone"].includes(b.type)&&!holdingPickaxe())text=`${NAMES[b.type]} — PICKAXE REQUIRED`;
   if(b.type==="bed"){$("craft").textContent="SLEEP";text=isNight()?"BED — SLEEP OR MINE TO PICK UP":"BED — SLEEP AT NIGHT";}
   if(b.type==="ogger_trap"){$("craft").textContent=devices.get(key(b.x,b.y,b.z))?.baited?"BAIT -":"BAIT +";}
@@ -1834,6 +1873,7 @@ $("createWorld").onclick=()=>{
 };
 $("resume").onclick=enterPlay;$("saveButton").onclick=()=>saveCurrent(true);$("goHome").onclick=goHome;$("leave").onclick=pauseGame;
 $("respawn").onclick=respawn;$("deathHome").onclick=goHome;$("heldItem").onclick=openInventory;$("closeInventory").onclick=closeInventory;
+$("equipItem").onclick=()=>equipSelected();$("removeHelmet").onclick=()=>removeEquipment("helmet");$("removeArmor").onclick=()=>removeEquipment("armor");$("drinkPotion").onclick=drinkHealing;
 $("hands").onclick=()=>{active=-1;renderInventory();updateHand();};
 $("assign1").onclick=()=>assignQuick(20);$("assign2").onclick=()=>assignQuick(21);$("assign3").onclick=()=>assignQuick(22);
 $("storeQuick").onclick=storeQuick;$("inventoryEat").onclick=()=>eat();$("portableCraft").onclick=()=>openCraft(true);
@@ -1854,7 +1894,7 @@ canvas.addEventListener("pointerdown",e=>{
   if(e.button===2){eat(true);return;}if(e.button!==0)return;
   if(document.pointerLockElement!==canvas&&canvas.requestPointerLock){requestMouse();return;}
   updateAim();const t=activeStack()?.type;
-  if(t==="poison_potion")attack();
+  if(["poison_potion","healing_potion"].includes(t))attack();
   else if(BLOCKS.includes(t)||["boat","corn_seeds"].includes(t))place();
   else if(target?.type==="block"&&holdingPickaxe()&&["bed","campfire","ogger_trap","chest"].includes(target.block.type))beginMining(true);
   else if(target?.type==="boat")useBoat(target.boat.id);
@@ -1885,16 +1925,16 @@ document.addEventListener("mousemove",e=>{
  yaw-=e.movementX*.0027;pitch=Math.max(-1.25,Math.min(1.25,pitch-e.movementY*.0027));updateCamera();
 });
 document.addEventListener("pointerlockchange",()=>{if(!document.pointerLockElement&&mode==="playing")pauseGame();});
-const moveKeys={KeyW:"forward",ArrowUp:"forward",KeyS:"backward",ArrowDown:"backward",KeyA:"left",ArrowLeft:"left",KeyD:"right",ArrowRight:"right"};
+const moveKeys={KeyW:"forward",ArrowUp:"forward",KeyS:"backward",ArrowDown:"backward",KeyA:"left",ArrowLeft:"left",KeyD:"right",ArrowRight:"right",KeyC:"dive",ControlLeft:"dive",ControlRight:"dive"};
 window.addEventListener("keydown",e=>{
  if(e.target instanceof HTMLInputElement)return;
  if(e.code==="Escape"){if(mode==="craft")closeCraft();else if(mode==="chest")closeStorage();else if(mode==="inventory")closeInventory();else if(mode==="playing")pauseGame();return;}
  if(e.code==="KeyI"&&!e.repeat){if(mode==="inventory")closeInventory();else if(mode==="playing")openInventory();return;}
- if(mode!=="playing")return;if(moveKeys[e.code]){e.preventDefault();held.add(moveKeys[e.code]);return;}if(e.repeat)return;
+ if(mode!=="playing")return;if(e.code==="Space")held.add("rise");if(moveKeys[e.code]){e.preventDefault();held.add(moveKeys[e.code]);return;}if(e.repeat)return;
  if(e.code==="Space"){e.preventDefault();jump();}if(e.code==="KeyE")openCraft();if(e.code==="KeyQ")eat();if(e.code==="KeyF")beginMining();
  if(/^Digit[1-3]$/.test(e.code)){active=19+Number(e.code.slice(-1));stopMining();updateHand();renderHUD();}
 });
-window.addEventListener("keyup",e=>{if(moveKeys[e.code])held.delete(moveKeys[e.code]);});
+window.addEventListener("keyup",e=>{if(e.code==="Space")held.delete("rise");if(moveKeys[e.code])held.delete(moveKeys[e.code]);});
 window.addEventListener("blur",()=>{releaseControls();if(mode==="playing")pauseGame();});
 document.addEventListener("visibilitychange",()=>{if(document.hidden){releaseControls();saveCurrent();if(mode==="playing")pauseGame();}});
 window.addEventListener("pagehide",()=>saveCurrent());
@@ -1909,10 +1949,10 @@ blocks.set=function(k,b){originalSet(k,b);if(netRole==="host")netChanges.set(k,[
 blocks.delete=function(k){const b=blocks.get(k),ok=originalDelete(k);if(ok&&netRole==="host"&&b)netChanges.set(k,[b.x,b.y,b.z,null]);return ok;};
 function netSend(c,d){if(c?.open)try{c.send(d);}catch{}}
 function netValidPose(p){
- return p&&Array.isArray(p.feet)&&p.feet.length===3&&p.feet.every(Number.isFinite)&&Math.abs(p.feet[0])<=LIMIT+1&&Math.abs(p.feet[2])<=LIMIT+1&&p.feet[1]>=-30&&p.feet[1]<=45&&Number.isFinite(p.yaw)&&Number.isFinite(p.pitch);
+ return p&&Array.isArray(p.feet)&&p.feet.length===3&&p.feet.every(Number.isFinite)&&Math.abs(p.feet[0])<=LIMIT+1&&Math.abs(p.feet[2])<=LIMIT+1&&p.feet[1]>=-62&&p.feet[1]<=45&&Number.isFinite(p.yaw)&&Number.isFinite(p.pitch);
 }
 function netProfile(){
- return{inventory:clone(inventory),active,hp,hunger,nextHunger,nextHeal,nextAttack,nextCactus,wetTime,mountedBoat,
+ return{equipment:{...equipment},revivalShieldUntil,inventory:clone(inventory),active,hp,hunger,nextHunger,nextHeal,nextAttack,nextCactus,wetTime,mountedBoat,
   feet:feet.toArray(),yaw,pitch,stepOffset:playerStepOffset,escrow:craftSlots.filter(Boolean).map(s=>({...s.item})),savedTime:time,deathReason,
   name:netActing?.name||playerProfile.username||"PLAYER",skin:skinById(netActing?netActing.pose?.skin:playerProfile.skin).id};
 }
@@ -1925,11 +1965,11 @@ function netSaveGuest(manual=false){
  }catch{if(manual)notify("COULD NOT SAVE ON THIS DEVICE.");}
 }
 function netPerson(id,name,p){
- return{id,name:cleanName(name)||"PLAYER",skin:skinById(p.skin||(id==="host"&&netRole!=="guest"?playerProfile.skin:"pine")).id,hp:Math.max(0,Number(p.hp)||0),position:new THREE.Vector3().fromArray(p.feet),yaw:p.yaw||0,mountedBoat:p.mountedBoat||null};
+ return{equipment:normaliseEquipment(p.equipment),revivalShieldUntil:p.revivalShieldUntil||0,id,name:cleanName(name)||"PLAYER",skin:skinById(p.skin||(id==="host"&&netRole!=="guest"?playerProfile.skin:"pine")).id,hp:Math.max(0,Number(p.hp)||0),position:new THREE.Vector3().fromArray(p.feet),yaw:p.yaw||0,mountedBoat:p.mountedBoat||null};
 }
 function netPeople(){
  if(netRole==="guest")return netRoster.map(p=>netPerson(p.id,p.name,p));
- const host=netHostPose||{feet:feet.toArray(),yaw,hp,mountedBoat,skin:playerProfile.skin},out=[netPerson("host",playerProfile.username,host)];
+ const host=netHostPose||{equipment,revivalShieldUntil,feet:feet.toArray(),yaw,hp,mountedBoat,skin:playerProfile.skin},out=[netPerson("host",playerProfile.username,host)];
  if(netRole==="host")for(const e of netClients.values())if(e.ready&&netValidPose(e.pose))out.push(netPerson(e.id,e.name,e.pose));return out;
 }
 function netAggroTarget(m,night){
@@ -1943,8 +1983,10 @@ function netAggroTarget(m,night){
   if(lineClear(from,to)){m.nightAggro=true;m.nightTarget=a.id;return a;}
  }return null;
 }
-function netHurtPlayer(p,amount,reason="AN OGGER GOT YOU"){
- if(p.id==="host"){hp=Math.max(0,hp-amount);playerFlash=time+.5;deathReason=reason;notify(reason==="AN OGGER GOT YOU"?"AN OGGER BIT YOU.":"SPIKES HIT YOU.");}
+function netHurtPlayer(p,amount,reason="AN OGGER GOT YOU",aquatic=false){
+ if(time<(p.revivalShieldUntil||0))return;
+ if(aquatic&&p.equipment?.armor==="aquatic_armor")amount*=.5;
+ if(p.id==="host"){hp=Math.max(0,hp-amount);playerFlash=time+.5;deathReason=reason;}
  else{const e=netClients.get(p.id);if(e){e.pose.hp=Math.max(0,(e.pose.hp||0)-amount);netSend(e.conn,{t:"hurt",amount,reason});}}
 }
 function netUI(){
@@ -2022,7 +2064,7 @@ function netAccept(conn){
    if(d.t==="hello"&&!e.approved){
     clearTimeout(timeout);if(d.version!==NET_VERSION){netSend(conn,{t:"deny",reason:"REFRESH BOTH GAMES TO THE SAME VERSION."});return;}
     e.name=cleanName(d.name)||"PLAYER";e.approved=true;e.pose={feet:[spawn.x,spawn.y,spawn.z],yaw:0,pitch:0,hp:4};
-    const state=capture();Object.assign(state,{inventory:Array(23).fill(null),active:-1,escrow:[],hp:4,hunger:4,mountedBoat:null,feet:[spawn.x,spawn.y,spawn.z]});
+    const state=capture();Object.assign(state,{equipment:{helmet:null,armor:null},revivalShieldUntil:0,inventory:Array(23).fill(null),active:-1,escrow:[],hp:4,hunger:4,mountedBoat:null,feet:[spawn.x,spawn.y,spawn.z]});
     const text=JSON.stringify({world:{id:current.id,name:current.name,seed:current.seed},state}),size=12000,total=Math.ceil(text.length/size),transfer=uid();
     for(let i=0;i<total;i++)netSend(conn,{t:"chunk",transfer,index:i,total,part:text.slice(i*size,(i+1)*size)});
    }else if(d.t==="ready"&&e.approved){
@@ -2040,7 +2082,7 @@ function netAccept(conn){
  });conn.on("error",()=>{try{conn.close();}catch{}});
 }
 function netRequest(op,args){
- if(netRole!=="guest"||!netConnection?.open||netPending||!(mode==="playing"||(mode==="chest"&&op==="storage")))return;
+ if(netRole!=="guest"||!netConnection?.open||netPending||!(mode==="playing"||(mode==="chest"&&op==="storage")||(mode==="inventory"&&["equip","unequip","drink"].includes(op))))return;
  const id=++netSequence;netPending={id,op,args,hpAt:hp,timer:setTimeout(()=>{if(netPending?.id===id){netPending=null;notify("THE HOST IS NOT RESPONDING.");}},8000)};
  netSend(netConnection,{t:"rpc",id,op,args,profile:netProfile()});
 }
@@ -2049,10 +2091,11 @@ function netNearBlock(k){
  return o.distanceTo(c)<=5.7&&lineClear(o,c,k);
 }
 function netWithPlayer(e,s,fn){
- const old={inventory,active,hp,hunger,nextHunger,nextHeal,nextAttack,nextCactus,wetTime,mountedBoat,feet:feet.clone(),yaw,pitch,playerStepOffset,mode,miningKey,miningTime,mouseMining,target,swingUntil,playerFlash,
+ const old={equipment,revivalShieldUntil,inventory,active,hp,hunger,nextHunger,nextHeal,nextAttack,nextCactus,wetTime,mountedBoat,feet:feet.clone(),yaw,pitch,playerStepOffset,mode,miningKey,miningTime,mouseMining,target,swingUntil,playerFlash,
   cp:camera.position.clone(),cq:camera.quaternion.clone(),op:outline.position.clone(),ov:outline.visible};
- netHostPose={feet:old.feet.toArray(),yaw:old.yaw,hp:old.hp,mountedBoat:old.mountedBoat,skin:playerProfile.skin};netActing=e;
+ netHostPose={equipment:old.equipment,revivalShieldUntil:old.revivalShieldUntil,feet:old.feet.toArray(),yaw:old.yaw,hp:old.hp,mountedBoat:old.mountedBoat,skin:playerProfile.skin};netActing=e;
  try{
+  equipment=normaliseEquipment(s.equipment);revivalShieldUntil=s.revivalShieldUntil||0;
   inventory=normaliseInventory(s.inventory);active=Number.isInteger(s.active)&&s.active>=0&&s.active<23?s.active:-1;
   hp=Math.max(0,Math.min(4,Number(s.hp)||0));hunger=Math.max(0,Math.min(4,Number(s.hunger)||0));
   nextHunger=Number.isFinite(s.nextHunger)?s.nextHunger:time+180;nextHeal=Number.isFinite(s.nextHeal)?s.nextHeal:time+30;
@@ -2061,7 +2104,7 @@ function netWithPlayer(e,s,fn){
   mode="playing";miningKey=null;miningTime=0;mouseMining=false;updateCamera();fn();
   const result=netProfile();result.escrow=[];e.attackReady=nextAttack;e.boat=mountedBoat;e.pose=result;return result;
  }finally{
-  inventory=old.inventory;active=old.active;hp=old.hp;hunger=old.hunger;nextHunger=old.nextHunger;nextHeal=old.nextHeal;nextAttack=old.nextAttack;nextCactus=old.nextCactus;
+  equipment=old.equipment;revivalShieldUntil=old.revivalShieldUntil;inventory=old.inventory;active=old.active;hp=old.hp;hunger=old.hunger;nextHunger=old.nextHunger;nextHeal=old.nextHeal;nextAttack=old.nextAttack;nextCactus=old.nextCactus;
   wetTime=old.wetTime;mountedBoat=old.mountedBoat;feet.copy(old.feet);yaw=old.yaw;pitch=old.pitch;playerStepOffset=old.playerStepOffset;mode=old.mode;
   miningKey=old.miningKey;miningTime=old.miningTime;mouseMining=old.mouseMining;target=old.target;swingUntil=old.swingUntil;playerFlash=old.playerFlash;
   camera.position.copy(old.cp);camera.quaternion.copy(old.cq);camera.updateMatrixWorld();outline.position.copy(old.op);outline.visible=old.ov;netActing=null;netHostPose=null;
@@ -2069,7 +2112,7 @@ function netWithPlayer(e,s,fn){
 }
 function netHostRequest(e,d){
  if(!Number.isInteger(d.id)||!netValidPose(d.profile)||e.seen.has(d.id))return;
- const allowed=["mine","place","attack","potion","trap","fire","sleep","harvest","pickup","storage","boat"];if(!allowed.includes(d.op))return;
+ const allowed=["mine","place","attack","potion","trap","fire","sleep","harvest","pickup","storage","boat","scanner","awaken","equip","unequip","drink"];if(!allowed.includes(d.op))return;
  e.seen.add(d.id);if(e.seen.size>256)e.seen.delete(e.seen.values().next().value);
  const a=d.args||{};let removedDrop=null;
  const profile=netWithPlayer(e,d.profile,()=>{
@@ -2078,7 +2121,12 @@ function netHostRequest(e,d){
    if(!e.mining||e.mining.key!==a.key||!netNearBlock(a.key)){notify("START MINING AGAIN.");return;}
    if(time-e.mining.start+.15<miningSeconds()){notify("KEEP MINING.");return;}
    miningKey=a.key;completeMining();e.mining=null;
-  }else if(d.op==="place")place();
+  }else if(d.op==="scanner"){if(netNearBlock(a.key))useAquaticScanner(a.key);}
+  else if(d.op==="awaken"){if(netNearBlock(a.key)&&blocks.get(a.key)?.type==="stonefish_block")awakenStonefish(blocks.get(a.key));}
+  else if(d.op==="equip")equipSelected();
+  else if(d.op==="unequip")removeEquipment(a.slot);
+  else if(d.op==="drink")drinkHealing();
+  else if(d.op==="place")place();
   else if(d.op==="potion")throwPotion();
   else if(d.op==="attack"){
    const m=a.id===farmerActor?.id?farmerActor:mobs.get(a.id);if(!m||m.hp<=0)return;
@@ -2101,14 +2149,14 @@ function netHostRequest(e,d){
 function netFrame(){
  if(farmFeature()&&farmerActor)farmFeature().farmer=farmerSaveState();
  return{
-  t:"frame",time,dayClock,blocks:[...netChanges.values()],mobs:[...mobs.values()].map(mobState),features:clone(worldFeatures),farmer:farmerSaveState(),
+  t:"frame",aquaticHazards:aquaticHazardStates(),time,dayClock,blocks:[...netChanges.values()],mobs:[...mobs.values()].map(mobState),features:clone(worldFeatures),farmer:farmerSaveState(),
   corn:[...cornPlants.values()].map(p=>({x:p.x,y:p.y,z:p.z,plantedAt:p.plantedAt,matureAt:p.matureAt})),
   traps:[...devices].map(([k,t])=>({key:k,baited:t.baited,nextCatch:t.nextCatch,snapAt:t.snapAt,catches:t.catches})),
   fires:[...fires].map(([k,f])=>({key:k,rawType:f.rawType,readyAt:f.readyAt})),
   chests:chestStates(),boats:boatStates(),drops:drops.map(p=>({id:p.id,item:p.item,x:p.x,y:p.y,z:p.z})),
-  projectiles:[...projectiles.values()].map(p=>({id:p.id,p:p.p,v:p.v,owner:p.owner,until:p.until})),
-  spikes:[...spikes.values()].map(w=>({id:w.id,points:w.points,triggerAt:w.triggerAt,until:w.until})),
-  players:netPeople().map(p=>({id:p.id,name:p.name,skin:p.skin,feet:p.position.toArray(),yaw:p.yaw,hp:p.hp,mountedBoat:p.mountedBoat}))
+  projectiles:[...projectiles.values()].map(p=>({id:p.id,kind:p.kind,p:p.p,v:p.v,owner:p.owner,until:p.until})),
+  spikes:[...spikes.values()].map(w=>({id:w.id,points:w.points,triggerAt:w.triggerAt,until:w.until,aquatic:w.aquatic,reason:w.reason})),
+  players:netPeople().map(p=>({id:p.id,name:p.name,skin:p.skin,equipment:p.equipment,revivalShieldUntil:p.revivalShieldUntil,feet:p.position.toArray(),yaw:p.yaw,hp:p.hp,mountedBoat:p.mountedBoat}))
  };
 }
 function netBroadcast(){
@@ -2120,7 +2168,7 @@ function netLoadWorld(payload){
  let p=null;try{p=JSON.parse(localStorage.getItem("corny-guest-profiles-v1")||"{}")[w.id]||null;}catch{}
  netRole="guest";current={id:w.id,name:w.name,seed:w.seed,netGuest:true};
  if(p){
-  d.inventory=p.inventory;d.active=p.active;d.escrow=p.escrow||[];d.hp=p.hp??4;d.hunger=p.hunger??4;
+  d.equipment=p.equipment;d.revivalShieldUntil=p.revivalShieldUntil||0;d.inventory=p.inventory;d.active=p.active;d.escrow=p.escrow||[];d.hp=p.hp??4;d.hunger=p.hunger??4;
   if(netValidPose(p)&&!p.mountedBoat){d.feet=p.feet;d.yaw=p.yaw;d.pitch=p.pitch;}
   const old=p.savedTime||0;d.nextHunger=d.time+Math.max(1,Math.min(180,(p.nextHunger??old+180)-old));d.nextHeal=d.time+Math.max(1,Math.min(30,(p.nextHeal??old+30)-old));d.deathReason=p.deathReason;
  }
@@ -2141,7 +2189,7 @@ function netApplyFrame(d){
  for(const s of d.mobs||[]){
   if(!KINDS.includes(s.kind))continue;live.add(s.id);let m=mobs.get(s.id);if(!m)m=makeMob(s.kind,s.x,s.y,s.z,s);
   Object.assign(m,{hp:s.hp,angry:s.angry,nightAggro:s.nightAggro,heading:s.heading,flashUntil:s.flashUntil||0,castUntil:s.castUntil||0});
-  m.netTarget={x:s.x,y:s.y,z:s.z,heading:s.heading};flashMob(m,time<m.flashUntil);if(m.kind==="sandwitch")blueMob(m,time<m.castUntil);
+  syncAquaticMobState(m,s);m.netTarget={x:s.x,y:s.y,z:s.z,heading:s.heading};flashMob(m,time<m.flashUntil);if(m.kind==="sandwitch")blueMob(m,time<m.castUntil);
  }
  for(const m of [...mobs.values()])if(!live.has(m.id))removeMob(m);
  if(d.farmer&&!d.farmer.dead){
@@ -2164,6 +2212,7 @@ function netApplyFrame(d){
  for(const [id,p] of projectiles)if(!shots.has(id)){scene.remove(p.mesh);p.mesh.geometry.dispose();projectiles.delete(id);}
  const waveIds=new Set();for(const s of d.spikes||[]){waveIds.add(s.id);if(!spikes.has(s.id))createSpikeWave(s);}
  for(const [id,w] of spikes)if(!waveIds.has(id)){scene.remove(w.root);spikes.delete(id);}
+ syncAquaticHazards(d.aquaticHazards||[]);
  netRoster=Array.isArray(d.players)?d.players:[];updateSky();updateFires();updateCornVisuals();netUI();if(mode==="chest")renderStorage();
 }
 function netClientMessage(d){
@@ -2182,7 +2231,7 @@ function netClientMessage(d){
   else if(d.t==="reply"&&netRole==="guest"&&netPending?.id===d.id){
    const pending=netPending;clearTimeout(pending.timer);netPending=null;const p=d.profile;
    if(p){
-    inventory=normaliseInventory(p.inventory);if(!inventory[active])active=Number.isInteger(p.active)?p.active:-1;
+    equipment=normaliseEquipment(p.equipment);revivalShieldUntil=p.revivalShieldUntil||0;inventory=normaliseInventory(p.inventory);if(!inventory[active])active=Number.isInteger(p.active)?p.active:-1;
     const damageSince=Math.max(0,pending.hpAt-hp);hp=mode==="dead"?0:Math.max(0,Math.min(4,Number(p.hp)||0)-damageSince);
     hunger=Math.max(0,Math.min(4,Number(p.hunger)||0));nextAttack=p.nextAttack||time;nextHeal=p.nextHeal||time+30;nextHunger=p.nextHunger||time+180;
     if((p.mountedBoat||null)!==mountedBoat){
@@ -2190,7 +2239,8 @@ function netClientMessage(d){
     }
    }
    if(d.removedDrop){const i=drops.findIndex(p=>p.id===d.removedDrop);if(i>=0)removeDrop(i);}
-   handKey="";updateHand();renderHUD();if(mode==="chest")renderStorage();netSaveGuest();
+   handKey="";updateHand();renderHUD();if(mode==="chest")renderStorage();if(mode==="inventory")renderInventory();netSaveGuest();
+  }else if(d.t==="heal"&&netRole==="guest"){hp=Math.min(4,hp+Math.max(0,Math.min(4,Number(d.amount)||0)));renderHUD();
   }else if(d.t==="hurt"&&netRole==="guest"){
    hp=Math.max(0,hp-Math.max(0,Math.min(1,Number(d.amount)||0)));playerFlash=time+.5;deathReason=d.reason||"AN OGGER GOT YOU";
    notify(deathReason==="AN OGGER GOT YOU"?"AN OGGER BIT YOU.":"SPIKES HIT YOU.");if(hp<=0)die();else renderHUD();
@@ -2219,17 +2269,19 @@ function netMakeAvatar(person){
  }else{
   part(root,.50,.1,.50,0,1.77,0,s.hat);part(root,.54,.04,.22,0,1.72,-.20,s.hat);part(root,.065,.6,.025,-.14,.95,-.17,"#a98654");
  }
+ if(person.equipment?.helmet){part(root,.58,.57,.54,0,1.5,0,"#50b5c4");part(root,.43,.26,.05,0,1.52,-.3,"#a2eeef");}
+ if(person.equipment?.armor)part(root,.63,.70,.36,0,.98,0,"#3295b6");
  const c=document.createElement("canvas");c.width=256;c.height=64;const x=c.getContext("2d");
  x.fillStyle="#10271ee8";x.fillRect(0,0,256,64);x.fillStyle="#f3e7c1";x.font='32px "VT323", monospace';x.textAlign="center";x.fillText(cleanName(person.name)||"PLAYER",128,43);
  const texture=new THREE.CanvasTexture(c),label=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,depthWrite:false}));
  label.position.y=2.2;label.scale.set(1.8,.45,1);root.add(label);root.position.copy(person.position);scene.add(root);
- return{root,legs,name:person.name,skin:s.id};
+ return{root,legs,name:person.name,skin:s.id,equipment:JSON.stringify(person.equipment||{})};
 }
 function netAnimate(dt){
  const local=netRole==="host"?"host":netPeer?.id,people=netPeople().filter(p=>p.id!==local),ids=new Set();
  for(const p of people){
   ids.add(p.id);let a=netAvatars.get(p.id);
-  if(a&&(a.name!==p.name||a.skin!==p.skin)){netDisposeAvatar(a);netAvatars.delete(p.id);a=null;}
+  if(a&&(a.name!==p.name||a.skin!==p.skin||a.equipment!==JSON.stringify(p.equipment||{}))){netDisposeAvatar(a);netAvatars.delete(p.id);a=null;}
   if(!a){a=netMakeAvatar(p);netAvatars.set(p.id,a);}
   const moving=a.root.position.distanceTo(p.position)>.025;a.root.visible=p.hp>0;a.root.position.lerp(p.position,1-Math.exp(-14*dt));
   a.root.rotation.y+=Math.atan2(Math.sin(p.yaw-a.root.rotation.y),Math.cos(p.yaw-a.root.rotation.y))*Math.min(1,dt*12);
@@ -2248,9 +2300,10 @@ function netAnimate(dt){
 }
 function worldTick(dt){
  if(time>=nextSpawn){spawnWave();nextSpawn+=900;}if(time>=nextAI){thinkMobs();nextAI=time+.45;}
- moveMobs(dt);updateDevices();updateFires();moveFarmer(dt);updateCornVisuals();updateProjectiles(dt);updateSpikes();updateEffects();
+ moveMobs(dt);updateAquaticCombat(dt);updateDevices();updateFires();moveFarmer(dt);updateCornVisuals();updateProjectiles(dt);updateSpikes();updateEffects();
  const c=farmFeature();if(c?.won&&!c.placed&&time>=farmNextRetry)buildFarmerCamp(false);
  if(worldFeatures.desert?.sandwitchDefeated&&!worldFeatures.desert.shipChestSpawned)unlockShipChest();
+ upgradeWitchChestAquaticLoot();
 }
 function netTick(dt){
  if(netRole==="host"){
@@ -2262,7 +2315,7 @@ function netTick(dt){
  }else if(netRole==="guest"){
   const now=performance.now()/1000;if(now>=netNextPose){netSend(netConnection,{t:"pose",pose:netProfile()});netNextPose=now+.1;}
   if(mode==="playing"&&hp>0&&!netPending)for(const p of drops)if(distance(feet,p)<1.35&&Math.abs(feet.y+.3-p.y)<1.8&&addMain(clone(inventory),p.item)){netRequest("pickup",{id:p.id});break;}
-  updateDevices();updateFires();updateCornVisuals();updateSpikes();updateEffects();
+  updateAquaticCombat(dt);updateDevices();updateFires();updateCornVisuals();updateSpikes();updateEffects();
  }if(["host","guest"].includes(netRole))netAnimate(dt);
 }
 $("joinHome").onclick=()=>{if(!commitProfile())return;hidePanels();mode="network";show("multiplayer",true);$("joinStatus").textContent="ASK YOUR FRIEND FOR THEIR ROOM CODE.";};
@@ -2270,6 +2323,441 @@ $("joinRoom").onclick=netStartJoin;$("hostRoom").onclick=netStartHost;
 $("netBack").onclick=()=>{netStop();hidePanels();mode="home";show("home",true);};
 $("copyRoomCode").onclick=async()=>{try{await navigator.clipboard.writeText(netCode);notify("ROOM CODE COPIED.");}catch{notify(`ROOM CODE: ${netCode}`);}};
 $("stopRoom").onclick=()=>{if(netRole==="guest"){goHome();return;}saveCurrent();netStop(true);notify("MULTIPLAYER ENDED. YOUR WORLD IS SAVED.");};
+
+/* Aquatic equipment and rescue potions. */
+function normaliseEquipment(e){return{helmet:e?.helmet==="aquatic_helmet"?"aquatic_helmet":null,armor:e?.armor==="aquatic_armor"?"aquatic_armor":null};}
+function renderEquipment(){
+ if(netActing)return;
+ $("equipmentStatus").textContent=`HELMET: ${equipment.helmet?"AQUATIC — UNLIMITED AIR":"NONE"} | ARMOR: ${equipment.armor?"AQUATIC — HALF AQUATIC DAMAGE":"NONE"}`;
+ $("equipItem").disabled=!["aquatic_helmet","aquatic_armor"].includes(activeStack()?.type);
+ $("removeHelmet").disabled=!equipment.helmet;$("removeArmor").disabled=!equipment.armor;
+ $("drinkPotion").disabled=!inventory.some(s=>s?.type==="healing_potion");
+}
+function equipSelected(){
+ if(!["playing","inventory"].includes(mode)||netPending)return;
+ const type=activeStack()?.type,slot=type==="aquatic_helmet"?"helmet":type==="aquatic_armor"?"armor":null;if(!slot)return;
+ if(netRole==="guest"){netRequest("equip",{});return;}
+ if(equipment[slot]){notify("YOU ARE ALREADY WEARING THIS GEAR.");return;}
+ takeItem(active);equipment[slot]=type;if(slot==="helmet")wetTime=0;
+ updateHand();renderInventory();renderHUD();saveCurrent();notify(slot==="helmet"?"AQUATIC HELMET ON — UNLIMITED AIR.":"AQUATIC ARMOR ON — AQUATIC DAMAGE HALVED.");
+}
+function removeEquipment(slot){
+ if(!["helmet","armor"].includes(slot)||!equipment[slot]||netPending)return;
+ if(netRole==="guest"){netRequest("unequip",{slot});return;}
+ if(!addMain(inventory,{type:equipment[slot]})){notify("MAKE ROOM IN YOUR INVENTORY FIRST.");return;}
+ equipment[slot]=null;renderInventory();renderHUD();saveCurrent();
+}
+function drinkHealing(){
+ if(!["playing","inventory"].includes(mode)||netPending||hp<=0)return;
+ if(netRole==="guest"){netRequest("drink",{});return;}
+ const i=inventory.findIndex(s=>s?.type==="healing_potion");if(i<0)return;
+ if(hp>=4){notify("YOUR HEALTH IS ALREADY FULL.");return;}
+ takeItem(i);hp=4;renderInventory();renderHUD();saveCurrent();notify("HEALTH FULLY RESTORED.");
+}
+function tryRevival(){
+ const i=inventory.findIndex(s=>s?.type==="revival_potion");if(i<0)return false;
+ takeItem(i);hp=4;hunger=Math.max(2,hunger);wetTime=0;nextStarve=time+1;revivalShieldUntil=time+5;playerFlash=0;
+ if(feet.y<-61||(!equipment.helmet&&feet.y+1.62<WATER)){
+  const t=worldFeatures.temple,entry=t?.entrance||t?.scanner;
+  if(entry){feet.set(entry.x,3.5,entry.z+4);vy=0;}else{feet.set(spawn.x,spawn.y,spawn.z);vy=0;}
+ }
+ notify("REVIVAL POTION SAVED YOU! FIVE SECONDS OF PROTECTION.");updateHand();renderHUD();saveCurrent();return true;
+}
+
+/* Aquatic expedition: additive world migration and persistent temple residents. */
+function ensureAquaticTemple(){
+ if(netRole==="guest"||!current||!worldFeatures.desert)return;
+ if(worldFeatures.temple?.version===1){upgradeWitchChestAquaticLoot();ensureAquaticResidents();return;}
+ const d=worldFeatures.desert,cx=d.center.x+35,cz=d.center.z+26,floor=-28;
+ const t={version:1,center:{x:cx,z:cz},floor,ceiling:-7,
+  island:{x:cx,z:cz+12,radius:7},scanner:{x:cx-3,y:2,z:cz+8},doorCells:[],doorOpen:false,
+  shaft:{minX:cx-2,maxX:cx+2,minZ:cz+10,maxZ:cz+14,bottom:floor,top:1},
+  bounds:{minX:cx-26,maxX:cx+26,minY:floor,maxY:-7,minZ:cz-40,maxZ:cz+17},
+  arena:{x:cx,y:-11.5,z:cz-33,minX:cx-8,maxX:cx+8,minZ:cz-39,maxZ:cz-26},
+  throne:{x:cx,y:-11,z:cz-37},rulerId:"aquatic_ruler:"+current.id,rulerDefeated:false,rulerWins:0,
+  aquarium:{minX:cx-25,maxX:cx-12,minY:floor,maxY:-17,minZ:cz-26,maxZ:cz-15},
+  chestRoom:{minX:cx-25,maxX:cx-12,minZ:cz-12,maxZ:cz+8},
+  trainingRoom:{minX:cx+12,maxX:cx+25,minZ:cz-24,maxZ:cz+10},
+  treasureChests:[],stonefishCells:[],residentsSpawned:false,rewardChests:[]};
+ worldFeatures.temple=t;
+ const stone=(dx,y,dz,type="stone")=>setBlock(cx+dx,y,cz+dz,type);
+ const clear=(dx,y,dz)=>blocks.delete(key(cx+dx,y,cz+dz));
+ // The temple is carved below the islands, leaving their surface structures intact.
+ for(let dx=-26;dx<=26;dx++)for(let dz=-40;dz<=17;dz++){
+  stone(dx,floor,dz,(dx%6===0||dz%6===0)?"marked_stone":"smooth_stone");
+  stone(dx,-7,dz,(dx%8===0&&dz%4===0)?"marked_stone":"stone");
+  for(let y=floor+1;y<-7;y++){
+   if(dx===-26||dx===26||dz===-40||dz===17)stone(dx,y,dz,y%5===0?"marked_stone":"stone");
+   else clear(dx,y,dz);
+  }
+ }
+ // Thick columns give the central hall a recognisable monumental silhouette.
+ for(const dx of [-9,9])for(const dz of [-9,0,9])for(let y=-27;y<=-8;y++)stone(dx,y,dz,y===-27||y===-8?"marked_stone":"smooth_stone");
+ // Side-room dividing walls with broad doorways and an aquarium viewing opening.
+ for(const dx of [-11,11])for(let dz=-26;dz<=12;dz++)for(let y=-27;y<=-8;y++){
+  const doorway=dz>=-2&&dz<=2&&y<=-22;
+  const aquariumView=dx===-11&&dz>=-24&&dz<=-17&&y>=-26&&y<=-19;
+  if(!doorway&&!aquariumView)stone(dx,y,dz,y===-24?"marked_stone":"stone");
+ }
+ for(const dz of [-13,9])for(let dx=-25;dx<=-12;dx++)for(let y=-27;y<=-8;y++)stone(dx,y,dz,y===-24?"marked_stone":"stone");
+ // Twenty-four loot chests, with walkable aisles between every row.
+ let chestNumber=0;
+ for(const dx of [-23,-20,-17,-14])for(const dz of [-10,-7,-4,-1,2,5]){
+  const items=chestNumber++%4===3?[{type:"aquatic_armor"}]:[{type:"revival_potion"},{type:"revival_potion"}];
+  fillChest(cx+dx,-27,cz+dz,items);t.treasureChests.push(key(cx+dx,-27,cz+dz));
+ }
+ // Sealed glass tank: the knightfish can see visitors but cannot cross the glass.
+ for(let dx=-25;dx<=-12;dx++)for(let dz=-26;dz<=-15;dz++)for(let y=-27;y<=-17;y++){
+  const edge=dx===-25||dx===-12||dz===-26||dz===-15||y===-17;
+  if(edge)stone(dx,y,dz,y===-27?"marked_stone":"glass");
+ }
+ for(const [dx,dz] of [[-23,-24],[-21,-18],[-16,-23],[-14,-18]])stone(dx,-27,dz,"stone");
+ // Practice targets stand on pine-log posts at three depths of the training hall.
+ for(const dx of [15,19,23])for(const dz of [-20,-10,6]){
+  stone(dx,-27,dz,"log");stone(dx,-26,dz,"bullseye");
+ }
+ // A broad sixteen-step diagonal stair climbs from the central hall to the throne.
+ for(let step=0;step<16;step++)for(let dx=-3;dx<=3;dx++){
+  const dz=-10-step,top=-27+step;
+  stone(dx,top,dz,Math.abs(dx)===3?"marked_stone":"smooth_stone");
+  stone(dx,top-1,dz,"stone");
+ }
+ for(let dx=-9;dx<=9;dx++)for(let dz=-39;dz<=-26;dz++){
+  stone(dx,-12,dz,(dx===-9||dx===9||dz===-39)?"marked_stone":"smooth_stone");
+  if(Math.abs(dx)===9){stone(dx,-11,dz,"marked_stone");stone(dx,-10,dz,"stone");}
+ }
+ stone(0,-11,-37,"throne");stone(-1,-11,-38,"marked_stone");stone(1,-11,-38,"marked_stone");
+ for(let y=-11;y<=-9;y++)stone(0,y,-38,"marked_stone");
+ // Stonefish hide both in floor tiles and against the central hall's walls.
+ for(const [dx,y,dz] of [[-5,-28,5],[5,-28,3],[-4,-28,-4],[5,-28,-7],[-10,-26,5],[10,-26,-4],[-10,-24,-7],[10,-25,8]]){
+  stone(dx,y,dz,"stonefish_block");t.stonefishCells.push(key(cx+dx,y,cz+dz));
+ }
+ // A compact, entirely stone island sits above the southern end of the temple.
+ for(let dx=-7;dx<=7;dx++)for(let dz=-7;dz<=7;dz++){
+  const r=Math.hypot(dx,dz);if(r>7+(Math.abs(dx+dz)%3)*.2)continue;
+  const top=r<5?1:0;
+  for(let y=-6;y<=top;y++)stone(dx,y,12+dz,y===top&&r<5?"smooth_stone":"stone");
+  land.push({x:cx+dx,z:cz+12+dz,h:top,beach:r>5,biome:"stone"});landColumns.add(`${cx+dx},${cz+12+dz}`);
+ }
+ // Entrance pavilion and card-locked stone door face the desert to the north.
+ for(let dx=-3;dx<=3;dx++)for(let dz=9;dz<=15;dz++){
+  stone(dx,1,dz,"smooth_stone");stone(dx,5,dz,"marked_stone");
+  for(let y=2;y<=4;y++){
+   if(Math.abs(dx)===3||dz===9||dz===15)stone(dx,y,dz,"stone");else clear(dx,y,dz);
+   if(Math.abs(dx)<=1&&dz===9)t.doorCells.push(key(cx+dx,y,cz+dz));
+  }
+ }
+ // The five-block-wide shaft pierces island and roof without a hidden floor plug.
+ for(let dx=-2;dx<=2;dx++)for(let dz=10;dz<=14;dz++)for(let y=-7;y<=1;y++)clear(dx,y,dz);
+ // A dry landing immediately behind the door makes the entrance easy to use.
+ for(let dx=-2;dx<=2;dx++)stone(dx,1,10,"smooth_stone");
+ setBlock(t.scanner.x,t.scanner.y-1,t.scanner.z,"marked_stone");setBlock(t.scanner.x,t.scanner.y,t.scanner.z,"keycard_scanner");
+ upgradeWitchChestAquaticLoot();ensureAquaticResidents();rebuildTerrain();
+}
+
+function upgradeWitchChestAquaticLoot(){
+ const d=worldFeatures.desert;if(!d?.shipChestSpawned||d.aquaticLootGranted||netRole==="guest")return;
+ const base=d.shipChestPosition||d.ship?.chest;if(!base)return;
+ let p={...base},c=chests.get(key(p.x,p.y,p.z));
+ if(!c){
+  // An old world's chest may already have been mined: provide a replacement nearby.
+  let found=false;
+  for(const [dx,dz] of [[0,0],[1,0],[-1,0],[0,-1],[1,-1],[-1,-1],[2,0],[-2,0],[0,1]]){
+   const x=base.x+dx,z=base.z+dz;if(at(x,base.y,z)||!at(x,base.y-1,z))continue;
+   p={x,y:base.y,z};fillChest(x,p.y,z,[]);c=chests.get(key(x,p.y,z));found=true;break;
+  }
+  if(!found){
+   addDrop({type:"aquatic_keycard"},base.x,base.y+.6,base.z);addDrop({type:"aquatic_helmet"},base.x+.4,base.y+.6,base.z);
+   d.aquaticLootGranted=true;return;
+  }
+  d.aquaticChestPosition={...p};rebuildTerrain();
+ }
+ for(const type of ["aquatic_keycard","aquatic_helmet"]){
+  if(!addMain(c.inventory,{type}))addDrop({type},p.x,p.y+.6,p.z);
+ }
+ c.revision++;d.aquaticLootGranted=true;
+}
+
+function ensureAquaticResidents(){
+ const t=worldFeatures.temple;if(!t||netRole==="guest")return;
+ if(!t.residentsSpawned){
+  const {x,z}=t.center;
+  const residents=[
+   ["oggerfish",-5,-25,8,false],["oggerfish",5,-25,-2,false],["oggerfish",-6,-23,-6,false],
+   ["knightfish",16,-24,-4,false],["knightfish",21,-24,-16,false],
+   ["oggerfish",-22,-24,-21,true],["oggerfish",-18,-22,-19,true],["oggerfish",-16,-24,-23,true],
+   ["knightfish",-22,-22,-18,true],["knightfish",-16,-21,-21,true],["knightfish",-19,-24,-24,true],
+   ["stonefish",-23,-26,-23,true],["stonefish",-17,-26,-18,true],["stonefish",-15,-25,-24,true]
+  ];
+  residents.forEach(([kind,dx,y,dz,aquarium],i)=>{
+   const home={x:x+dx,y,z:z+dz};makeMob(kind,home.x,home.y,home.z,{id:`temple:${current.id}:${i}`,home,aquarium,awakened:kind==="stonefish",hp:kind==="oggerfish"?2:kind==="stonefish"?3:4});
+  });
+  t.residentsSpawned=true;
+ }
+ if(!t.rulerDefeated&&!mobs.has(t.rulerId))makeMob("aquatic_ruler",t.arena.x,t.arena.y,t.arena.z,{id:t.rulerId,hp:100,home:{x:t.arena.x,y:t.arena.y,z:t.arena.z}});
+}
+
+function useAquaticScanner(k){
+ const t=worldFeatures.temple;if(!t||blocks.get(k)?.type!=="keycard_scanner")return false;
+ if(netRole==="guest"){netRequest("scanner",{key:k});return true;}
+ if(!inventory.some(s=>s?.type==="aquatic_keycard")){notify("THIS SCANNER NEEDS THE AQUATIC KEYCARD FROM THE SANDWITCH'S CHEST.");return true;}
+ if(t.doorOpen){notify("AQUATIC ACCESS GRANTED. THE STONE DOOR IS OPEN.");return true;}
+ for(const cell of t.doorCells)if(blocks.get(cell)?.type==="stone")blocks.delete(cell);
+ t.doorOpen=true;rebuildTerrain();notify("AQUATIC ACCESS GRANTED. EQUIP YOUR HELMET, THEN DIVE INTO THE SHAFT.");saveCurrent();return true;
+}
+
+function defeatAquaticRuler(m){
+ const t=worldFeatures.temple;if(!t||t.rulerDefeated)return;
+ t.rulerDefeated=true;t.rulerWins=(t.rulerWins||0)+1;
+ const base={x:Math.round(m.root.position.x),y:-11,z:Math.round(m.root.position.z)};
+ let placed=false;
+ for(let ring=0;ring<=8&&!placed;ring++)for(let dx=-ring;dx<=ring&&!placed;dx++)for(let dz=-ring;dz<=ring&&!placed;dz++){
+  if(ring&&Math.abs(dx)!==ring&&Math.abs(dz)!==ring)continue;
+  const p={x:base.x+dx,y:base.y,z:base.z+dz};if(at(p.x,p.y,p.z)||!at(p.x,p.y-1,p.z))continue;
+  fillChest(p.x,p.y,p.z,[{type:"gold_block"},...Array.from({length:15},()=>({type:"healing_potion"}))]);
+  t.rewardChests.push(key(p.x,p.y,p.z));t.rewardChestPosition=p;placed=true;
+ }
+ if(!placed){addDrop({type:"gold_block"},base.x,base.y+.5,base.z);for(let i=0;i<15;i++)addDrop({type:"healing_potion"},base.x,base.y+.5,base.z);}
+ rebuildTerrain();notify("THE AQUATIC RULER HAS FALLEN! CLAIM THE GOLD AND HEALING POTIONS. THROW A HEALING POTION AT THE THRONE TO REVIVE HIM.");
+}
+
+function reviveAquaticRuler(position){
+ const t=worldFeatures.temple;if(!t?.rulerDefeated||netRole==="guest")return false;
+ if(at(t.throne.x,t.throne.y,t.throne.z)?.type!=="throne")return false;
+ if(Math.hypot(position.x-t.throne.x,position.y-t.throne.y,position.z-t.throne.z)>3)return false;
+ const old=mobs.get(t.rulerId);if(old)removeMob(old);
+ const spots=[];for(let radius=0;radius<=6;radius+=2)for(const [dx,dz] of [[radius,0],[-radius,0],[0,radius],[0,-radius]])spots.push({x:t.arena.x+dx,y:t.arena.y,z:t.arena.z+dz});
+ const spot=spots.find(p=>!bodyCollides(p,.6,3));if(!spot){notify("CLEAR SOME SPACE AROUND THE THRONE TO REVIVE THE RULER.");return false;}
+ t.rulerDefeated=false;
+ makeMob("aquatic_ruler",spot.x,spot.y,spot.z,{id:t.rulerId,hp:100,home:spot,nextCast:time+3});
+ notify("THE THRONE GLOWS. THE AQUATIC RULER RETURNS WITH 100 HP!");saveCurrent();return true;
+}
+
+/* Aquatic temple creatures, telegraphed ruler attacks, and synchronized hazards. */
+const AQUATIC_KINDS=["oggerfish","stonefish","knightfish","aquatic_ruler"];
+const aquaticHazards=new Map();
+const isAquaticKind=kind=>AQUATIC_KINDS.includes(kind);
+const aquaticMaxHP=kind=>kind==="aquatic_ruler"?100:kind==="knightfish"?4:kind==="stonefish"?3:2;
+const aquaticCastColors={blue:"#49a7ff",green:"#6cff80",yellow:"#fff36c",orange:"#ff933b"};
+function buildAquaticModel(kind,model,id,legs){
+ function part(w,h,d,x,y,z,color){
+  const material=new THREE.MeshLambertMaterial({color}),mesh=cube(model,w,h,d,x,y,z,material);
+  mesh.userData.mobId=id;mesh.userData.baseColor=material.color.clone();return mesh;
+ }
+ if(kind==="aquatic_ruler"){
+  part(1.05,1.35,.65,0,1.1,0,"#176b87");part(.77,.68,.67,0,2.1,-.03,"#58c6d0");
+  part(1.15,.18,.76,0,1.65,0,"#dfbd53");part(.83,.15,.73,0,2.5,0,"#dfbd53");
+  for(const s of [-1,1]){
+   legs.push(part(.34,.5,.36,s*.25,.28,0,"#154351"));
+   part(.27,1.02,.3,s*.67,1.24,0,"#218d9e");part(.12,.11,.035,s*.2,2.18,-.38,"#efffff");
+   part(.14,.33,.15,s*.33,2.69,0,"#dfbd53");part(.16,.13,.08,s*.2,2.17,-.41,"#09485b");
+  }
+  part(.16,.44,.16,0,2.74,0,"#f6de73");part(.27,.2,.08,0,2.52,-.4,"#5cddf5");
+  part(.09,2.7,.1,-.91,1.45,-.1,"#c8d9cc");part(.7,.1,.1,-.91,2.5,-.1,"#c8d9cc");
+  for(const x of [-1.21,-.91,-.61])part(.1,.55,.1,x,2.73,-.1,"#73e8f4");
+  part(1.04,1.45,.12,0,1.15,.4,"#173847");return;
+ }
+ const stone=kind==="stonefish",knight=kind==="knightfish",body=stone?"#7b8580":knight?"#97b1c4":"#73a874";
+ part(.76,.58,1.02,0,.55,0,body);part(.67,.48,.38,0,.55,-.61,stone?"#69756e":knight?"#647c99":"#9cc885");
+ const tail=part(.72,.5,.12,0,.57,.75,stone?"#667269":knight?"#566e8c":"#4b8063");tail.userData.aquaticTail=true;
+ for(const s of [-1,1]){
+  const fin=part(.38,.10,.46,s*.51,.46,.02,stone?"#737d73":knight?"#d0c99c":"#3f8075");fin.rotation.z=s*.3;fin.userData.aquaticFin=s;
+  part(.1,.11,.04,s*.21,.65,-.82,"#142829");
+  if(!stone)part(.07,.12,.07,s*.14,.37,-.82,"#f1eaca");
+ }
+ if(stone){for(const [x,z] of [[-.2,-.25],[.19,.17],[0,.4]])part(.22,.22,.28,x,.91,z,"#969e8b");}
+ if(knight){part(.18,.42,.7,0,.99,-.04,"#e0b859");part(.8,.13,.25,0,.82,-.56,"#d3dfe4");part(.12,.31,.07,0,.55,-.84,"#d3dfe4");}
+ if(kind==="oggerfish"){for(const s of [-1,1])part(.16,.23,.19,s*.36,.78,-.45,"#568260");}
+}
+function syncAquaticMobState(m,s){
+ for(const k of ["aquarium","awakened","castType","castTarget","castPending","attackPhase","summoned","nextAquaticThink"])
+  if(s[k]!==undefined)m[k]=s[k];
+}
+function aquaticMobState(m){
+ return{aquarium:!!m.aquarium,awakened:!!m.awakened,castType:m.castType||null,castTarget:m.castTarget||null,
+  castPending:!!m.castPending,attackPhase:m.attackPhase||0,summoned:!!m.summoned,nextAquaticThink:m.nextAquaticThink||0};
+}
+function aquaticDistance(a,b){return Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z);}
+function aquariumBounds(m){return m.aquarium?(typeof m.aquarium==="object"?m.aquarium:worldFeatures.temple?.aquarium):null;}
+function aquaticSwimClear(m,p){
+ const box=aquariumBounds(m);
+ if(box&&(p.x<box.minX+.98||p.x>box.maxX-.98||p.z<box.minZ+1.12||p.z>box.maxZ-1.12||p.y<box.minY+.52||p.y>box.maxY-1.45))return false;
+ if(p.y>WATER-1||p.y< -55)return false;
+ // Fish bodies occupy real space, so intact glass and temple masonry block them.
+ return !bodyCollides(p,.55,1.02);
+}
+function aquaticSight(m,person){
+ const a=m.root.position.clone().add(new THREE.Vector3(0,.55,0)),b=person.position.clone().add(new THREE.Vector3(0,.65,0));
+ return lineClear(a,b);
+}
+function chooseAquaticGoal(m){
+ const box=aquariumBounds(m),home=m.home||m.root.position,p=m.root.position;
+ for(let i=0;i<12;i++){
+  const goal=box?{x:box.minX+1.4+random()*(box.maxX-box.minX-2.8),y:box.minY+.7+random()*(box.maxY-box.minY-2.4),z:box.minZ+1.5+random()*(box.maxZ-box.minZ-3)}:
+   {x:home.x+(random()-.5)*11,y:Math.min(WATER-1.4,home.y+(random()-.5)*4),z:home.z+(random()-.5)*11};
+  if(aquaticSwimClear(m,goal)){m.goal=goal;m.goalAt=time+2+random()*3;return;}
+ }
+ m.goal=null;m.goalAt=time+1;
+}
+function thinkAquaticFish(m){
+ const p=m.root.position,aggressive=m.kind!=="oggerfish"||m.angry;
+ const people=netPeople().filter(a=>a.hp>0&&a.position.y<WATER-.6&&aquaticDistance(p,a.position)<(m.angry?24:15));
+ // Aquarium knights track swimmers through the glass, but line-of-sight and body collision prevent bites or escape.
+ const person=aggressive?people.filter(a=>!m.angerTarget||a.id===m.angerTarget||m.kind!=="oggerfish").sort((a,b)=>aquaticDistance(p,a.position)-aquaticDistance(p,b.position))[0]:null;
+ m.speed=person?(m.kind==="knightfish"?2.1:1.65):.65;
+ if(person){
+  m.goal={x:person.position.x,y:person.position.y+.15,z:person.position.z};m.goalAt=time+.5;
+  if(aquaticDistance(p,person.position)<1.55&&time>=m.nextBite&&aquaticSight(m,person)){
+   m.nextBite=time+2;m.biteUntil=time+.3;netHurtPlayer(person,.10,`A ${m.kind.toUpperCase()} GOT YOU`,true);
+  }
+ }else if(!m.goal||time>=m.goalAt)chooseAquaticGoal(m);
+}
+function moveAquaticFish(m,dt){
+ const p=m.root.position;let moving=false;
+ if(m.goal){
+  const delta=new THREE.Vector3(m.goal.x-p.x,m.goal.y-p.y,m.goal.z-p.z),length=delta.length();
+  if(length>.15){
+   const step=Math.min(length,m.speed*dt),dir=delta.normalize(),heading=Math.atan2(dir.x,dir.z);
+   for(const turn of [0,.55,-.55,1.1,-1.1]){
+    const v=new THREE.Vector3(Math.sin(heading+turn)*Math.hypot(dir.x,dir.z),dir.y,Math.cos(heading+turn)*Math.hypot(dir.x,dir.z)).multiplyScalar(step);
+    const candidate=p.clone().add(v);
+    if(!aquaticSwimClear(m,candidate))continue;
+    p.copy(candidate);m.heading+=Math.atan2(Math.sin(heading+turn+Math.PI-m.heading),Math.cos(heading+turn+Math.PI-m.heading))*Math.min(1,dt*7);moving=true;break;
+   }
+   if(!moving){
+    // Sliding vertically lets free fish swim over low obstacles without passing through glass.
+    for(const sign of [1,-1]){const candidate=p.clone();candidate.y+=sign*step;if(aquaticSwimClear(m,candidate)){p.copy(candidate);moving=true;break;}}
+    if(!moving)m.goalAt=0;
+   }
+  }else{m.goal=null;m.goalAt=time+.5;}
+ }
+ m.root.rotation.y=m.heading;m.root.rotation.x=time<m.biteUntil?Math.sin((m.biteUntil-time)*20)*.12:0;
+ m.model.position.y=Math.sin(time*2+m.phase)*.035;
+ m.model.traverse(o=>{if(o.userData.aquaticTail)o.rotation.y=Math.sin(time*(moving?9:3)+m.phase)*.4;if(o.userData.aquaticFin)o.rotation.z=o.userData.aquaticFin*(.3+Math.sin(time*5+m.phase)*.14);});
+}
+function awakenStonefish(block,owner){
+ if(netRole==="guest")return null;
+ const miner=netPeople().find(p=>p.id===(owner||netActing?.id||"host")),p=miner?.position||feet;
+ const toward=new THREE.Vector3(p.x-block.x,0,p.z-block.z).normalize(),candidates=[
+  {x:block.x,y:block.y+.52,z:block.z},
+  {x:block.x+toward.x*1.25,y:block.y-.48,z:block.z+toward.z*1.25},
+  {x:block.x+toward.x*1.25,y:block.y+.52,z:block.z+toward.z*1.25}
+ ];
+ for(const [dx,dz] of [[1.2,0],[-1.2,0],[0,1.2],[0,-1.2]])for(const dy of [-.48,.52])candidates.push({x:block.x+dx,y:block.y+dy,z:block.z+dz});
+ const cell=key(block.x,block.y,block.z);blocks.delete(cell);
+ const where=candidates.find(q=>aquaticSwimClear({},q));
+ if(!where){blocks.set(cell,block);return null;}
+ rebuildTerrain();
+ const m=makeMob("stonefish",where.x,where.y,where.z,{hp:3,awakened:true,angry:true,angerTarget:owner||netActing?.id||"host",home:where});
+ notify("THAT STONE WAS A STONEFISH!");return m;
+}
+function aquaticAppearance(m){
+ if(time<m.flashUntil)return;
+ if(m.red)flashMob(m,false);
+ const color=m.kind==="aquatic_ruler"&&time<m.castUntil?aquaticCastColors[m.castType]:null;
+ m.root.traverse(o=>{if(!o.isMesh)return;o.material.color.copy(o.userData.baseColor);o.material.emissive.set(color||"#000000");if(color){o.material.color.lerp(new THREE.Color(color),.75);o.material.emissiveIntensity=.45;}else o.material.emissiveIntensity=1;});
+}
+function beginAquaticCast(m,person){
+ const types=["blue","green","yellow","orange"];
+ m.castType=types[(m.attackPhase||0)%types.length];m.attackPhase=(m.attackPhase||0)+1;
+ m.castUntil=time+1.25;m.nextCast=time+7.2;m.castPending=true;
+ m.castTarget={id:person.id,x:person.position.x,y:person.position.y,z:person.position.z};
+}
+function executeAquaticCast(m){
+ m.castPending=false;const t=worldFeatures.temple;if(!t?.arena)return;
+ const arena=t.arena,target=m.castTarget||arena;
+ if(m.castType==="blue"){
+  const points=[];
+  for(const [dx,dz] of [[0,0],[1.2,.2],[-1.2,-.2],[0,1.2],[0,-1.2]]){
+   const x=Math.max(arena.x-10,Math.min(arena.x+10,target.x+dx)),z=Math.max(arena.z-7,Math.min(arena.z+7,target.z+dz));
+   const y=floorNear(x,z,arena.y,1,3)??arena.y;points.push({x,y,z});
+  }
+  createSpikeWave({id:uid(),points,triggerAt:time+.9,until:time+2,aquatic:true,reason:"THE AQUATIC RULER'S SPIKES GOT YOU"});
+ }else if(m.castType==="green"){
+  for(const s of [-1,1]){
+   const p={x:m.root.position.x+s*2,y:arena.y+.3,z:m.root.position.z+2};
+   if(!aquaticSwimClear({},p))p.z+=2;
+   if(aquaticSwimClear({},p))makeMob("oggerfish",p.x,p.y,p.z,{hp:2,angry:true,angerTarget:target.id,home:p,summoned:true});
+  }
+ }else if(m.castType==="yellow"){
+  const points=[];
+  for(const [dx,dz] of [[0,0],[2.5,0],[-2.5,0],[0,2.5],[0,-2.5]])points.push({x:Math.max(arena.x-10,Math.min(arena.x+10,target.x+dx)),y:arena.y,z:Math.max(arena.z-7,Math.min(arena.z+7,target.z+dz))});
+  createAquaticHazard({id:uid(),kind:"pillars",points,createdAt:time,triggerAt:time+1.25,until:time+8.5,nextHit:{}});
+ }else{
+  createAquaticHazard({id:uid(),kind:"rotating",x:arena.x,y:arena.y+.85,z:arena.z,angle:Math.atan2(target.z-arena.z,target.x-arena.x),createdAt:time,triggerAt:time+1.4,until:time+9.5,nextHit:{}});
+ }
+}
+function thinkAquaticRuler(m){
+ const p=m.root.position,person=netPeople().filter(a=>a.hp>0&&aquaticDistance(p,a.position)<24&&Math.abs(p.y-a.position.y)<10).sort((a,b)=>aquaticDistance(p,a.position)-aquaticDistance(p,b.position))[0];
+ if(m.castPending&&time>=m.castUntil)executeAquaticCast(m);
+ if(person){m.heading=Math.atan2(p.x-person.position.x,p.z-person.position.z);m.root.rotation.y=m.heading;if(time>=m.nextCast&&!m.castPending)beginAquaticCast(m,person);}
+}
+function createAquaticHazard(state){
+ const root=new THREE.Group(),visuals=[],color=state.kind==="pillars"?"#fff45b":"#ff8a3d";
+ const beamMat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:.73,depthWrite:false});
+ const markMat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:.55,depthWrite:false,side:THREE.DoubleSide});
+ if(state.kind==="pillars"){
+  for(const p of state.points){
+   const beam=new THREE.Mesh(new THREE.CylinderGeometry(.43,.61,7,8),beamMat);beam.position.set(p.x,p.y+3.5,p.z);root.add(beam);
+   const mark=new THREE.Mesh(new THREE.RingGeometry(.55,.8,12),markMat);mark.rotation.x=-Math.PI/2;mark.position.set(p.x,p.y+.035,p.z);root.add(mark);visuals.push({beam,mark});
+  }
+ }else{
+  root.position.set(state.x,state.y,state.z);
+  for(const sign of [-1,1]){
+   const beam=new THREE.Mesh(new THREE.BoxGeometry(11.3,1.35,.24),beamMat);beam.position.x=sign*5.65;root.add(beam);
+   const mark=new THREE.Mesh(new THREE.BoxGeometry(11.3,.045,.4),markMat);mark.position.set(sign*5.65,-.8,0);root.add(mark);visuals.push({beam,mark});
+  }
+ }
+ scene.add(root);const h={...state,nextHit:{...(state.nextHit||{})},root,visuals};aquaticHazards.set(h.id,h);return h;
+}
+function removeAquaticHazard(h){
+ scene.remove(h.root);const materials=new Set();h.root.traverse(o=>{if(o.isMesh){o.geometry.dispose();materials.add(o.material);}});for(const m of materials)m.dispose();aquaticHazards.delete(h.id);
+}
+function aquaticHazardStates(){return [...aquaticHazards.values()].map(h=>({id:h.id,kind:h.kind,points:h.points,x:h.x,y:h.y,z:h.z,angle:h.angle,createdAt:h.createdAt,triggerAt:h.triggerAt,until:h.until,nextHit:{...h.nextHit}}));}
+function syncAquaticHazards(states=[]){
+ const live=new Set();for(const s of states){live.add(s.id);const h=aquaticHazards.get(s.id);if(!h)createAquaticHazard(s);else h.nextHit={...(s.nextHit||{})};}
+ for(const h of [...aquaticHazards.values()])if(!live.has(h.id))removeAquaticHazard(h);
+}
+function clearAquaticCombat(){for(const h of [...aquaticHazards.values()])removeAquaticHazard(h);for(const [id,w] of [...spikes])if(w.aquatic){scene.remove(w.root);spikes.delete(id);}show("aquaticBoss",false);}
+function updateAquaticHazards(){
+ for(const h of [...aquaticHazards.values()]){
+  if(time>=h.until){removeAquaticHazard(h);continue;}
+  const active=time>=h.triggerAt,angle=(h.angle||0)+Math.max(0,time-h.triggerAt)*.6;
+  if(h.kind==="rotating")h.root.rotation.y=-angle;
+  for(const v of h.visuals){v.beam.visible=active;v.mark.visible=!active;v.mark.material.opacity=.38+Math.sin(time*12)*.18;}
+  if(!active||netRole==="guest")continue;
+  for(const p of netPeople()){
+   if(p.hp<=0||time<(h.nextHit[p.id]||0))continue;const q=p.position;let hit=false;
+   if(h.kind==="pillars")hit=h.points.some(a=>Math.hypot(a.x-q.x,a.z-q.z)<.85&&q.y<a.y+7&&q.y+1.7>a.y);
+   else{
+    const dx=q.x-h.x,dz=q.z-h.z,along=dx*Math.cos(angle)+dz*Math.sin(angle),across=-dx*Math.sin(angle)+dz*Math.cos(angle);
+    hit=Math.abs(along)<11.6&&Math.abs(across)<.48&&q.y<h.y+.675&&q.y+1.7>h.y-.675;
+   }
+   if(hit){h.nextHit[p.id]=time+3;netHurtPlayer(p,.25,"THE AQUATIC RULER'S LASERS GOT YOU",true);}
+  }
+ }
+}
+function updateAquaticBossHUD(){
+ const ruler=[...mobs.values()].find(m=>m.kind==="aquatic_ruler"&&m.hp>0&&aquaticDistance(m.root.position,feet)<25&&Math.abs(m.root.position.y-feet.y)<7);
+ const visible=!!ruler&&!["home","worlds","network","dead"].includes(mode);show("aquaticBoss",visible);if(!visible)return;
+ $("aquaticBossTitle").textContent=`AQUATIC RULER  ${Math.max(0,ruler.hp).toFixed(1)} / 100 HP`;
+ $("aquaticBossFill").style.width=`${Math.max(0,ruler.hp)}%`;
+ const label={blue:"BLUE — SPIKES",green:"GREEN — OGGERFISH",yellow:"YELLOW — GROUND LASERS",orange:"ORANGE — SPINNING LASERS"};
+ $("aquaticBossPhase").textContent=time<ruler.castUntil?label[ruler.castType]||"":"";
+ $("aquaticBossPhase").style.color=aquaticCastColors[ruler.castType]||"#e4fbff";
+}
+function updateAquaticCombat(dt){
+ for(const m of [...mobs.values()]){
+  if(!isAquaticKind(m.kind))continue;
+  if(m.hp<=0){if(netRole!=="guest"&&m.deadAt!==null&&time>=m.deadAt)finishMobDeath(m);continue;}
+  if(netRole!=="guest"){
+   if(m.kind==="aquatic_ruler")thinkAquaticRuler(m);
+   else{if(time>=(m.nextAquaticThink||0)){thinkAquaticFish(m);m.nextAquaticThink=time+.25;}moveAquaticFish(m,dt);}
+  }
+  aquaticAppearance(m);
+ }
+ updateAquaticHazards();updateAquaticBossHUD();
+}
 
 /* Startup and shared animation loop. */
 renderProfile();generate("corny-menu-forest");mode="home";show("loading",false);show("home",true);show("notice",false);hand.visible=false;netUI();
@@ -2313,4 +2801,4 @@ main().catch(window.showCornyError);
 </script>
 </body>
 </html>
-```
+
