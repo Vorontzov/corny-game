@@ -119,6 +119,37 @@ input[readonly]{color:#e4ca78}
 #walk{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(2,40px)}
 .control{font-size:18px;min-height:40px}
 }
+
+.currentSkin{display:flex;align-items:center;justify-content:center;gap:14px;margin:12px 0 2px;min-height:88px}
+.currentSkin canvas{width:54px;height:72px;image-rendering:pixelated}
+.currentSkin span{max-width:220px;font-size:23px;text-align:left}
+.currentSkin small{display:block;color:#bdc9a9;font-size:16px;margin-bottom:5px}
+#skins{z-index:25;background:#07170ee6}
+.skinPanel{display:flex;flex-direction:column;padding:0;overflow:hidden;width:min(780px,100%);max-height:92dvh;text-align:left}
+.skinHeader{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 22px;border-bottom:2px solid #627950;background:#183b2b;flex:none}
+.skinHeader h2{margin:5px 0 0}.skinHeader .control{width:46px;height:46px;flex:none}
+.skinSections{overflow-y:auto;overscroll-behavior:contain;padding:0 22px 20px;min-height:0;scrollbar-color:#8a9c64 #10291d}
+.skinSections section{padding:19px 0 23px;border-bottom:1px solid #62795080}
+.skinSections h3{font-size:28px;font-weight:normal;color:var(--gold);margin:0 0 6px}
+.skinSections p{margin:6px 0 12px}.skinSections .skinGrid{grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px}
+.skinSections .skinChoice{min-height:176px;padding:12px 8px;gap:9px;font-size:20px}
+.skinSections .skinChoice canvas{width:72px;height:96px}
+.skinChoice.claimable{border-color:#93b878;background:#29452c}.skinChoice:hover{border-color:#dbcb88}
+.emptySkins{padding:24px;border:1px dashed #7e9460;color:#b4c2a6;text-align:center}
+@media(max-width:460px){.skinHeader{padding:14px}.skinSections{padding:0 14px 14px}.skinSections .skinGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.skinSections .skinChoice{font-size:18px}}
+#chatPanel{align-items:flex-end;justify-content:flex-start;padding:20px;background:#06120c66;z-index:35}
+#chatPanel .panel{width:min(540px,100%);max-height:min(600px,85vh);text-align:left;background:#132d22f5}
+.chatHeading{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.chatHeading h2{margin:0}
+#closeChat{font-size:25px;width:42px;min-height:42px}
+#chatContext,#chatStatus{font-size:16px;line-height:1.25}
+#chatMessages{max-height:36vh;overflow:auto;overscroll-behavior:contain;overflow-wrap:anywhere;font-size:20px;line-height:1.25;padding:6px 0}
+#chatMessages p{margin:7px 0}#chatMessages strong{color:#e3cf87}
+#chatForm{display:flex;gap:8px;margin-top:12px}#chatInput{min-width:0;flex:1}#chatForm button{flex:none}
+#chatPreview{position:absolute;left:14px;bottom:150px;width:min(440px,55vw);pointer-events:none;font-size:17px;line-height:1.2;text-shadow:1px 1px 2px #000;overflow-wrap:anywhere}
+#chatPreview div{background:#10241dcc;padding:4px 8px;margin-top:3px;border-left:2px solid #d0dc8c}
+@media(max-width:600px){#chatPanel{padding:10px}#chatPanel .panel{padding:15px}#chatPreview{bottom:190px;width:65vw;font-size:15px}}
+
 </style>
 </head>
 <body>
@@ -137,7 +168,8 @@ input[readonly]{color:#e4ca78}
 <div class="profileBox">
 <label for="homeUsername">YOUR USERNAME</label>
 <input id="homeUsername" maxlength="16" autocomplete="nickname" autocapitalize="off" spellcheck="false" placeholder="Type your name">
-<p>CHOOSE YOUR SKIN</p><div id="skinChoices" class="skinGrid"></div>
+<div id="currentSkin" class="currentSkin" aria-live="polite"></div>
+<button id="openSkins" class="secondary full" aria-haspopup="dialog">OPEN ALL SKINS</button>
 <p id="profileHint" class="small"></p>
 </div>
 <div class="row"><button class="secondary" data-music-toggle aria-pressed="true">MUSIC: ON</button><button class="secondary" data-effects-toggle aria-pressed="false">PREVIEW EFFECTS: OFF</button></div>
@@ -148,9 +180,20 @@ input[readonly]{color:#e4ca78}
 <p class="small">iPad: drag to look. Hold arrows to walk.<br>
 Computer: WASD, mouse, Space. Swim: Space rises, C dives.<br>
 Left-click: place. Right-click: eat quick-stack food.<br>
-F: mine / E: use / Q: eat / I: inventory.<br>
+F: mine / E: use / Q: eat / I: inventory / T: chat.<br>
 Aquatic gear: select it in inventory, then WEAR.<br>Healing: drink in inventory or throw with ATTACK.<br>Revival potions rescue you automatically when carried.<br>Your name, skin, and worlds save on this device.</p>
 </div></div>
+
+<div id="skins" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="skinGalleryTitle">
+<div class="panel skinPanel">
+<header class="skinHeader"><div><div class="eyebrow">YOUR COLLECTION</div><h2 id="skinGalleryTitle">ALL SKINS</h2></div><button id="closeSkins" class="control" aria-label="Close skins">X</button></header>
+<div class="skinSections" id="skinSections" tabindex="0">
+<section aria-labelledby="starterSkinsTitle"><h3 id="starterSkinsTitle">STARTER SKINS</h3><p class="small">The four original adventurers. Always yours.</p><div id="starterSkins" class="skinGrid"></div></section>
+<section aria-labelledby="devSkinsTitle"><h3 id="devSkinsTitle">DEV SKINS</h3><p class="small">Meet Maestro and Hotaruuu. Free to wear.</p><div id="devSkins" class="skinGrid"></div></section>
+<section aria-labelledby="anniversarySkinsTitle"><h3 id="anniversarySkinsTitle">ANNIVERSARY SKINS</h3><p class="small">A little celebration, on the house.</p><div id="anniversarySkins" class="skinGrid"></div></section>
+<section aria-labelledby="buyableSkinsTitle"><h3 id="buyableSkinsTitle">BUYABLE SKINS</h3><p class="emptySkins">No skins here yet.</p></section>
+<p id="skinClaimStatus" class="small" role="status" aria-live="polite"></p>
+</div></div></div>
 
 <div id="worlds" class="overlay hidden"><div class="panel">
 <div class="eyebrow">SAVED ON THIS DEVICE</div><h2>YOUR SERVERS</h2>
@@ -185,11 +228,13 @@ Aquatic gear: select it in inventory, then WEAR.<br>Healing: drink in inventory 
 <div id="air" class="hidden"></div>
 </div>
 <div class="toolbar">
+<button id="openChat" class="control" title="Chat (T or Enter)">CHAT</button>
 <button id="fullscreen" class="control">[ ]</button>
 <button id="leave" class="control">MENU</button>
 </div>
 </div>
 <div id="aquaticBoss" class="hidden" style="position:absolute;top:112px;left:50%;transform:translateX(-50%);width:min(470px,85vw);text-align:center;background:#102b39dd;padding:7px;border:2px solid #67dadc"><div id="aquaticBossTitle"></div><div class="track"><div id="aquaticBossFill" style="height:100%;background:#4de1ce"></div></div><div id="aquaticBossPhase" class="small"></div></div>
+<div id="chatPreview" class="hidden" aria-live="polite"></div>
 <div id="crosshair">+</div><div id="target" class="hidden"></div>
 <div id="mineBox" class="hidden"><span id="mineText"></span><div class="track"><div id="mineFill"></div></div></div>
 <button id="heldItem"><span id="heldName"></span><small id="heldDetail"></small></button>
@@ -207,6 +252,14 @@ Aquatic gear: select it in inventory, then WEAR.<br>Healing: drink in inventory 
 </div>
 </div>
 
+<div id="chatPanel" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="chatTitle"><div class="panel">
+<div class="chatHeading"><h2 id="chatTitle">CHAT</h2><button id="closeChat" class="secondary" aria-label="Close chat">X</button></div>
+<p id="chatContext" class="small"></p><p id="chatEmpty" class="small">SAY HELLO TO YOUR WORLD.</p>
+<div id="chatMessages" role="log" aria-live="polite" aria-label="Chat messages"></div>
+<form id="chatForm"><input id="chatInput" aria-label="Message" placeholder="TYPE A MESSAGE..." maxlength="160" autocomplete="off" spellcheck="false"><button class="primary" type="submit">SEND</button></form>
+<p id="chatStatus" class="small" role="status"></p><p class="small">ENTER TO SEND · ESC OR X TO CLOSE</p>
+</div></div>
+
 <div id="pause" class="overlay hidden"><div class="panel">
 <h2>TAKE A BREATHER</h2>
 <div class="row"><button class="secondary" data-music-toggle aria-pressed="true">MUSIC: ON</button><button class="secondary" data-effects-toggle aria-pressed="false">PREVIEW EFFECTS: OFF</button></div>
@@ -223,7 +276,7 @@ Aquatic gear: select it in inventory, then WEAR.<br>Healing: drink in inventory 
 </div>
 <button id="goHome" class="secondary full">SAVE AND GO TO HOMEPAGE</button>
 <p class="small">F: mine / E: use / Q: eat / I: inventory<br>
-1, 2, 3: quick stacks / Space: jump or exit boat<br>
+1, 2, 3: quick stacks / Space: jump or exit boat<br>T or Enter: chat / Esc: close chat<br>
 In multiplayer, the shared world keeps running.</p>
 </div></div>
 
@@ -445,7 +498,7 @@ const $=id=>document.getElementById(id);
 const show=(id,on)=>$(id).classList.toggle("hidden",!on);
 const clone=o=>JSON.parse(JSON.stringify(o));
 const SAVE_KEY="corny-worlds-v2",PROFILE_KEY="corny-player-profile-v1";
-const WATER=-.22,LIMIT=192,NET_VERSION=4;
+const WATER=-.22,LIMIT=192,NET_VERSION=5;
 const BLOCKS=["dirt","sand","log","leaves","table","stone","ogger_trap","wool","bed","campfire","farmland","sandstone","cactus","chest","smooth_stone","marked_stone","glass","keycard_scanner","bullseye","stonefish_block","gold_block","throne"];
 const KINDS=["cow","horse","sheep","ogger","dweller","sandwitch","oggerfish","stonefish","knightfish","aquatic_ruler"];
 const TOOLS=new Set(["wooden_dagger","wooden_pickaxe","poison_potion"]);
@@ -470,17 +523,23 @@ const COLORS={
 };
 const FOOD={corn:{food:1},beef:{food:2,fast:true},lamb:{food:2,fast:true},cooked_beef:{food:2,heal:true},cooked_lamb:{food:2,heal:true}};
 const SKINS=[
- {id:"pine",name:"FOREST SCOUT",shirt:"#4f7952",trousers:"#66513b",boots:"#3f392f",skin:"#c99c74",hair:"#60422e",hat:"#395f43"},
- {id:"corn",name:"CORN FARMER",shirt:"#dfba57",trousers:"#66513b",boots:"#40372e",skin:"#8d5b3f",hair:"#302821",hat:"#d2b574"},
- {id:"ocean",name:"OCEAN SCOUT",shirt:"#537f9b",trousers:"#354c61",boots:"#303b43",skin:"#dbb48e",hair:"#453b32",hat:"#ece6d1"},
- {id:"desert",name:"DESERT EXPLORER",shirt:"#c9ad7d",trousers:"#8a6c47",boots:"#594735",skin:"#bd895f",hair:"#45342a",hat:"#e2cf9a"}
+ {id:"pine",category:"starter",name:"FOREST SCOUT",shirt:"#4f7952",trousers:"#66513b",boots:"#3f392f",skin:"#c99c74",hair:"#60422e",hat:"#395f43"},
+ {id:"corn",category:"starter",name:"CORN FARMER",shirt:"#dfba57",trousers:"#66513b",boots:"#40372e",skin:"#8d5b3f",hair:"#302821",hat:"#d2b574"},
+ {id:"ocean",category:"starter",name:"OCEAN SCOUT",shirt:"#537f9b",trousers:"#354c61",boots:"#303b43",skin:"#dbb48e",hair:"#453b32",hat:"#ece6d1"},
+ {id:"desert",category:"starter",name:"DESERT EXPLORER",shirt:"#c9ad7d",trousers:"#8a6c47",boots:"#594735",skin:"#bd895f",hair:"#45342a",hat:"#e2cf9a"}
 ];
+SKINS.push(
+ {id:"maestro",name:"MAESTRO",category:"dev",shirt:"#713537",trousers:"#435b73",boots:"#37332f",skin:"#e8a377",hair:"#94948f",hat:"#94948f"},
+ {id:"hotaruuu",name:"HOTARUUU",category:"dev",shirt:"#3c437d",trousers:"#68666d",boots:"#24232a",skin:"#f3b482",hair:"#d9b98c",hat:"#ece6d9"},
+ {id:"boba_matcha",name:"BOBA MATCHA",category:"anniversary",claimable:true,shirt:"#82994d",trousers:"#82994d",boots:"#799449",skin:"#82994d",hair:"#c49248",hat:"#2b2922"}
+);
 const skinById=id=>SKINS.find(s=>s.id===id)||SKINS[0];
 const cleanName=v=>Array.from(String(v??"").replace(/[\u0000-\u001f\u007f<>]/g,"").trim()).slice(0,16).join("");
-let playerProfile={username:"",skin:"pine"};
+let playerProfile={username:"",skin:"pine",claimedSkins:[]};
 try{
  const p=JSON.parse(localStorage.getItem(PROFILE_KEY)||"null")||{};
- playerProfile={username:cleanName(p.username||localStorage.getItem("corny-player-name")||""),skin:skinById(p.skin).id};
+ playerProfile={username:cleanName(p.username||localStorage.getItem("corny-player-name")||""),skin:skinById(p.skin).id,claimedSkins:Array.isArray(p.claimedSkins)?[...new Set(p.claimedSkins.filter(id=>SKINS.some(s=>s.id===id&&s.claimable)))]:[]};
+ if(skinById(playerProfile.skin).claimable&&!playerProfile.claimedSkins.includes(playerProfile.skin))playerProfile.skin="pine";
 }catch{}
 const key=(x,y,z)=>`${x},${y},${z}`;
 const canvas=$("game");
@@ -1326,7 +1385,7 @@ function craftItem(){
  inventory=copy;craftSlots=Array(9).fill(null);notify(`CRAFTED ${NAMES[result.type]}.`);renderCrafting();updateHand();
 }
 function updateHand(){
- if(netActing)return;const t=activeStack()?.type||"hands",identity=`${active}:${t}:${playerProfile.skin}`;
+ if(netActing)return;refreshSkinHandMaterials();const t=activeStack()?.type||"hands",identity=`${active}:${t}:${playerProfile.skin}`;
  if(identity===handKey)return;handKey=identity;for(const c of [...hand.children])hand.remove(c);
  const p=(w,h,d,x,y,z,m)=>cube(hand,w,h,d,x,y,z,m);
  if(t==="wooden_pickaxe"){p(.045,.39,.045,0,-.04,0,mats.brown);p(.29,.065,.06,0,.14,0,mats.wood);}
@@ -1339,7 +1398,10 @@ function updateHand(){
  else if(t==="corn_seeds")p(.15,.07,.12,0,0,0,mats.cornSeed);
  else if(BLOCKS.includes(t))p(.23,.23,.23,0,0,0,batches.get(t).material);
  else if(FOOD[t])p(.20,.12,.12,0,0,0,lootMats[t]);
- else{p(.13,.23,.14,0,-.06,0,localSkin);p(.14,.11,.15,0,-.20,0,localShirt);}
+ else{
+  if(playerProfile.skin==="hotaruuu"){p(.13,.08,.14,0,.02,0,localSkin);p(.14,.26,.15,0,-.15,0,localShirt);}
+  else{p(.13,.23,.14,0,-.06,0,localSkin);p(.14,.11,.15,0,-.20,0,localShirt);}
+ }
  hand.position.set(.31,-.28,-.62);hand.rotation.set(-.15,-.25,-.25);
 }
 
@@ -1654,7 +1716,7 @@ function applyWorldUpdates(fresh=false){
 
 /* World generation. */
 function clearWorld(){
- resetGameAudio();clearAquaticCombat();
+ clearChatSession();resetGameAudio();clearAquaticCombat();
  for(const m of [...mobs.values()])removeMob(m);disposeFarmer(false);
  for(const map of [devices,fires,boats,projectiles,spikes]){for(const v of map.values())scene.remove(v.root||v.mesh);map.clear();}
  for(const p of [...cornPlants.values()])removeCorn(p);
@@ -1906,9 +1968,123 @@ function syncProfile(){
  $("playerName").value=$("hostName").value=playerProfile.username||"PLAYER";
  const ready=!!playerProfile.username;$("playButton").disabled=$("joinHome").disabled=!ready;
  $("profileHint").textContent=ready?`${skinById(playerProfile.skin).name} — SAVED ON THIS DEVICE`:"ENTER A USERNAME TO PLAY.";
- localSkin.color.set(skinById(playerProfile.skin).skin);localShirt.color.set(skinById(playerProfile.skin).shirt);
+ refreshSkinHandMaterials();
 }
+/* Original pixel-painted character surfaces, shared by the wardrobe and world models. */
+function specialSkin(s){return ["maestro","hotaruuu","boba_matcha"].includes(s.id);}
+function skinSurface(s,part,face="front"){
+ const c=document.createElement("canvas");c.width=c.height=32;const x=c.getContext("2d");
+ const r=(a,b,w,h,color)=>{x.fillStyle=color;x.fillRect(a,b,w,h);};
+ const isFront=face==="front",head=part==="head",arm=part==="arm",leg=part==="leg";
+ let base=head||part==="hand"?s.skin:leg?s.trousers:part==="boot"?s.boots:part==="hair"?s.hair:part==="scarf"?s.hat:s.shirt;
+ r(0,0,32,32,base);
+ // Stable pixel mottling gives each skin texture without random changes on redraw.
+ for(let row=0;row<8;row++)for(let col=0;col<8;col++){
+  const shade=(row*13+col*7+part.length*3)%9;
+  if(shade<5)r(col*4,row*4,4,4,shade<2?"#00000013":"#ffffff13");
+ }
+ if(s.id==="maestro"){
+  if(head){
+   if(!isFront){r(0,0,32,face==="top"?32:face==="back"?25:13,s.hair);r(0,0,5,24,"#777875");r(27,0,5,24,"#92928d");}
+   else{
+    r(0,0,32,7,s.hair);r(0,7,4,13,"#949490");r(28,7,4,14,"#858683");
+    r(3,1,8,3,"#b3b3ab");r(17,0,6,6,"#a8a8a1");r(25,1,5,3,"#656662");
+    r(6,12,9,2,"#686964");r(19,12,8,2,"#686964");
+    r(7,14,7,3,"#f3e8dc");r(21,14,6,3,"#f3e8dc");r(11,14,3,3,"#263f4d");r(21,14,3,3,"#263f4d");
+    r(15,15,3,8,"#cf8b60");r(14,22,6,2,"#ba7957");r(11,27,12,2,"#8e4f3e");r(13,26,8,1,"#c17f58");
+   }
+  }else if(part==="torso"&&isFront){r(11,0,10,3,"#ce9168");r(13,3,6,2,"#e8a77b");r(8,0,3,5,"#542629");r(21,0,3,5,"#542629");}
+  else if(arm){r(0,11,32,21,s.skin);r(0,11,4,21,"#d49268");r(22,14,6,12,"#efa87d");r(8,25,10,7,"#d8956c");}
+  else if(leg){r(3,0,2,32,"#31465a");r(26,0,2,32,"#5b7187");r(4,19,9,4,"#526a81");r(15,26,10,3,"#334a60");}
+ }else if(s.id==="hotaruuu"){
+  if(head||part==="scarf"){
+   r(0,0,32,32,s.hat);for(const [a,b,w,h]of [[1,2,4,4],[12,1,4,3],[24,3,5,4],[5,10,4,4],[20,12,4,4],[1,21,4,5],[12,25,4,4],[26,22,5,4],[7,30,4,2]])r(a,b,w,h,"#2a292e");
+   if(head&&isFront){
+    r(5,6,22,26,s.skin);r(6,6,6,4,"#df9a69");r(20,7,6,3,"#f1b784");
+    r(7,13,7,2,"#302a27");r(12,11,2,3,"#302a27");r(19,11,2,3,"#302a27");r(20,13,6,2,"#302a27");
+    r(7,16,7,7,"#fff4d8");r(19,16,7,7,"#fff4d8");r(10,17,3,5,"#211f1e");r(20,17,3,5,"#211f1e");
+    r(5,23,6,4,"#edab88");r(22,23,5,4,"#edab88");r(14,22,4,3,"#d99466");
+    r(14,28,5,3,"#cc8468");r(15,27,3,5,"#d99172");
+   }
+  }else if(part==="torso"){
+   if(isFront){r(15,0,2,32,"#252630");r(22,0,10,18,"#24242d");r(26,7,1,8,"#53505a");r(26,6,2,2,"#eec66d");r(3,7,6,2,"#d9d9da");r(2,9,2,3,"#d9d9da");r(8,8,2,4,"#d9d9da");}
+   else if(face==="back"){r(5,6,22,3,"#363a6f");r(13,5,6,16,"#3b427b");}
+  }else if(arm){r(0,24,32,3,"#292e58");r(0,27,32,5,s.skin);}
+  else if(leg){r(0,0,32,12,"#66656c");r(0,9,32,5,"#343139");r(0,14,32,18,s.skin);r(2,18,6,10,"#f1b080");}
+ }else if(s.id==="boba_matcha"){
+  const caramel="#c49248",cream="#f4dba0",pearl="#2c1c17";
+  if(head){
+   if(face==="top"){r(0,0,32,32,"#77934b");r(0,0,32,4,caramel);r(0,0,4,32,cream);r(26,0,6,32,caramel);r(0,27,32,5,caramel);}
+   else if(face!=="bottom"){
+    r(0,0,32,4,caramel);r(0,0,8,4,cream);r(21,0,6,6,"#e4b66d");r(26,3,6,10,caramel);r(26,13,3,6,cream);r(2,4,4,3,cream);
+    if(isFront){r(7,21,4,6,"#12170d");r(22,21,4,6,"#12170d");}
+    else{r(9,3,10,4,"#dab273");r(14,7,5,6,cream);r(16,13,3,5,cream);}
+   }
+  }else if(part!=="straw"){
+   const shift=face==="back"?5:face==="side"?2:0;
+   r(0,22,32,8,caramel);r(5+shift,0,6,8,caramel);r(8+shift,8,6,8,caramel);r(12,16,9,9,caramel);
+   r(5+shift,0,3,9,cream);r(8+shift,8,3,10,cream);r(11,18,4,5,cream);r(0,21,7,3,cream);r(23,15,4,11,cream);r(26,10,4,6,cream);
+   const pearls=leg?[[4,23],[21,27],[17,17]]:arm?[[2,26],[21,23],[13,17]]:[[3,25],[14,22],[25,27]];
+   for(const[a,b]of pearls){r(a,b,6,5,pearl);r(a+1,b-1,4,1,"#3a2720");r(a+1,b+5,4,1,"#201713");r(a+1,b,2,1,"#493126");}
+  }
+ }
+ return c;
+}
+function specialSkinPreview(s){
+ const c=document.createElement("canvas");c.width=144;c.height=192;const x=c.getContext("2d");x.scale(2,2);x.imageSmoothingEnabled=false;
+ const draw=(part,a,b,w,h,face="front")=>x.drawImage(skinSurface(s,part,face),a,b,w,h);
+ const r=(a,b,w,h,col)=>{x.fillStyle=col;x.fillRect(a,b,w,h);};
+ draw("leg",22,62,13,26);draw("leg",38,62,13,26);draw("boot",22,86,13,7);draw("boot",38,86,13,7);
+ draw("torso",21,34,31,31);draw("arm",10,35,11,31);draw("arm",52,35,11,31);
+ draw("head",21,8,31,29);draw("head",52,10,3,27,"side");r(52,10,3,27,"#00000020");
+ if(s.id==="hotaruuu"){draw("scarf",29,35,7,15);draw("scarf",39,35,7,18);r(36,36,3,3,"#37333a");}
+ if(s.id==="boba_matcha"){r(35,0,6,10,"#20211f");r(40,0,2,10,"#34342f");draw("head",21,7,31,3,"top");}
+ return c;
+}
+function skinTexture(s,part,face){
+ const t=new THREE.CanvasTexture(skinSurface(s,part,face));t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;t.colorSpace=THREE.SRGBColorSpace;return t;
+}
+function netMakeSpecialAvatar(person){
+ const s=skinById(person.skin),root=new THREE.Group(),legs=[],materials=new Map();
+ function painted(part){
+  if(!materials.has(part))materials.set(part,["side","side","top","bottom","back","front"].map(face=>new THREE.MeshLambertMaterial({map:skinTexture(s,part,face)})));
+  return materials.get(part);
+ }
+ const part=(parent,w,h,d,x,y,z,name)=>cube(parent,w,h,d,x,y,z,painted(name));
+ const plain=(parent,w,h,d,x,y,z,col)=>cube(parent,w,h,d,x,y,z,new THREE.MeshLambertMaterial({color:col}));
+ part(root,.55,.65,.30,0,.95,0,"torso");part(root,.46,.48,.44,0,1.50,0,"head");
+ for(const side of[-1,1]){
+  const leg=new THREE.Group();leg.position.set(side*.15,.65,0);root.add(leg);legs.push(leg);
+  part(leg,.22,.55,.25,0,-.29,0,"leg");part(leg,.23,.13,.31,0,-.59,-.035,s.id==="boba_matcha"?"leg":"boot");
+  part(root,.18,.61,.23,side*.365,.955,0,"arm");
+ }
+ if(s.id==="hotaruuu"){
+  part(root,.50,.08,.48,0,1.76,0,"scarf");part(root,.085,.40,.46,-.237,1.51,0,"scarf");part(root,.085,.40,.46,.237,1.51,0,"scarf");
+  const l=part(root,.10,.24,.055,-.07,1.16,-.19,"scarf");l.rotation.z=-.18;
+  const r=part(root,.11,.29,.055,.09,1.135,-.19,"scarf");r.rotation.z=.18;
+ }else if(s.id==="boba_matcha"){
+  const straw=plain(root,.09,.27,.09,.025,1.85,0,"#252622");straw.rotation.z=-.045;
+  plain(root,.035,.27,.092,.047,1.85,0,"#32332e");
+ }
+ if(person.equipment?.helmet){plain(root,.62,.57,.57,0,1.5,0,"#50b5c4");plain(root,.43,.26,.05,0,1.52,-.32,"#a2eeef");}
+ if(person.equipment?.armor)plain(root,.63,.70,.36,0,.98,0,"#3295b6");
+ const c=document.createElement("canvas");c.width=256;c.height=64;const x=c.getContext("2d");
+ x.fillStyle="#10271ee8";x.fillRect(0,0,256,64);x.fillStyle="#f3e7c1";x.font='32px "VT323", monospace';x.textAlign="center";x.fillText(cleanName(person.name)||"PLAYER",128,43);
+ const texture=new THREE.CanvasTexture(c),label=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,depthWrite:false}));
+ label.position.y=2.2;label.scale.set(1.8,.45,1);root.add(label);root.position.copy(person.position);scene.add(root);
+ return{root,legs,name:person.name,skin:s.id,equipment:JSON.stringify(person.equipment||{})};
+}
+function refreshSkinHandMaterials(){
+ const s=skinById(playerProfile.skin);
+ for(const [mat,part,color]of [[localSkin,"hand",s.skin],[localShirt,"torso",s.shirt]]){
+  if(mat.userData.skinId===s.id)continue;
+  mat.map?.dispose();mat.map=specialSkin(s)?skinTexture(s,part,"front"):null;
+  mat.color.set(mat.map?"#ffffff":color);mat.userData.skinId=s.id;mat.needsUpdate=true;
+ }
+}
+
 function skinPreview(s){
+ if(specialSkin(s))return specialSkinPreview(s);
  const c=document.createElement("canvas");c.width=72;c.height=96;const x=c.getContext("2d");
  const r=(a,b,w,h,color)=>{x.fillStyle=color;x.fillRect(a,b,w,h);};
  r(20,61,14,25,s.trousers);r(38,61,14,25,s.trousers);r(19,83,15,9,s.boots);r(38,83,15,9,s.boots);
@@ -1921,14 +2097,47 @@ function skinPreview(s){
  else{r(19,7,34,8,s.hat);r(17,14,38,3,s.hat);r(24,36,5,30,"#a98654");}
  return c;
 }
-function renderProfile(){
- $("homeUsername").value=playerProfile.username;$("skinChoices").replaceChildren();
- for(const s of SKINS){
-  const b=document.createElement("button"),selected=s.id===playerProfile.skin;b.className="skinChoice"+(selected?" selected":"");b.setAttribute("aria-pressed",String(selected));
-  const n=document.createElement("span");n.textContent=s.name;const status=document.createElement("span");status.className="skinStatus";status.textContent=selected?"SELECTED":"CHOOSE";
-  b.append(skinPreview(s),n,status);b.onclick=()=>{playerProfile.skin=s.id;saveProfile();renderProfile();handKey="";updateHand();};$("skinChoices").append(b);
- }syncProfile();
+function ownsSkin(s){return !s.claimable||playerProfile.claimedSkins.includes(s.id);}
+function chooseSkin(id){
+ const s=skinById(id);
+ if(!ownsSkin(s)){
+  playerProfile.claimedSkins.push(s.id);
+  $("skinClaimStatus").textContent=`${s.name} CLAIMED FOR FREE — SAVED ON THIS DEVICE.`;
+ }
+ playerProfile.skin=s.id;saveProfile();renderProfile();handKey="";updateHand();
+ $("skins").querySelector(`[data-skin="${s.id}"]`)?.focus({preventScroll:true});
 }
+function renderSkinGallery(){
+ for(const id of ["starterSkins","devSkins","anniversarySkins"])$(id).replaceChildren();
+ for(const s of SKINS){
+  const b=document.createElement("button"),selected=s.id===playerProfile.skin,owned=ownsSkin(s);
+  b.type="button";b.dataset.skin=s.id;b.className="skinChoice"+(selected?" selected":"")+(!owned?" claimable":"");
+  b.setAttribute("aria-pressed",String(selected));b.setAttribute("aria-label",`${!owned?"Claim for free":selected?"Selected":"Choose"} ${s.name}`);
+  const n=document.createElement("span");n.textContent=s.name;
+  const status=document.createElement("span");status.className="skinStatus";status.textContent=selected?"SELECTED":!owned?"CLAIM FREE":s.claimable?"CLAIMED · WEAR":"FREE · WEAR";
+  b.append(skinPreview(s),n,status);b.onclick=()=>chooseSkin(s.id);
+  $(s.category==="dev"?"devSkins":s.category==="anniversary"?"anniversarySkins":"starterSkins").append(b);
+ }
+}
+function renderProfile(){
+ $("homeUsername").value=playerProfile.username;
+ const s=skinById(playerProfile.skin),label=document.createElement("span"),caption=document.createElement("small");
+ caption.textContent="CURRENT SKIN";label.append(caption,document.createTextNode(s.name));
+ $("currentSkin").replaceChildren(skinPreview(s),label);renderSkinGallery();syncProfile();
+}
+function openSkinGallery(){
+ renderSkinGallery();show("skins",true);$("home").inert=true;$("skinClaimStatus").textContent="";$("closeSkins").focus();
+}
+function closeSkinGallery(){show("skins",false);$("home").inert=false;$("openSkins").focus();}
+$("openSkins").onclick=openSkinGallery;$("closeSkins").onclick=closeSkinGallery;
+$("skins").addEventListener("keydown",e=>{
+ if(e.key==="Escape"||((e.key==="x"||e.key==="X")&&!e.ctrlKey&&!e.metaKey&&!e.altKey)){e.preventDefault();e.stopPropagation();closeSkinGallery();return;}
+ if(e.key!=="Tab")return;
+ const controls=[...$("skins").querySelectorAll('button:not(:disabled),[tabindex="0"]')],first=controls[0],last=controls.at(-1);
+ if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+ else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+});
+
 function commitProfile(){
  playerProfile.username=cleanName($("homeUsername").value);playerProfile.skin=skinById(playerProfile.skin).id;
  $("homeUsername").value=playerProfile.username;saveProfile();syncProfile();
@@ -1938,7 +2147,7 @@ $("homeUsername").addEventListener("input",()=>{playerProfile.username=cleanName
 $("homeUsername").addEventListener("blur",()=>{$("homeUsername").value=playerProfile.username;});
 
 /* Menus. */
-function hidePanels(){for(const id of ["home","worlds","pause","inventory","crafting","storage","death","multiplayer"])show(id,false);}
+function hidePanels(){$("home").inert=false;for(const id of ["home","skins","worlds","pause","inventory","crafting","storage","death","multiplayer","chatPanel"])show(id,false);}
 function renderWorlds(){
  $("worldCount").textContent=`${records.length} / 8 WORLDS`;$("worldList").replaceChildren();
  if(!records.length){const p=document.createElement("p");p.textContent="NO WORLDS YET. CREATE ONE BELOW.";$("worldList").append(p);}
@@ -1963,7 +2172,7 @@ async function openWorld(r){
 }
 function enterPlay(){hidePanels();mode="playing";show("hud",true);releaseControls();updateCamera();updateHand();renderHUD();netUI();}
 function goHome(){
- const guest=netRole==="guest";refundCraft();saveCurrent();releaseControls();stopMining();mode="home";document.exitPointerLock?.();
+ const guest=netRole==="guest";clearChatSession();refundCraft();saveCurrent();releaseControls();stopMining();mode="home";document.exitPointerLock?.();
  netStop(true);if(guest)current=null;hidePanels();show("hud",false);show("home",true);hand.visible=false;$("waterTint").style.opacity=$("damageTint").style.opacity=0;
 }
 function pauseGame(){
@@ -2087,7 +2296,9 @@ document.addEventListener("mousemove",e=>{
 document.addEventListener("pointerlockchange",()=>{if(!document.pointerLockElement&&mode==="playing")pauseGame();});
 const moveKeys={KeyW:"forward",ArrowUp:"forward",KeyS:"backward",ArrowDown:"backward",KeyA:"left",ArrowLeft:"left",KeyD:"right",ArrowRight:"right",KeyC:"dive",ControlLeft:"dive",ControlRight:"dive"};
 window.addEventListener("keydown",e=>{
- if(e.target instanceof HTMLInputElement)return;
+ if(mode==="chat"){if(e.code==="Escape"){e.preventDefault();closeChat();}return;}
+ if(e.target instanceof HTMLInputElement||e.target?.isContentEditable||e.target?.tagName==="TEXTAREA")return;
+ if(mode==="playing"&&["KeyT","Enter"].includes(e.code)&&!e.repeat){e.preventDefault();openChat();return;}
  if(e.code==="Escape"){if(mode==="craft")closeCraft();else if(mode==="chest")closeStorage();else if(mode==="inventory")closeInventory();else if(mode==="playing")pauseGame();return;}
  if(e.code==="KeyI"&&!e.repeat){if(mode==="inventory")closeInventory();else if(mode==="playing")openInventory();return;}
  if(mode!=="playing")return;if(e.code==="Space")held.add("rise");if(moveKeys[e.code]){e.preventDefault();held.add(moveKeys[e.code]);return;}if(e.repeat)return;
@@ -2100,6 +2311,142 @@ document.addEventListener("visibilitychange",()=>{if(document.hidden){releaseCon
 window.addEventListener("pagehide",()=>saveCurrent());
 function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight,false);}
 window.addEventListener("resize",resize);resize();
+
+/* Session chat and the Hotaruuu matcha celebration. */
+const chatMessages=[],matchaFireworks=[],chatFireworkCooldown=new Map();
+let chatSequence=0,chatRequestSequence=0,chatLastReceived=0,chatLastSent=-Infinity;
+const CHAT_LIMIT=40,CHAT_TEXT_LIMIT=160,MATCHA_COOLDOWN=12;
+function cleanChatText(value){return typeof value==="string"?value.replace(/[\u0000-\u001f\u007f]/g," ").trim().slice(0,CHAT_TEXT_LIMIT):"";}
+function chatClock(){return performance.now()/1000;}
+function renderChat(){
+ $("chatMessages").replaceChildren();
+ for(const line of chatMessages){
+  const row=document.createElement("p"),name=document.createElement("strong"),text=document.createElement("span");
+  name.textContent=line.name+": ";text.textContent=line.text;row.append(name,text);$("chatMessages").append(row);
+ }
+ $("chatMessages").scrollTop=$("chatMessages").scrollHeight;
+ $("chatEmpty").hidden=chatMessages.length>0;
+ $("chatPreview").replaceChildren();
+ for(const line of chatMessages.slice(-3)){const row=document.createElement("div");row.textContent=`${line.name}: ${line.text}`;$("chatPreview").append(row);}
+ show("chatPreview",chatMessages.length>0&&mode!=="chat");
+}
+function openChat(){
+ if(mode!=="playing"||hp<=0)return;
+ mode="chat";stopMining();releaseControls();document.exitPointerLock?.();
+ $("chatContext").textContent=netRole?"ROOM CHAT — YOUR FRIENDS CAN SEE THESE MESSAGES.":"SOLO CHAT — MESSAGES STAY IN THIS PLAY SESSION.";
+ show("chatPanel",true);show("chatPreview",false);renderChat();$("chatInput").focus();
+}
+function closeChat(){
+ show("chatPanel",false);$("chatInput").blur();releaseControls();
+ if(mode==="chat")mode="playing";renderChat();
+}
+function validMatchaPosition(p){return Array.isArray(p)&&p.length===3&&p.every(Number.isFinite)&&Math.abs(p[0])<=LIMIT+1&&Math.abs(p[2])<=LIMIT+1&&p[1]>=-62&&p[1]<=45;}
+function ingestChat(packet){
+ if(!packet||!Number.isSafeInteger(packet.id)||packet.id<=chatLastReceived||typeof packet.name!=="string"||typeof packet.text!=="string")return false;
+ const text=cleanChatText(packet.text),name=cleanName(packet.name)||"PLAYER";if(!text)return false;
+ chatLastReceived=packet.id;chatMessages.push({id:packet.id,name,text});if(chatMessages.length>CHAT_LIMIT)chatMessages.shift();renderChat();
+ if(packet.skin==="hotaruuu"&&text.toLowerCase()==="matcha"&&validMatchaPosition(packet.firework?.p)&&Number.isFinite(packet.firework.yaw)){
+  spawnMatchaFirework(packet.firework.p,packet.firework.yaw);notify("LOOK UP — MATCHA!");
+ }
+ return true;
+}
+function publishChat(value,person){
+ if(netRole==="guest"||!person||person.hp<=0)return false;
+ const text=cleanChatText(value);if(!text)return false;
+ const packet={t:"chatLine",id:++chatSequence,name:cleanName(person.name)||"PLAYER",skin:skinById(person.skin).id,text};
+ const now=chatClock(),last=chatFireworkCooldown.get(person.id)??-Infinity;
+ if(packet.skin==="hotaruuu"&&text.toLowerCase()==="matcha"&&now-last>=MATCHA_COOLDOWN&&validMatchaPosition(person.feet)&&Number.isFinite(person.yaw)){
+  packet.firework={p:person.feet.slice(),yaw:person.yaw};chatFireworkCooldown.set(person.id,now);
+ }
+ ingestChat(packet);
+ if(netRole==="host")for(const e of netClients.values())if(e.ready)netSend(e.conn,packet);
+ return packet;
+}
+function acceptGuestChat(e,d){
+ if(netRole!=="host"||!e.approved||!e.ready||!Number.isSafeInteger(d.id)||d.id<1||d.id<=(e.chatRequestID||0)||!cleanChatText(d.text))return false;
+ e.chatRequestID=d.id;const now=chatClock();if(now-(e.chatAt??-Infinity)<.75)return false;
+ if(!netValidPose(d.pose))return false;
+ netAcceptPose(e,d.pose);if(!netValidPose(e.pose)||!(e.pose.hp>0))return false;e.chatAt=now;
+ return publishChat(d.text,{id:e.id,name:e.name,skin:e.pose.skin,feet:e.pose.feet,yaw:e.pose.yaw,hp:e.pose.hp});
+}
+function sendChat(value){
+ const text=cleanChatText(value);if(!text||!current||hp<=0||!["playing","chat"].includes(mode))return false;
+ const now=chatClock();if(now-chatLastSent<.75){$("chatStatus").textContent="WAIT A MOMENT BEFORE SENDING AGAIN.";return false;}
+ if(netRole==="guest"){
+  if(!netConnection?.open){$("chatStatus").textContent="WAITING FOR THE HOST CONNECTION.";return false;}
+  netSend(netConnection,{t:"chatSay",id:++chatRequestSequence,text,pose:netProfile()});
+ }else publishChat(text,{id:"host",name:playerProfile.username,skin:playerProfile.skin,feet:feet.toArray(),yaw,hp});
+ chatLastSent=now;$("chatStatus").textContent="";return true;
+}
+function removeMatchaFirework(f){
+ scene.remove(f.root);const geometries=new Set(),materials=new Set();
+ f.root.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)for(const m of Array.isArray(o.material)?o.material:[o.material])materials.add(m);});
+ for(const g of geometries)g.dispose();for(const m of materials)m.dispose();
+}
+function clearChatSession(){
+ show("chatPanel",false);$("chatInput").value="";$("chatInput").blur();$("chatStatus").textContent="";
+ chatMessages.length=0;chatSequence=chatRequestSequence=chatLastReceived=0;chatLastSent=-Infinity;chatFireworkCooldown.clear();
+ for(const f of matchaFireworks)removeMatchaFirework(f);matchaFireworks.length=0;renderChat();
+}
+function spawnMatchaFirework(p,heading){
+ if(matchaFireworks.length>=4)removeMatchaFirework(matchaFireworks.shift());
+ const root=new THREE.Group(),cup=new THREE.Group();root.add(cup);
+ const x=p[0]-Math.sin(heading)*24,z=p[2]-Math.cos(heading)*24,bottom=Math.max(8,p[1]+12),startY=Math.max(1,p[1]+1.5);
+ root.position.set(x,bottom,z);cup.rotation.y=heading;
+ const destinations=[],colors=[];
+ function spark(x,y,z,color){destinations.push(x,y,z);colors.push(...color);}
+ const green=[.55,1,.22],cream=[1,.88,.48];
+ // A tapered cup traced by hundreds of bright stars, with a creamy rim and straw.
+ for(let ring=0;ring<=12;ring++)for(let a=0;a<40;a++){
+  const angle=a/40*Math.PI*2,radius=3.3+ring*.11;spark(Math.sin(angle)*radius,ring,Math.cos(angle)*radius,ring>=11?cream:green);
+ }
+ for(let y=12;y<=18;y+=.32)for(const side of [-1,1])spark(.9+side*.35,y,0,[.65,1,.45]);
+ for(let a=0;a<32;a++){const angle=a/32*Math.PI*2;spark(Math.cos(angle)*5.2,11.9,Math.sin(angle)*5.2,cream);}
+ // A separate burst of short-lived sparks surrounds the drink silhouette.
+ const shapeCount=destinations.length/3;
+ for(let a=0;a<100;a++){const turn=a*2.39996,h=(a/99)*2-1,r=Math.sqrt(1-h*h);spark(Math.cos(turn)*r*12,6+h*12,Math.sin(turn)*r*12,a%3?green:cream);}
+ const positions=new Float32Array(destinations.length),attribute=new THREE.Float32BufferAttribute(positions,3),geometry=new THREE.BufferGeometry();
+ geometry.setAttribute("position",attribute);geometry.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));
+ const material=new THREE.PointsMaterial({size:.32,vertexColors:true,transparent:true,opacity:1,blending:THREE.AdditiveBlending,depthWrite:false,fog:false});
+ const stars=new THREE.Points(geometry,material);stars.frustumCulled=false;cup.add(stars);
+ const solid=new THREE.Group();cup.add(solid);
+ function part(geometry,color,x,y,z,opacity=1){const mesh=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({color,transparent:true,opacity,depthWrite:false,fog:false}));mesh.position.set(x,y,z);solid.add(mesh);mesh.userData.matchaOpacity=opacity;return mesh;}
+ part(new THREE.CylinderGeometry(4.6,3.3,12,24,1,true),"#9cde4b",0,6,0,.18);
+ part(new THREE.CylinderGeometry(4.65,4.65,.5,24),"#ffe9a1",0,12,0,.65);
+ part(new THREE.BoxGeometry(.72,6,.72),"#25362a",.9,15,0,.9);
+ for(let i=0;i<9;i++){const a=i/9*Math.PI*2,r=3.5;part(new THREE.SphereGeometry(.67,8,6),"#3b241d",Math.sin(a)*r,1.6+(i%2)*1.7,Math.cos(a)*r,.95);}
+ const launchMaterial=new THREE.MeshBasicMaterial({color:"#d8ff9b",fog:false}),launch=new THREE.Mesh(new THREE.SphereGeometry(.25,8,6),launchMaterial);root.add(launch);
+ const trailGeometry=new THREE.BufferGeometry(),trailPositions=new Float32Array(30*3),trailAttribute=new THREE.Float32BufferAttribute(trailPositions,3);
+ trailGeometry.setAttribute("position",trailAttribute);const trailMaterial=new THREE.PointsMaterial({color:"#b7ff55",size:.18,transparent:true,opacity:.9,blending:THREE.AdditiveBlending,depthWrite:false,fog:false});
+ const trail=new THREE.Points(trailGeometry,trailMaterial);trail.frustumCulled=false;root.add(trail);cup.visible=false;
+ // Float32BufferAttribute copies its input; animate the actual GPU-bound arrays.
+ const f={root,cup,solid,stars,launch,trail,trailAttribute,trailPositions:trailAttribute.array,trailMaterial,attribute,positions:attribute.array,destinations,shapeCount,material,age:0,startY,bottom};
+ matchaFireworks.push(f);scene.add(root);return f;
+}
+function updateMatchaFireworks(dt){
+ if(document.hidden||["home","worlds","network"].includes(mode))return;
+ // Visuals keep animating while a chat or pause panel is open, including co-op guests.
+ for(let i=matchaFireworks.length-1;i>=0;i--){
+  const f=matchaFireworks[i];f.age+=Math.max(0,Math.min(.1,dt));
+  if(f.age>10){removeMatchaFirework(f);matchaFireworks.splice(i,1);continue;}
+  const rise=Math.min(1,f.age/1.2),launchY=f.startY-f.bottom+(f.bottom+6-f.startY)*rise;
+  f.launch.position.y=launchY;f.launch.visible=f.age<1.2;f.trail.visible=f.age<1.7;f.trailMaterial.opacity=Math.max(0,1-(f.age-1.2)*2);
+  for(let j=0;j<30;j++){const at=j*3;f.trailPositions[at]=Math.sin(j*.8+f.age*9)*.1;f.trailPositions[at+1]=launchY-j*.18;f.trailPositions[at+2]=Math.cos(j*.8)*.1;}f.trailAttribute.needsUpdate=true;
+  if(f.age<1.2)continue;f.cup.visible=true;const burst=f.age-1.2,form=Math.min(1,burst/.65),fade=Math.min(1,(10-f.age)/2);
+  f.material.opacity=fade;f.cup.rotation.y+=dt*.1;
+  for(let j=0;j<f.destinations.length/3;j++){
+   const at=j*3,isShape=j<f.shapeCount,spread=isShape?form:Math.min(1.4,burst*.65),sink=isShape?Math.max(0,burst-6)*.5:burst*.55;
+   f.positions[at]=f.destinations[at]*spread;f.positions[at+1]=6+(f.destinations[at+1]-6)*spread-sink;f.positions[at+2]=f.destinations[at+2]*spread;
+  }
+  f.attribute.needsUpdate=true;f.solid.visible=burst>.4;f.solid.scale.setScalar(form);
+  for(const mesh of f.solid.children)mesh.material.opacity=mesh.userData.matchaOpacity*fade;
+ }
+}
+$("openChat").onclick=openChat;$("closeChat").onclick=closeChat;
+$("chatForm").addEventListener("submit",e=>{e.preventDefault();if(sendChat($("chatInput").value)){$("chatInput").value="";closeChat();}});
+$("chatInput").addEventListener("keydown",e=>{e.stopPropagation();if(e.code==="Escape"){e.preventDefault();closeChat();}});
+$("chatPanel").addEventListener("click",e=>{if(e.target===$("chatPanel"))closeChat();});
+
 
 /* Cooperative multiplayer. */
 const netClients=new Map(),netAvatars=new Map(),netChanges=new Map();
@@ -2191,7 +2538,9 @@ async function netStartJoin(){
 function netJoinFailed(s){netStop();$("joinStatus").textContent=s;}
 function netLostHost(){if(netRole==="joining"){netJoinFailed("COULD NOT JOIN. CHECK THE CODE.");return;}if(netRole==="guest"){goHome();notify("THE HOST LEFT OR THE CONNECTION CLOSED.");}}
 function netDisposeAvatar(a){
- a.root.traverse(o=>{if(o.isSprite){o.material.map?.dispose();o.material.dispose();}else if(o.isMesh)o.material.dispose();});scene.remove(a.root);
+ const materials=new Set(),textures=new Set();
+ a.root.traverse(o=>{if(o.isSprite||o.isMesh)for(const m of(Array.isArray(o.material)?o.material:[o.material]))if(m){materials.add(m);if(m.map)textures.add(m.map);}});
+ for(const t of textures)t.dispose();for(const m of materials)m.dispose();scene.remove(a.root);
 }
 function netStop(announce=false){
  const old=netRole;netRole="";netEpoch++;clearTimeout(netJoinTimer);if(netPending){clearTimeout(netPending.timer);netPending=null;}
@@ -2231,6 +2580,7 @@ function netAccept(conn){
     e.ready=true;netAcceptPose(e,d.pose);for(const p of e.backlog)netSend(conn,p);e.backlog=[];netUI();notify(`${e.name} JOINED.`);netBroadcast();
    }else if(d.t==="pose"&&e.ready)netAcceptPose(e,d.pose);
    else if(d.t==="mineStart"&&e.ready&&typeof d.key==="string"&&netValidPose(d.pose)){netAcceptPose(e,d.pose);e.mining={key:d.key,start:time};}
+   else if(d.t==="chatSay"&&e.ready)acceptGuestChat(e,d);
    else if(d.t==="rpc"&&e.ready)netHostRequest(e,d);
   }catch{netSend(conn,{t:"note",text:"THAT ACTION COULD NOT BE COMPLETED."});}
  });
@@ -2378,6 +2728,7 @@ function netApplyFrame(d){
 function netClientMessage(d){
  if(!d||typeof d!=="object")return;
  try{
+  if(d.t==="chatLine"&&netRole==="guest"){ingestChat(d);return;}
   if(d.t==="deny"){netJoinFailed(d.reason||"COULD NOT JOIN.");return;}
   if(d.t==="closed"){netLostHost();return;}
   if(d.t==="note"){notify(String(d.text||"").slice(0,240));return;}
@@ -2408,6 +2759,7 @@ function netClientMessage(d){
  }catch{if(netRole==="joining")netJoinFailed("WORLD COULD NOT LOAD. REFRESH BOTH GAMES.");}
 }
 function netMakeAvatar(person){
+ if(specialSkin(skinById(person.skin)))return netMakeSpecialAvatar(person);
  const s=skinById(person.skin),root=new THREE.Group(),legs=[];
  function part(parent,w,h,d,x,y,z,c){return cube(parent,w,h,d,x,y,z,new THREE.MeshLambertMaterial({color:c}));}
  part(root,.55,.65,.3,0,.95,0,s.shirt);part(root,.42,.43,.42,0,1.49,0,s.skin);part(root,.44,.12,.44,0,1.68,.015,s.hair);
@@ -3036,7 +3388,7 @@ renderer.setAnimationLoop(now=>{
    $("damageTint").style.opacity=time<playerFlash?"1":"0";if(time>=nextHUD){renderHUD();nextHUD=time+.1;}
   }if(hp<=0)die();
  }else if(!["home","worlds","network"].includes(mode))hand.visible=false;
- netTick(dt);updateGameAudio(now);updateCelestialBodies();
+ netTick(dt);updateMatchaFireworks(dt);updateGameAudio(now);updateCelestialBodies();
  for(const root of [farmWaterRoot,desertWaterRoot])if(root)for(const m of root.children){const p=m.userData.pond;m.visible=!at(p.x,p.y,p.z);}
  renderer.render(scene,camera);
 });
