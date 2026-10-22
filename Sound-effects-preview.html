@@ -1,0 +1,156 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Corny Game — Sound Effects Preview</title>
+<style>body{margin:0;background:#12291f;color:#f3e7c1;font:17px system-ui;padding:28px}main{max-width:960px;margin:auto}h1{font-size:34px}p{color:#c0ceb9;line-height:1.5}button{padding:12px;margin:4px;border:1px solid #6d895c;background:#254b35;color:#f3e7c1;border-radius:5px;cursor:pointer}button:hover{background:#436440}section{border-top:1px solid #456140;padding:14px 0}h2{font-size:21px;margin:0 0 6px}.tag{color:#dcbd74;font-size:13px;text-transform:uppercase;letter-spacing:2px}</style>
+<main><div class="tag">Separate audition · generated sounds</div><h1>Corny Game sound effects</h1><p>These are optional synthesized candidates, separate from your custom music. Turn preview effects on, then try each sound. Your choice also applies when you open the game at the same address.</p><button data-effects-toggle>PREVIEW EFFECTS: OFF</button><div id="sounds"></div></main>
+<audio id="gameMusic" hidden></audio><script id="corny-audio-assets" type="application/json">{}</script><script>/* Custom soundtrack and optional synthesized effect previews. No external audio files. */
+(()=>{
+ const assets=JSON.parse(document.getElementById('corny-audio-assets').textContent);
+ const music=document.getElementById('gameMusic'),settingsKey='corny-audio-settings-v1';
+ let settings={music:true,effects:false,volume:.35};
+ try{Object.assign(settings,JSON.parse(localStorage.getItem(settingsKey)||'{}'));}catch{}
+ settings.volume=Number.isFinite(Number(settings.volume))?Math.max(0,Math.min(1,Number(settings.volume))):.35;
+ let unlocked=false,scene='loading',track=null,pending=false,blocked=false,context=null,master=null;
+ let revision=0,desired=null,fade=0,lastTick=performance.now();
+ const positions=new Map(),voices=new Set();
+ const musicButtons=[...document.querySelectorAll('[data-music-toggle]')];
+ const effectButtons=[...document.querySelectorAll('[data-effects-toggle]')];
+ const volumeInputs=[...document.querySelectorAll('[data-music-volume]')];
+ const labels=[...document.querySelectorAll('[data-now-playing]')];
+ const profiles={
+  cow:[110,'sawtooth',.65,3.2],horse:[510,'sawtooth',.55,7],sheep:[300,'triangle',.55,12],
+  ogger:[63,'sawtooth',.6,22],dweller:[185,'triangle',.35,4],farmer:[220,'triangle',.3,3],
+  sandwitch:[540,'sawtooth',.55,9],oggerfish:[155,'sine',.3,17],stonefish:[88,'triangle',.28,25],
+  knightfish:[680,'triangle',.23,19],aquatic_ruler:[77,'sawtooth',.8,5],
+ };
+ const allowed=()=>unlocked&&!document.hidden&&!['loading','fatal','dead'].includes(scene);
+ function persist(){try{localStorage.setItem(settingsKey,JSON.stringify(settings));}catch{}}
+ function render(){
+  for(const b of musicButtons){b.textContent=`MUSIC: ${settings.music?'ON':'OFF'}`;b.setAttribute('aria-pressed',String(!!settings.music));}
+  for(const b of effectButtons){b.textContent=`PREVIEW EFFECTS: ${settings.effects?'ON':'OFF'}`;b.setAttribute('aria-pressed',String(!!settings.effects));}
+  for(const v of volumeInputs)v.value=Math.round(settings.volume*100);
+  const text=!settings.music?'Music is muted.':!unlocked||blocked?'Click or press a key to start the music.':track?`♪ ${assets[track].title}`:'Music is ready.';
+  for(const el of labels)el.textContent=text;
+ }
+ function ensureContext(){
+  if(!settings.effects)return;
+  try{
+   if(!context){
+    const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;
+    context=new Ctx();master=context.createGain();master.gain.value=.38;
+    const compressor=context.createDynamicsCompressor();compressor.threshold.value=-12;compressor.ratio.value=5;
+    master.connect(compressor);compressor.connect(context.destination);
+   }
+   if(context.state==='suspended')Promise.resolve(context.resume()).catch(()=>{});
+  }catch{context=null;master=null;}
+ }
+ function stopEffects(){
+  for(const voice of [...voices]){for(const node of voice.sources)try{node.stop();}catch{}voice.cleanup();}
+ }
+ function sync(){
+  if(!allowed()||!settings.music||!track){music.pause();return;}
+  if(blocked||pending||!music.paused)return;
+  pending=true;const token=revision;
+  try{
+   Promise.resolve(music.play()).then(()=>{
+    if(token!==revision||!allowed()||!settings.music)music.pause();else blocked=false;
+   }).catch(()=>{if(token===revision)blocked=true;}).finally(()=>{pending=false;render();});
+  }catch{pending=false;blocked=true;render();}
+ }
+ function changeTrack(id){
+  if(id===track)return;
+  if(track&&Number.isFinite(music.currentTime))positions.set(track,music.currentTime);
+  music.pause();revision++;track=id;blocked=false;fade=0;music.volume=0;
+  music.src=assets[id].src;music.dataset.track=id;music.loop=true;
+  music.onloadedmetadata=()=>{
+   const saved=positions.get(id)||0;
+   try{music.currentTime=Math.min(saved,Math.max(0,music.duration-.1));}catch{}
+  };
+  music.load();sync();render();
+ }
+ function tick(){
+  const now=performance.now(),dt=Math.min(.15,(now-lastTick)/1000);lastTick=now;
+  if(desired!==track){
+   fade=Math.max(0,fade-dt*2);
+   if(!track||fade===0||!allowed()||!settings.music)changeTrack(desired);
+  }else fade=Math.min(1,fade+dt*1.6);
+  music.volume=settings.volume*fade*(scene==='paused'?.5:1);
+  sync();
+ }
+ function unlock(event){
+  if(event?.target?.closest?.('[data-music-toggle],[data-effects-toggle],[data-music-volume]'))return;
+  unlocked=true;blocked=false;ensureContext();sync();render();
+ }
+ for(const b of musicButtons)b.addEventListener('click',()=>{settings.music=!settings.music;unlocked=true;blocked=false;persist();sync();render();});
+ for(const b of effectButtons)b.addEventListener('click',()=>{
+  settings.effects=!settings.effects;unlocked=true;blocked=false;if(settings.effects)ensureContext();else stopEffects();persist();sync();render();
+ });
+ for(const input of volumeInputs)input.addEventListener('input',()=>{settings.volume=Math.max(0,Math.min(1,Number(input.value)/100));unlocked=true;blocked=false;persist();tick();render();});
+ document.addEventListener('pointerdown',unlock,{passive:true});
+ document.addEventListener('keydown',e=>{if(!e.repeat)unlock(e);});
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopEffects();sync();});
+ window.addEventListener('pagehide',()=>{music.pause();stopEffects();});
+ window.addEventListener('pageshow',()=>sync());
+ music.addEventListener('error',()=>{blocked=true;for(const el of labels)el.textContent='Music could not play. You can keep playing the game.';});
+ function effect(kind,event='idle',level=1,pan=0,variant=''){
+  if(!settings.effects||!allowed()||scene!=='playing'||!context||context.state!=='running'||voices.size>=10)return false;
+  if(!profiles[kind]&&kind!=='block')return false;
+  const c=context,start=c.currentTime+.005,nodes=[],sources=[];
+  const gain=c.createGain(),filter=c.createBiquadFilter();filter.type='lowpass';filter.frequency.value=2600;
+  gain.gain.value=Math.max(0,Math.min(1,level));gain.connect(filter);nodes.push(gain,filter);
+  if(c.createStereoPanner){const panner=c.createStereoPanner();panner.pan.value=Math.max(-1,Math.min(1,pan));filter.connect(panner);panner.connect(master);nodes.push(panner);}else filter.connect(master);
+  const voice={sources,cleanup(){for(const node of nodes)try{node.disconnect();}catch{}voices.delete(voice);}};voices.add(voice);
+  let longest=.1;
+  function tone(freq,end,duration,type='sine',amp=.2,delay=0,vibrato=0){
+   const osc=c.createOscillator(),env=c.createGain(),at=start+delay;
+   osc.type=type;osc.frequency.setValueAtTime(Math.max(20,freq),at);osc.frequency.exponentialRampToValueAtTime(Math.max(20,end),at+duration);
+   env.gain.setValueAtTime(.0001,at);env.gain.exponentialRampToValueAtTime(Math.max(.0002,amp),at+.02);env.gain.exponentialRampToValueAtTime(.0001,at+duration);
+   osc.connect(env);env.connect(gain);sources.push(osc);nodes.push(osc,env);
+   if(vibrato){const lfo=c.createOscillator(),depth=c.createGain();lfo.frequency.value=vibrato;depth.gain.value=freq*.035;lfo.connect(depth);depth.connect(osc.frequency);lfo.start(at);lfo.stop(at+duration);sources.push(lfo);nodes.push(lfo,depth);}
+   osc.start(at);osc.stop(at+duration+.03);longest=Math.max(longest,delay+duration+.05);
+  }
+  function noise(duration,freq,amp=.12){
+   const buffer=c.createBuffer(1,Math.ceil(c.sampleRate*duration),c.sampleRate),data=buffer.getChannelData(0);
+   for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*Math.pow(1-i/data.length,2);
+   const src=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();src.buffer=buffer;f.type='lowpass';f.frequency.value=freq;g.gain.value=amp;
+   src.connect(f);f.connect(g);g.connect(gain);src.start(start);sources.push(src);nodes.push(src,f,g);longest=Math.max(longest,duration+.05);
+  }
+  try{
+   if(kind==='block'){
+    const wood=['log','table','chest','bed','campfire','boat'].includes(variant),soft=['dirt','sand','wool','leaves','farmland','cactus','corn_seeds'].includes(variant);
+    if(variant==='glass'){tone(1650,1100,.18,'sine',.15);tone(2300,1700,.15,'sine',.07,.015);}
+    else if(['gold_block','keycard_scanner','ogger_trap'].includes(variant)){tone(760,520,.22,'triangle',.18);tone(1170,800,.16,'sine',.1);}
+    else{tone(wood?190:soft?95:125,wood?85:soft?45:65,.13,'sine',.3);noise(soft?.14:.07,soft?850:wood?1800:3200,.18);}
+   }else{
+    let [freq,wave,duration,vibrato]=profiles[kind];freq*=.94+Math.random()*.12;
+    if(event==='hurt'){freq*=1.55;duration*=.55;}
+    if(event==='death'){freq*=.8;duration*=1.4;}
+    if(event==='attack'||event==='awaken'){freq*=1.15;duration*=.65;noise(.12,1100,.1);}
+    if(event==='cast'){
+     const f=({blue:440,green:165,yellow:880,orange:330})[variant]||620;
+     tone(f,f*1.65,.55,'triangle',.19);tone(f/2,f*.8,.7,'sine',.14,.08);noise(.25,900,.06);
+    }else if(kind.endsWith('fish')){
+     for(let i=0;i<3;i++)tone(freq*(1+i*.3),freq*.5,duration*.65,wave,.18,i*.07,vibrato);
+     if(kind==='stonefish')noise(.15,650,.16);
+    }else{
+     tone(freq,event==='death'?freq*.3:freq*.65,duration,wave,.21,0,vibrato);
+     tone(freq*.5,freq*.35,duration*.9,'sine',.11,.02);
+     if(kind==='horse')for(let i=0;i<3;i++)tone(freq*1.4,freq*.9,.1,'triangle',.09,.17+i*.12);
+     if(kind==='sandwitch')tone(freq*1.5,freq*2,.18,'triangle',.08,.15);
+    }
+   }
+   setTimeout(()=>voice.cleanup(),(longest+.1)*1000);return true;
+  }catch{voice.cleanup();return false;}
+ }
+ window.cornyAudio={
+  setScene(next){if(scene===next)return;scene=next;if(next!=='playing')stopEffects();sync();},
+  setTrack(id){if(assets[id])desired=id;},effect,
+ };
+ setInterval(()=>{if(desired)tick();},50);render();
+})();
+</script><script>
+cornyAudio.setScene('playing');
+const creatures={cow:'Cow',horse:'Horse',sheep:'Sheep',ogger:'Ogger',dweller:'Dweller',farmer:'Farmer',sandwitch:'Sandwitch',oggerfish:'Oggerfish',stonefish:'Stonefish',knightfish:'Knightfish',aquatic_ruler:'Aquatic Ruler'};
+function row(title,buttons){const section=document.createElement('section'),h=document.createElement('h2');h.textContent=title;section.append(h);for(const [label,fn] of buttons){const b=document.createElement('button');b.textContent=label;b.onclick=fn;section.append(b);}document.getElementById('sounds').append(section);}
+for(const [kind,title] of Object.entries(creatures))row(title,['idle','hurt','attack','death'].map(event=>[event,()=>cornyAudio.effect(kind,event)]));
+row('Ruler spells',['blue','green','yellow','orange'].map(phase=>[phase,()=>cornyAudio.effect('aquatic_ruler','cast',1,0,phase)]));
+row('Place a block',['dirt','sand','log','stone','glass','gold_block','keycard_scanner','wool','leaves','campfire'].map(block=>[block.replaceAll('_',' '),()=>cornyAudio.effect('block','place',1,0,block)]));
+</script></html>
