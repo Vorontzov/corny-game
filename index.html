@@ -299,6 +299,12 @@ In multiplayer, the shared world keeps running.</p>
 <button id="closeInventory" class="primary full">BACK TO GAME</button>
 </div></div>
 
+<div id="trading" class="overlay hidden"><div class="panel">
+<button id="closeTrading" class="secondary full stickyExit">X — EXIT BLACKSMITH</button>
+<h2>VILLAGE BLACKSMITH</h2><p id="tradeWallet"></p><div id="tradeOffers" class="row" style="flex-direction:column"></div>
+<p class="small">Select a trade. Wear the iron helmet from your inventory. Place the fish bucket on a clear block top to create a tiny pond with your pet fish.</p>
+</div></div>
+
 <div id="crafting" class="overlay hidden"><div class="panel wide">
 <button id="closeCraft" class="secondary full stickyExit">X — EXIT CRAFTING</button>
 <h2 id="craftTitle">CRAFTING</h2>
@@ -458,7 +464,7 @@ window.addEventListener("unhandledrejection",e=>window.showCornyError(e.reason))
   }
   try{
    if(kind==='block'){
-    const wood=['log','table','chest','bed','campfire','boat'].includes(variant),soft=['dirt','sand','wool','leaves','farmland','cactus','corn_seeds'].includes(variant);
+    const wood=['log','oak_log','table','chest','bed','campfire','boat'].includes(variant),soft=['dirt','sand','wool','leaves','oak_leaves','farmland','cactus','corn_seeds'].includes(variant);
     if(variant==='glass'){tone(1650,1100,.18,'sine',.15);tone(2300,1700,.15,'sine',.07,.015);}
     else if(['gold_block','keycard_scanner','ogger_trap'].includes(variant)){tone(760,520,.22,'triangle',.18);tone(1170,800,.16,'sine',.1);}
     else{tone(wood?190:soft?95:125,wood?85:soft?45:65,.13,'sine',.3);noise(soft?.14:.07,soft?850:wood?1800:3200,.18);}
@@ -498,14 +504,15 @@ const $=id=>document.getElementById(id);
 const show=(id,on)=>$(id).classList.toggle("hidden",!on);
 const clone=o=>JSON.parse(JSON.stringify(o));
 const SAVE_KEY="corny-worlds-v2",PROFILE_KEY="corny-player-profile-v1";
-const WATER=-.22,LIMIT=192,NET_VERSION=5;
-const BLOCKS=["dirt","sand","log","leaves","table","stone","ogger_trap","wool","bed","campfire","farmland","sandstone","cactus","chest","smooth_stone","marked_stone","glass","keycard_scanner","bullseye","stonefish_block","gold_block","throne"];
+const WATER=-.22,LIMIT=192,NET_VERSION=6;
+const BLOCKS=["dirt","sand","log","leaves","oak_log","oak_leaves","table","stone","ogger_trap","wool","bed","campfire","farmland","sandstone","cactus","chest","smooth_stone","marked_stone","glass","keycard_scanner","bullseye","stonefish_block","gold_block","throne"];
 const KINDS=["cow","horse","sheep","ogger","dweller","sandwitch","oggerfish","stonefish","knightfish","aquatic_ruler"];
 const TOOLS=new Set(["wooden_dagger","wooden_pickaxe","poison_potion"]);
 const USE_BLOCKS=new Set(["table","ogger_trap","campfire","bed","chest","keycard_scanner","throne"]);
 const NAMES={
+ iron_helmet:"IRON HELMET",emerald:"EMERALD",fish_bucket:"PET FISH IN A BUCKET",
  aquatic_keycard:"AQUATIC KEY CARD",aquatic_helmet:"AQUATIC HELMET",aquatic_armor:"AQUATIC ARMOR",healing_potion:"HEALING POTION",revival_potion:"REVIVAL POTION",smooth_stone:"SMOOTH STONE",marked_stone:"MARKED STONE",glass:"GLASS",keycard_scanner:"KEY CARD SCANNER",bullseye:"BULLSEYE",stonefish_block:"STONE",gold_block:"BLOCK OF GOLD",throne:"AQUATIC THRONE",
- dirt:"DIRT",sand:"SAND",log:"PINE LOGS",leaves:"PINE LEAVES",table:"BUILDING TABLE",
+ oak_log:"OAK LOGS",oak_leaves:"OAK LEAVES",dirt:"DIRT",sand:"SAND",log:"PINE LOGS",leaves:"PINE LEAVES",table:"BUILDING TABLE",
  stone:"STONE",ogger_trap:"OGGER TRAP",wool:"WOOL",bed:"BED",campfire:"CAMPFIRE",
  farmland:"FARMLAND",sandstone:"SANDSTONE",cactus:"CACTUS",chest:"CHEST",boat:"BOAT",
  beef:"BEEF",lamb:"LAMB",corn:"CORN",corn_seeds:"CORN SEEDS",
@@ -513,8 +520,9 @@ const NAMES={
  wooden_dagger:"WOODEN DAGGER",wooden_pickaxe:"WOODEN PICKAXE",poison_potion:"POISON POTION"
 };
 const COLORS={
+ iron_helmet:"#bcc8ce",emerald:"#4cdb9a",fish_bucket:"#68c0d5",
  aquatic_keycard:"#47d9dd",aquatic_helmet:"#65e2ee",aquatic_armor:"#3295b6",healing_potion:"#ff76a5",revival_potion:"#b89aff",smooth_stone:"#aaaead",marked_stone:"#49777d",glass:"#9ce3e8",keycard_scanner:"#263f49",bullseye:"#e5d9bb",stonefish_block:"#92958c",gold_block:"#ffd566",throne:"#365e6a",
- dirt:"#8b6949",sand:"#dcc48b",log:"#805438",leaves:"#3a643f",table:"#b8874a",
+ oak_log:"#a47b46",oak_leaves:"#6d8c43",dirt:"#8b6949",sand:"#dcc48b",log:"#805438",leaves:"#3a643f",table:"#b8874a",
  stone:"#92958c",ogger_trap:"#8a7860",wool:"#e5e0d2",bed:"#60819a",campfire:"#625d52",
  farmland:"#715239",sandstone:"#c9aa73",cactus:"#60814a",chest:"#a7753d",boat:"#91633e",
  beef:"#b9614e",lamb:"#c17a70",corn:"#e6c34f",corn_seeds:"#9ba658",
@@ -587,7 +595,7 @@ function texture(type){
  if(type==="stonefish_block")type="stone";
  const c=document.createElement("canvas");c.width=c.height=16;const x=c.getContext("2d");
  x.fillStyle=type==="dirt"?"#ffffff":COLORS[type];x.fillRect(0,0,16,16);
- for(let i=0;i<65;i++){x.fillStyle=Math.random()<.5?"#00000018":"#ffffff18";x.fillRect(Math.random()*16|0,Math.random()*16|0,type==="log"?1:2,type==="log"?4:1);}
+ for(let i=0;i<65;i++){x.fillStyle=Math.random()<.5?"#00000018":"#ffffff18";x.fillRect(Math.random()*16|0,Math.random()*16|0,["log","oak_log"].includes(type)?1:2,["log","oak_log"].includes(type)?4:1);}
  if(["table","sandstone"].includes(type)){
   x.strokeStyle=type==="table"?"#62412a":"#a78a59";
   for(let n=4;n<16;n+=5){x.beginPath();x.moveTo(0,n);x.lineTo(16,n);x.stroke();}
@@ -654,8 +662,8 @@ function smoothNoise(x,z,seed){
  const ix=Math.floor(x),iz=Math.floor(z),fx=x-ix,fz=z-iz,u=fx*fx*(3-2*fx),v=fz*fz*(3-2*fz);
  return(noise(ix,iz,seed)*(1-u)+noise(ix+1,iz,seed)*u)*(1-v)+(noise(ix,iz+1,seed)*(1-u)+noise(ix+1,iz+1,seed)*u)*v;
 }
-const at=(x,y,z)=>blocks.get(key(x,y,z));
-function put(x,y,z,type){if(!at(x,y,z))blocks.set(key(x,y,z),{x,y,z,type});}
+const at=(x,y,z)=>blocks.get(key(x,y,z))||(y<=seabedY?{x,y,z,type:"stone",permanentSeabed:true}:undefined);
+function put(x,y,z,type){if(!blocks.has(key(x,y,z)))blocks.set(key(x,y,z),{x,y,z,type});}
 function setBlock(x,y,z,type){blocks.set(key(x,y,z),{x,y,z,type});}
 function rebuildTerrain(){
  const grouped=Object.fromEntries(BLOCKS.map(t=>[t,[]]));
@@ -665,7 +673,7 @@ function rebuildTerrain(){
   cells.forEach((b,i)=>{matrix.makeTranslation(b.x,b.y,b.z);m.setMatrixAt(i,matrix);});
   m.instanceMatrix.needsUpdate=true;if(cells.length){m.computeBoundingSphere();m.computeBoundingBox();}
  }
- syncDevices();syncFires();syncChests();syncCornGround();
+ syncDevices();syncFires();syncChests();syncCornGround();syncPetFish();
 }
 
 /* Inventory and charged items. */
@@ -968,11 +976,15 @@ function pick(nx=0,ny=0){
  const terrain=terrainRay(ray.ray.origin,ray.ray.direction,4.8);ray.far=terrain?terrain.distance:4.8;
  const roots=[...mobs.values()].filter(m=>m.hp>0).map(m=>m.root);
  if(farmerActor?.hp>0)roots.push(farmerActor.root);
+ for(const a of villageActors.values())roots.push(a.root);
  for(const p of cornPlants.values())roots.push(p.root);
  for(const b of boats.values())roots.push(b.root);
+ for(const p of petFishVisuals.values())if(p.root.visible)roots.push(p.root);
  const hit=ray.intersectObjects(roots,true)[0];if(!hit)return terrain;
+ if(hit.object.userData.petFishId)return{type:"petFish",id:hit.object.userData.petFishId,distance:hit.distance};
  if(hit.object.userData.boatId)return{type:"boat",boat:boats.get(hit.object.userData.boatId),distance:hit.distance};
  if(hit.object.userData.farmerId&&farmerActor)return{type:"mob",mob:farmerActor,distance:hit.distance};
+ if(hit.object.userData.villageActorId){const actor=villageActors.get(hit.object.userData.villageActorId);if(actor)return{type:"villager",actor,distance:hit.distance};}
  const m=mobs.get(hit.object.userData.mobId);if(m)return{type:"mob",mob:m,distance:hit.distance};
  const plant=cornPlants.get(hit.object.userData.cornKey);return plant?{type:"crop",plant,distance:hit.distance}:terrain;
 }
@@ -1184,13 +1196,14 @@ function beginMining(mouse=false){
  if(target?.type==="crop"){harvestCorn(target.plant);return;}
  if(target?.type==="boat"){useBoat(target.boat.id,"pickup");return;}
  if(target?.type!=="block"){notify("AIM AT A NEARBY BLOCK.");return;}
- const b=target.block;if(b.type==="stonefish_block"){if(netRole==="guest")netRequest("awaken",{key:key(b.x,b.y,b.z)});else awakenStonefish(b);return;}if(needsPickaxe(b.type)&&!holdingPickaxe()){notify(`HOLD A WOODEN PICKAXE TO COLLECT ${NAMES[b.type]}.`);return;}
+ const b=target.block;if(b.permanentSeabed){stopMining();notify("THE SOLID OCEAN FLOOR CANNOT BE MINED. YOU CAN BUILD ON IT.");return;}if(petFishAt(b.x,b.y+1,b.z)){notify("PICK UP THE PET FISH POND BEFORE MINING ITS SUPPORT.");return;}if(b.type==="stonefish_block"){if(netRole==="guest")netRequest("awaken",{key:key(b.x,b.y,b.z)});else awakenStonefish(b);return;}if(needsPickaxe(b.type)&&!holdingPickaxe()){notify(`HOLD A WOODEN PICKAXE TO COLLECT ${NAMES[b.type]}.`);return;}
  miningKey=key(b.x,b.y,b.z);miningTime=0;mouseMining=mouse;
  if(netRole==="guest")netSend(netConnection,{t:"mineStart",key:miningKey,pose:netProfile()});
  notify(`KEEP AIMING FOR ${miningSeconds()} SECONDS.`);
 }
 function completeMining(){
  const b=blocks.get(miningKey);if(!b){stopMining();return;}
+ if(petFishAt(b.x,b.y+1,b.z)){stopMining();notify("PICK UP THE PET FISH POND FIRST.");return;}
  if(needsPickaxe(b.type)&&!holdingPickaxe()){stopMining();return;}
  if(netRole==="guest"){netRequest("mine",{key:miningKey});stopMining();return;}
  const broke=holdingPickaxe()?wearHeldTool("wooden_pickaxe"):false;
@@ -1207,6 +1220,7 @@ function place(){
  if(!s){notify("SELECT A BLOCK, BOAT OR SEEDS FIRST.");return;}
  if(netRole==="guest"){netRequest("place",{});return;}
  if(s.type==="boat"){launchBoat();return;}
+ if(s.type==="fish_bucket"){placePetFish();return;}
  if(!BLOCKS.includes(s.type)&&s.type!=="corn_seeds"){notify("THAT ITEM CANNOT BE PLACED.");return;}
  updateAim();if(target?.type!=="block"){notify("AIM AT A BLOCK'S SIDE OR TOP.");return;}
  const b=target.block,n=target.normal;
@@ -1215,9 +1229,9 @@ function place(){
   takeItem(active);audioEvent("place","block",b,"corn_seeds");updateHand();notify("CORN PLANTED. IT GROWS IN TWO MINUTES.");return;
  }
  const x=b.x+Math.round(n.x),y=b.y+Math.round(n.y),z=b.z+Math.round(n.z);
- if(at(x,y,z)||Math.abs(x)>LIMIT||Math.abs(z)>LIMIT||y<-60||y>40){notify("YOU CANNOT PLACE THERE.");return;}
+ if(at(x,y,z)||petFishAt(x,y,z)||Math.abs(x)>LIMIT||Math.abs(z)>LIMIT||y<-60||y>40){notify("YOU CANNOT PLACE THERE.");return;}
  const player=Math.abs(x-feet.x)<.77&&Math.abs(z-feet.z)<.77&&y+.5>feet.y&&y-.5<feet.y+1.7;
- const actors=[...mobs.values()];if(farmerActor)actors.push(farmerActor);
+ const actors=[...mobs.values(),...villageActors.values()];if(farmerActor)actors.push(farmerActor);
  const mob=actors.some(m=>m.hp>0&&Math.abs(m.root.position.x-x)<.9&&Math.abs(m.root.position.z-z)<.9&&y+.5>m.root.position.y&&y-.5<m.root.position.y+2);
  const other=netPeople().some(p=>p.id!==(netActing?.id||"host")&&p.hp>0&&Math.abs(p.position.x-x)<.77&&Math.abs(p.position.z-z)<.77&&y+.5>p.position.y&&y-.5<p.position.y+1.7);
  if(player||mob||other){notify("THAT SPACE IS OCCUPIED.");return;}
@@ -1324,10 +1338,143 @@ function updateEffects(){
  }
 }
 
+/* Village trading, portable pet ponds, and equipment shared by every skin. */
+const VILLAGE_TRADES=[
+ {id:'iron_helmet',cost:'corn',count:5,reward:'iron_helmet'},
+ {id:'emerald',cost:'stone',count:5,reward:'emerald'},
+ {id:'fish_bucket',cost:'emerald',count:1,reward:'fish_bucket'}
+];
+let tradingWith=null;
+const petFishVisuals=new Map();
+function villageTradePlan(source,trade){
+ if(!trade||!VILLAGE_TRADES.includes(trade))return null;
+ const result=clone(source);let remaining=trade.count;
+ for(let i=0;i<result.length&&remaining;i++)if(result[i]?.type===trade.cost){
+  const used=Math.min(remaining,result[i].n);result[i].n-=used;remaining-=used;if(!result[i].n)result[i]=null;
+ }
+ if(remaining||!addMain(result,{type:trade.reward}))return null;
+ return result;
+}
+function nearVillageBlacksmith(id){
+ const a=villageActors.get(id);if(!a||a.kind!=='blacksmith')return false;
+ const eye=feet.clone().add(new THREE.Vector3(0,1.35,0)),point=a.root.position.clone().add(new THREE.Vector3(0,1.1,0));
+ return eye.distanceTo(point)<=5.7&&lineClear(eye,point);
+}
+function openVillageTrade(actor){
+ if(mode!=='playing'||netPending||!actor)return;
+ if(actor.kind!=='blacksmith'){notify('VILLAGER — WELCOME TO VILLAGE ISLAND. OUR BLACKSMITH TRADES BY THE FORGE.');return;}
+ if(!nearVillageBlacksmith(actor.id))return;
+ tradingWith=actor.id;mode='trade';stopMining();releaseControls();document.exitPointerLock?.();show('trading',true);renderVillageTrade();
+}
+function closeVillageTrade(){if(mode!=='trade')return;show('trading',false);tradingWith=null;mode='playing';updateHand();renderHUD();}
+function renderVillageTrade(){
+ if(netActing||mode!=='trade')return;
+ const counts=t=>inventory.reduce((sum,s)=>sum+(s?.type===t?s.n:0),0);
+ $('tradeWallet').textContent=`YOU HAVE: ${counts('corn')} CORN · ${counts('stone')} STONE · ${counts('emerald')} EMERALD`;
+ $('tradeOffers').replaceChildren();
+ for(const t of VILLAGE_TRADES){
+  const b=document.createElement('button');b.className='secondary full';
+  b.textContent=`${t.count} ${NAMES[t.cost]} → 1 ${NAMES[t.reward]}`;
+  b.disabled=!!netPending||!nearVillageBlacksmith(tradingWith)||!villageTradePlan(inventory,t);
+  b.onclick=()=>tradeWithBlacksmith(tradingWith,t.id);$('tradeOffers').append(b);
+ }
+}
+function tradeWithBlacksmith(actorId,offerId){
+ if(!['playing','trade'].includes(mode)||netPending||hp<=0)return false;
+ const trade=VILLAGE_TRADES.find(t=>t.id===offerId);
+ if(!trade||!nearVillageBlacksmith(actorId)){notify('STAND NEXT TO THE BLACKSMITH TO TRADE.');return false;}
+ if(netRole==='guest'){netRequest('trade',{actorId,offerId});renderVillageTrade();return false;}
+ const next=villageTradePlan(inventory,trade);
+ if(!next){notify('YOU NEED THE TRADE ITEMS AND SPACE FOR YOUR REWARD.');return false;}
+ inventory=next;if(!inventory[active])active=-1;updateHand();renderVillageTrade();renderHUD();saveCurrent();
+ notify(`TRADED ${trade.count} ${NAMES[trade.cost]} FOR ${NAMES[trade.reward]}.`);return true;
+}
+function petFishStates(){return Array.isArray(worldFeatures.petFish)?worldFeatures.petFish:[];}
+function petFishAt(x,y,z){return petFishStates().some(p=>p.x===x&&p.y===y&&p.z===z);}
+function disposePetFish(p){
+ scene.remove(p.root);const mats=new Set();p.root.traverse(o=>{if(o.isMesh){o.geometry.dispose();if(Array.isArray(o.material))o.material.forEach(m=>mats.add(m));else mats.add(o.material);}});mats.forEach(m=>m.dispose());
+ petFishVisuals.delete(p.id);
+}
+function clearPetFish(){for(const p of [...petFishVisuals.values()])disposePetFish(p);tradingWith=null;}
+function makePetFish(state){
+ const root=new THREE.Group(),fish=new THREE.Group();root.position.set(state.x,state.y,state.z);
+ const part=(parent,w,h,d,x,y,z,color,alpha=1)=>{
+  const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial({color,transparent:alpha<1,opacity:alpha,depthWrite:alpha===1}));
+  mesh.position.set(x,y,z);mesh.userData.petFishId=state.id;parent.add(mesh);return mesh;
+ };
+ // A shallow open pond contains the water; its surface is below a player's waist.
+ part(root,.98,.07,.98,0,-.46,0,'#747d76');
+ for(const s of [-1,1]){part(root,.055,.63,.98,s*.463,-.11,0,'#a7b6aa');part(root,.88,.63,.055,0,-.11,s*.463,'#a7b6aa');}
+ part(root,.88,.58,.88,0,-.13,0,'#54b9d5',.42);
+ part(fish,.29,.16,.13,0,0,0,'#ffb147');part(fish,.08,.2,.18,.175,0,0,'#f27a37');part(fish,.13,.045,.09,0,.1,0,'#ffe193');
+ for(const s of [-1,1])part(fish,.033,.035,.015,-.105,.025,s*.071,'#182a31');
+ fish.position.y=-.1;root.add(fish);scene.add(root);root.updateMatrixWorld(true);
+ const visual={...state,root,fish};petFishVisuals.set(state.id,visual);return visual;
+}
+function syncPetFish(){
+ const live=new Set(),states=petFishStates();
+ for(const p of states){
+  if(!p||typeof p.id!=='string'||![p.x,p.y,p.z].every(Number.isInteger)||Math.abs(p.x)>LIMIT||Math.abs(p.z)>LIMIT||p.y<-59||p.y>40)continue;
+  live.add(p.id);const v=petFishVisuals.get(p.id)||makePetFish(p);
+  v.root.visible=!at(p.x,p.y,p.z)&&!!at(p.x,p.y-1,p.z);
+ }
+ for(const p of [...petFishVisuals.values()])if(!live.has(p.id))disposePetFish(p);
+}
+function updatePetFish(){
+ for(const p of petFishVisuals.values()){
+  const a=time*1.3+(hashString(p.id)%100)*.06;p.fish.position.set(Math.cos(a)*.22,-.1+Math.sin(a*1.7)*.055,Math.sin(a)*.2);p.fish.rotation.y=-a-Math.PI/2;
+ }
+}
+function fishPlacementOccupied(x,y,z){
+ if(Math.abs(feet.x-x)<.8&&Math.abs(feet.z-z)<.8&&y+.4>feet.y&&y-.5<feet.y+1.7)return true;
+ const persons=netPeople();if(persons.some(p=>p.hp>0&&Math.abs(p.position.x-x)<.8&&Math.abs(p.position.z-z)<.8&&y+.4>p.position.y&&y-.5<p.position.y+1.7))return true;
+ return [...mobs.values(),...villageActors.values(),...(farmerActor?[farmerActor]:[])].some(m=>m.hp>0&&Math.abs(m.root.position.x-x)<.85&&Math.abs(m.root.position.z-z)<.85&&y+.4>m.root.position.y&&y-.5<m.root.position.y+2);
+}
+function placePetFish(){
+ if(activeStack()?.type!=='fish_bucket')return false;updateAim();
+ if(target?.type!=='block'||target.normal.y<.5){notify('PLACE THE PET FISH ON AN EMPTY BLOCK TOP.');return false;}
+ const b=target.block,x=b.x,y=b.y+1,z=b.z;
+ if(at(x,y,z)||petFishAt(x,y,z)||Math.abs(x)>LIMIT||Math.abs(z)>LIMIT||y<-59||y>40||fishPlacementOccupied(x,y,z)){
+  notify('THE FISH NEEDS AN EMPTY, SUPPORTED SPACE.');return false;
+ }
+ if(petFishStates().length>=128){notify('THIS WORLD ALREADY HAS 128 PET PONDS.');return false;}
+ const state={id:uid(),x,y,z};worldFeatures.petFish=[...petFishStates(),state];takeItem(active);syncPetFish();
+ audioEvent('place','block',{x,y,z},'glass');updateHand();saveCurrent();notify('PET FISH AND WATER PLACED. USE THE POND TO PICK IT BACK UP.');return true;
+}
+function scoopPetFish(id){
+ if(mode!=='playing'||netPending)return false;
+ const p=petFishStates().find(p=>p.id===id);if(!p)return false;
+ const eye=feet.clone().add(new THREE.Vector3(0,1.35,0)),center=new THREE.Vector3(p.x,p.y,p.z);
+ if(eye.distanceTo(center)>5.7||!lineClear(eye,center))return false;
+ if(netRole==='guest'){netRequest('fishPickup',{id});return false;}
+ if(!addMain(inventory,{type:'fish_bucket'})){notify('MAKE ROOM IN YOUR INVENTORY FIRST.');return false;}
+ worldFeatures.petFish=petFishStates().filter(p=>p.id!==id);syncPetFish();updateHand();saveCurrent();notify('PET FISH AND WATER RETURNED TO THE BUCKET.');return true;
+}
+function addAvatarEquipment(root,e){
+ const helmet=e?.helmet,armor=e?.armor;if(!helmet&&!armor)return;
+ const gear=new THREE.Group();gear.name='equipped-gear';root.add(gear);
+ const part=(w,h,d,x,y,z,color,alpha=1)=>{
+  const m=cube(gear,w,h,d,x,y,z,new THREE.MeshLambertMaterial({color,transparent:alpha<1,opacity:alpha,depthWrite:alpha===1}));m.userData.equipmentPart=true;return m;
+ };
+ if(helmet){
+  const color=helmet==='iron_helmet'?'#b8c5ce':'#3295b6',rim=helmet==='iron_helmet'?'#e2e9ed':'#8af0e8';
+  part(.68,.13,.64,0,1.83,0,color);part(.67,.43,.07,0,1.565,.295,color);
+  for(const side of [-1,1])part(.07,.43,.60,side*.30,1.565,0,color);
+  part(.68,.08,.07,0,1.73,-.30,rim);
+  if(helmet==='aquatic_helmet'){part(.52,.30,.025,0,1.52,-.325,'#a2eeef',.43);part(.46,.055,.06,0,1.355,-.30,rim);}
+ }
+ if(armor==='aquatic_armor'){
+  for(const side of [-1,1]){part(.65,.69,.065,0,.99,side*.20,'#3295b6');part(.25,.18,.40,side*.36,1.23,0,'#66c9d1');part(.08,.60,.40,side*.29,.98,0,'#3295b6');}
+  part(.44,.08,.04,0,1.21,-.247,'#9df4e6');part(.12,.12,.04,0,.97,-.247,'#b8fff1');
+ }
+}
+$('closeTrading').onclick=closeVillageTrade;
+$('trading').addEventListener('click',e=>{if(e.target===$('trading'))closeVillageTrade();});
+
 /* Crafting. */
 function recipe(){
  const used=craftSlots.map((s,i)=>s?i:-1).filter(i=>i>=0);
- const matches=(ids,t)=>used.length===ids.length&&ids.every(i=>craftSlots[i]?.item.type===t);
+ const matches=(ids,t)=>used.length===ids.length&&ids.every(i=>craftSlots[i]?.item.type===t||(t==="log"&&craftSlots[i]?.item.type==="oak_log"));
  if(craftSize===3){
   if(matches([0,1,2,3,4,5,6,7,8],"log"))return{type:"chest"};
   for(let c=0;c<3;c++)if(matches([c,c+3,c+6],"log"))return{type:"boat"};
@@ -1339,7 +1486,7 @@ function recipe(){
  }
  for(let r=0;r<craftSize-1;r++)for(let c=0;c<craftSize-1;c++){
   const a=[r*craftSize+c,r*craftSize+c+1,(r+1)*craftSize+c,(r+1)*craftSize+c+1];
-  if(matches(a,"log"))return{type:"table"};if(matches(a,"stone"))return{type:"ogger_trap"};
+  if(matches(a,"sand"))return{type:"glass"};if(matches(a,"log"))return{type:"table"};if(matches(a,"stone"))return{type:"ogger_trap"};
   if(craftSize===3&&matches(a,"wool"))return{type:"bed"};
  }
  return null;
@@ -1347,8 +1494,8 @@ function recipe(){
 function refundCraft(){for(const s of craftSlots)if(s)receive(s.item);craftSlots=Array(9).fill(null);craftSource=-1;}
 function renderCrafting(){
  $("craftTitle").textContent=craftSize===2?"QUICK CRAFTING":"BUILDING TABLE";
- $("craftInstructions").textContent=craftSize===2?"2x2 PINE LOGS: TABLE. 2x2 STONE: TRAP.":
- "DAGGER: 3 PINE LOGS HORIZONTALLY, PLACED LEFT TO RIGHT. BOAT: 3 PINE LOGS VERTICALLY. PICKAXE: 2 ROWS OF 3 PINE LOGS. CHEST: ALL 9 SQUARES WITH PINE LOGS. BED: 2x2 WOOL. TABLE: 2x2 PINE LOGS. TRAP: 2x2 STONE.";
+ $("craftInstructions").textContent=craftSize===2?"2x2 LOGS: TABLE. 2x2 STONE: TRAP. 2x2 SAND: GLASS. PINE AND OAK LOGS BOTH WORK.":
+ "DAGGER: 3 PINE LOGS HORIZONTALLY, PLACED LEFT TO RIGHT. BOAT: 3 PINE LOGS VERTICALLY. PICKAXE: 2 ROWS OF 3 PINE LOGS. CHEST: ALL 9 SQUARES WITH PINE LOGS. BED: 2x2 WOOL. TABLE: 2x2 PINE LOGS. TRAP: 2x2 STONE. GLASS: 2x2 SAND. PINE AND OAK LOGS BOTH WORK.";
  $("craftGrid").style.gridTemplateColumns=`repeat(${craftSize},1fr)`;$("craftGrid").replaceChildren();
  for(let i=0;i<craftSize*craftSize;i++){
   const s=craftSlots[i],b=document.createElement("button");b.className="craftSlot"+(s?" filled":"");b.textContent=s?NAMES[s.item.type]:"+";
@@ -1367,7 +1514,7 @@ function renderCrafting(){
 function openCraft(portable=false,direct=null){
  if(!["playing","inventory"].includes(mode)||netPending)return;
  if(!portable){
-  if(!direct){updateAim();if(target?.type==="boat"){useBoat(target.boat.id);return;}if(target?.type==="block")direct=target.block;}
+  if(!direct){updateAim();if(target?.type==="villager"){openVillageTrade(target.actor);return;}if(target?.type==="petFish"){scoopPetFish(target.id);return;}if(target?.type==="boat"){useBoat(target.boat.id);return;}if(target?.type==="block")direct=target.block;}
   if(!direct){if(mountedBoat)useBoat(mountedBoat,"leave");else notify("AIM AT SOMETHING TO USE.");return;}
   const k=key(direct.x,direct.y,direct.z);
   if(direct.type==="ogger_trap"){useTrap(k);return;}if(direct.type==="campfire"){useFire(k);return;}
@@ -1392,7 +1539,9 @@ function updateHand(){
  else if(t==="wooden_dagger"){p(.055,.3,.03,0,.07,0,mats.wood);p(.15,.035,.05,0,-.075,0,mats.brown);p(.055,.13,.055,0,-.15,0,mats.brown);}
  else if(["poison_potion","healing_potion","revival_potion"].includes(t)){p(.13,.20,.13,0,0,0,lootMats[t]);p(.07,.09,.07,0,.14,0,mats.wood);}
  else if(t==="aquatic_keycard"){p(.24,.14,.025,0,0,0,lootMats[t]);p(.17,.025,.028,0,-.035,-.01,mats.dark);}
- else if(t==="aquatic_helmet"||t==="aquatic_armor"){p(.25,.27,.2,0,0,0,lootMats[t]);}
+ else if(t==="aquatic_helmet"||t==="iron_helmet"||t==="aquatic_armor"){p(.25,.27,.2,0,0,0,lootMats[t]);}
+ else if(t==="emerald"){const gem=p(.16,.24,.13,0,0,0,lootMats.emerald);gem.rotation.z=.35;}
+ else if(t==="fish_bucket"){p(.24,.2,.23,0,0,0,lootMats.iron_helmet);p(.21,.025,.20,0,.105,0,lootMats.fish_bucket);p(.09,.04,.045,0,.13,0,mats.cornEar);p(.03,.16,.025,-.13,.14,0,lootMats.iron_helmet);p(.03,.16,.025,.13,.14,0,lootMats.iron_helmet);p(.26,.025,.025,0,.22,0,lootMats.iron_helmet);}
  else if(t==="boat"){p(.27,.08,.37,0,0,0,mats.brown);p(.04,.12,.37,-.14,.07,0,mats.wood);p(.04,.12,.37,.14,.07,0,mats.wood);}
  else if(t==="corn"){p(.11,.27,.11,0,.02,0,mats.cornEar);p(.09,.22,.05,-.06,-.05,0,mats.cornLeaf).rotation.z=-.35;}
  else if(t==="corn_seeds")p(.15,.07,.12,0,0,0,mats.cornSeed);
@@ -1711,12 +1860,13 @@ function applyWorldUpdates(fresh=false){
   if(!c.placed)buildFarmerCamp(fresh);
   else{if(campIntact()&&addCampfireToCamp())rebuildTerrain();if(!c.farmer?.dead)createFarmer(c.farmer||{});}
  }
- ensureDesert();ensureAquaticTemple();makeWaterRoots();
+ ensureDesert();ensureAquaticTemple();ensureVillage();makeWaterRoots();
 }
 
 /* World generation. */
 function clearWorld(){
- clearChatSession();resetGameAudio();clearAquaticCombat();
+ setSeabedHeight(SEABED_Y);
+ clearChatSession();resetGameAudio();clearAquaticCombat();clearPetFish();disposeVillageActors();
  for(const m of [...mobs.values()])removeMob(m);disposeFarmer(false);
  for(const map of [devices,fires,boats,projectiles,spikes]){for(const v of map.values())scene.remove(v.root||v.mesh);map.clear();}
  for(const p of [...cornPlants.values()])removeCorn(p);
@@ -1886,17 +2036,61 @@ function updateDevices(){
  }
 }
 
+/* Storage packing is lossless; live worlds and network snapshots keep block rows. */
+function packStoredBlocks(rows){
+ if(!Array.isArray(rows)||!rows.length||!rows.every(b=>Array.isArray(b)&&b.length===4&&b.slice(0,3).every(Number.isSafeInteger)&&typeof b[3]==='string'))return rows;
+ const palette=[],types=new Map(),runs=[];
+ for(let i=0;i<rows.length;){
+  const first=rows[i],type=first[3];let code=0,n=1,index=types.get(type);
+  if(index===undefined){index=palette.length;palette.push(type);types.set(type,index);}
+  const next=rows[i+1];
+  if(next&&next[3]===type){
+   const delta=[next[0]-first[0],next[1]-first[1],next[2]-first[2]],axes=delta.map((d,a)=>d?a:-1).filter(a=>a>=0);
+   if(axes.length===1&&Math.abs(delta[axes[0]])===1){
+    const axis=axes[0],step=delta[axis];code=(axis+1)*step;
+    while(i+n<rows.length){const b=rows[i+n];if(b[3]!==type||b[0]!==first[0]+(axis===0?step*n:0)||b[1]!==first[1]+(axis===1?step*n:0)||b[2]!==first[2]+(axis===2?step*n:0))break;n++;}
+   }
+  }
+  runs.push(first[0],first[1],first[2],index,code,n);i+=n;
+ }
+ const packed={format:'corny-block-runs-v1',count:rows.length,palette,runs};
+ return JSON.stringify(packed).length<JSON.stringify(rows).length?packed:rows;
+}
+function unpackStoredBlocks(value){
+ if(!value||value.format!=='corny-block-runs-v1')return value;
+ const {count,palette,runs}=value;
+ if(!Number.isSafeInteger(count)||count<0||!Array.isArray(palette)||!palette.every(t=>typeof t==='string')||!Array.isArray(runs)||runs.length%6)throw new Error('Invalid packed world blocks.');
+ const rows=[];
+ for(let i=0;i<runs.length;i+=6){
+  const [x,y,z,type,code,n]=runs.slice(i,i+6);
+  if(![x,y,z,type,code,n].every(Number.isSafeInteger)||type<0||type>=palette.length||Math.abs(code)>3||n<1||(!code&&n!==1)||n>count-rows.length)throw new Error('Invalid packed world run.');
+  const axis=Math.abs(code)-1,step=Math.sign(code);
+  for(let k=0;k<n;k++)rows.push([x+(axis===0?step*k:0),y+(axis===1?step*k:0),z+(axis===2?step*k:0),palette[type]]);
+ }
+ if(rows.length!==count)throw new Error('Incomplete packed world.');return rows;
+}
+function mapStoredWorlds(worlds,decode=false){
+ const transform=state=>{
+  if(!state||typeof state!=='object'||Array.isArray(state))return state;
+  const result={...state};
+  if(Object.prototype.hasOwnProperty.call(state,'blocks'))result.blocks=decode?unpackStoredBlocks(state.blocks):packStoredBlocks(state.blocks);
+  if(state.legacy)result.legacy=transform(state.legacy);
+  return result;
+ };
+ return worlds.map(world=>world&&typeof world==='object'&&Object.prototype.hasOwnProperty.call(world,'state')?{...world,state:transform(world.state)}:world);
+}
+
 /* Saving. */
 try{
  const raw=localStorage.getItem(SAVE_KEY);
- if(raw){const d=JSON.parse(raw);if(d.version===2&&Array.isArray(d.worlds))records=d.worlds.slice(0,8);}
+ if(raw){const d=JSON.parse(raw);if(d.version===2&&Array.isArray(d.worlds))records=mapStoredWorlds(d.worlds.slice(0,8),true);}
  else{
   const old=JSON.parse(localStorage.getItem("corny-game-vercel-v1")||"null");
   if(old?.version===1&&Array.isArray(old.blocks))records=[{id:uid(),seed:uid(),name:"ORIGINAL ISLAND",created:Date.now(),updated:Date.now(),state:{legacy:old}}];
  }
 }catch{}
 function persist(){
- try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:2,worlds:records}));return true;}
+ try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:2,worlds:mapStoredWorlds(records)}));return true;}
  catch{notify("COULD NOT SAVE. BROWSER STORAGE MAY BE FULL.");return false;}
 }
 function mobState(m){
@@ -1910,7 +2104,7 @@ function boatStates(){return[...boats.values()].map(b=>({id:b.id,x:b.x,z:b.z,hea
 function capture(){
  if(farmFeature()&&farmerActor)farmFeature().farmer=farmerSaveState();
  return{
-  version:8,aquaticHazards:aquaticHazardStates(),stoneLayerVersion:1,equipment:{...equipment},revivalShieldUntil,inventory:clone(inventory),active,escrow:craftSlots.filter(Boolean).map(s=>({...s.item})),
+  version:9,seabedY,aquaticHazards:aquaticHazardStates(),stoneLayerVersion:1,equipment:{...equipment},revivalShieldUntil,inventory:clone(inventory),active,escrow:craftSlots.filter(Boolean).map(s=>({...s.item})),
   hp,hunger,time,dayClock,nextHunger,nextHeal,nextSpawn,nextAttack,nextStarve,nextCactus,wetTime,mountedBoat,
   feet:feet.toArray(),yaw,pitch,spawn:{...spawn},land:land.map(t=>({...t})),rngState,nextMobID,deathReason,
   blocks:[...blocks.values()].map(b=>[b.x,b.y,b.z,b.type]),mobs:[...mobs.values()].map(mobState),
@@ -1927,7 +2121,7 @@ function saveCurrent(manual=false){
  current.state=capture();current.updated=Date.now();if(persist()&&manual)notify("WORLD SAVED ON THIS DEVICE.");
 }
 function restoreState(input){
- clearWorld();const legacy=!!input.legacy,d=input.legacy||input;rngState=d.rngState||hashString(current.seed)||1;
+ clearWorld();const legacy=!!input.legacy,d=input.legacy||input;prepareSeabedForState(d);rngState=d.rngState||hashString(current.seed)||1;
  for(const row of d.blocks||[]){const [x,y,z,t]=row;if(BLOCKS.includes(t)&&[x,y,z].every(Number.isInteger))put(x,y,z,t);}
  land=Array.isArray(d.land)?d.land:[...blocks.values()].filter(b=>b.y===0).map(b=>({x:b.x,z:b.z,h:0}));
  spawn=d.spawn||(legacy?{x:10,y:.5,z:10}:{x:0,y:.5,z:0});feet.fromArray(d.feet||[spawn.x,spawn.y,spawn.z]);
@@ -1956,8 +2150,8 @@ function restoreState(input){
  mountedBoat=d.mountedBoat&&boats.has(d.mountedBoat)?d.mountedBoat:null;
  if(mountedBoat){boats.get(mountedBoat).occupant="host";feet.set(boats.get(mountedBoat).x,WATER+.12,boats.get(mountedBoat).z);wetTime=0;}
  nextAI=time+.5;nextSave=time+20;nextHUD=0;nextAim=0;vy=0;grounded=false;playerStepOffset=0;
- ensureAnimals();applyWorldUpdates(false);syncAquaticHazards(d.aquaticHazards||[]);makeWaterRoots();if(!isNight())clearNightAggression();
- previousNight=isNight();updateCamera();updateHand();updateSky();updateFires();updateCornVisuals();
+ ensureAnimals();applyWorldUpdates(false);syncAquaticHazards(d.aquaticHazards||[]);makeWaterRoots();syncPetFish();if(!isNight())clearNightAggression();
+ syncVillageActors();liftFromSeabed();previousNight=isNight();updateCamera();updateHand();updateSky();updateFires();updateCornVisuals();
 }
 
 /* Profile and skin selection. */
@@ -2066,8 +2260,7 @@ function netMakeSpecialAvatar(person){
   const straw=plain(root,.09,.27,.09,.025,1.85,0,"#252622");straw.rotation.z=-.045;
   plain(root,.035,.27,.092,.047,1.85,0,"#32332e");
  }
- if(person.equipment?.helmet){plain(root,.62,.57,.57,0,1.5,0,"#50b5c4");plain(root,.43,.26,.05,0,1.52,-.32,"#a2eeef");}
- if(person.equipment?.armor)plain(root,.63,.70,.36,0,.98,0,"#3295b6");
+ addAvatarEquipment(root,person.equipment);
  const c=document.createElement("canvas");c.width=256;c.height=64;const x=c.getContext("2d");
  x.fillStyle="#10271ee8";x.fillRect(0,0,256,64);x.fillStyle="#f3e7c1";x.font='32px "VT323", monospace';x.textAlign="center";x.fillText(cleanName(person.name)||"PLAYER",128,43);
  const texture=new THREE.CanvasTexture(c),label=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,depthWrite:false}));
@@ -2147,7 +2340,7 @@ $("homeUsername").addEventListener("input",()=>{playerProfile.username=cleanName
 $("homeUsername").addEventListener("blur",()=>{$("homeUsername").value=playerProfile.username;});
 
 /* Menus. */
-function hidePanels(){$("home").inert=false;for(const id of ["home","skins","worlds","pause","inventory","crafting","storage","death","multiplayer","chatPanel"])show(id,false);}
+function hidePanels(){$("home").inert=false;for(const id of ["home","skins","worlds","pause","inventory","crafting","storage","trading","death","multiplayer","chatPanel"])show(id,false);}
 function renderWorlds(){
  $("worldCount").textContent=`${records.length} / 8 WORLDS`;$("worldList").replaceChildren();
  if(!records.length){const p=document.createElement("p");p.textContent="NO WORLDS YET. CREATE ONE BELOW.";$("worldList").append(p);}
@@ -2198,9 +2391,9 @@ function respawn(){
 }
 function renderHUD(){
  if(netActing)return;
- $("worldName").textContent=current?.name||"NEW WORLD";$("health").textContent=`HP ${Math.max(0,hp).toFixed(2)} / 4`;$("hunger").textContent=`FOOD ${hunger} / 4`;
+ $("worldName").textContent=(current?.name||"NEW WORLD")+villageDirectionLabel();$("health").textContent=`HP ${Math.max(0,hp).toFixed(2)} / 4`;$("hunger").textContent=`FOOD ${hunger} / 4`;
  const p=dayPhase(),r=Math.max(0,Math.ceil(isNight()?600-p:300-p));$("dayPhase").textContent=`${isNight()?"NIGHT":"DAY"} — ${Math.floor(r/60)}:${String(r%60).padStart(2,"0")} LEFT`;
- show("air",feet.y<WATER||!!mountedBoat);$("air").textContent=mountedBoat?"SAILING — NO DROWNING TIMER":equipment.helmet?"AQUATIC HELMET — UNLIMITED AIR":`AIR: ${Math.max(0,15-wetTime).toFixed(1)}s — SPACE UP / C DOWN`;
+ show("air",feet.y<WATER||!!mountedBoat);$("air").textContent=mountedBoat?"SAILING — NO DROWNING TIMER":equipment.helmet==="aquatic_helmet"?"AQUATIC HELMET — UNLIMITED AIR":`AIR: ${Math.max(0,15-wetTime).toFixed(1)}s — SPACE UP / C DOWN`;
  updateAquaticBossHUD();
  const s=activeStack();$("heldName").textContent=s?NAMES[s.type]:"BARE HANDS";$("heldDetail").textContent=s?(s.tools?`${toolText(s)} | ${s.n} ITEM(S)`:`${s.n} ITEM(S) | INVENTORY`):"OPEN INVENTORY";
  const f=foodIndex();$("eat").textContent=f<0?"EAT":`EAT ${NAMES[inventory[f].type]}`;$("eat").disabled=f<0;
@@ -2221,7 +2414,10 @@ function renderHUD(){
   }
   if(["bed","chest","campfire","ogger_trap"].includes(b.type))$("mine").textContent=needsPickaxe(b.type)&&!holdingPickaxe()?"NEED PICK":"PICK UP";
  }
+ if(target?.type==="block"&&target.block.permanentSeabed){text="OCEAN FLOOR — SOLID BEDROCK";$("mine").textContent="BEDROCK";}
  if(target?.type==="mob"){const m=target.mob;text=`${m.kind.toUpperCase()} ${Math.max(0,m.hp).toFixed(1)} HP${m.kind==="sandwitch"&&time<m.castUntil?" — SPIKES INCOMING":""}`;}
+ if(target?.type==="villager"){text=target.actor.kind==="blacksmith"?"BLACKSMITH — E / USE TO TRADE":"VILLAGER — E / USE TO TALK";$("craft").textContent=target.actor.kind==="blacksmith"?"TRADE":"TALK";}
+ if(target?.type==="petFish"){text="PET FISH POND — E / USE TO PICK UP";$("craft").textContent="PICK UP FISH";}
  if(target?.type==="crop"){text=time>=target.plant.matureAt?"CORN — READY TO HARVEST":"CORN — GROWING";$("mine").textContent="HARVEST";}
  if(target?.type==="boat"){text=target.boat.occupant?"BOAT — OCCUPIED":"BOAT — BOARD OR PICK UP";$("craft").textContent="BOARD";$("mine").textContent="PICK UP";}
  $("target").textContent=text;show("target",!!text);show("mineBox",!!miningKey);
@@ -2264,8 +2460,10 @@ canvas.addEventListener("pointerdown",e=>{
   if(document.pointerLockElement!==canvas&&canvas.requestPointerLock){requestMouse();return;}
   updateAim();const t=activeStack()?.type;
   if(["poison_potion","healing_potion"].includes(t))attack();
-  else if(BLOCKS.includes(t)||["boat","corn_seeds"].includes(t))place();
+  else if(BLOCKS.includes(t)||["boat","corn_seeds","fish_bucket"].includes(t))place();
   else if(target?.type==="block"&&holdingPickaxe()&&["bed","campfire","ogger_trap","chest"].includes(target.block.type))beginMining(true);
+  else if(target?.type==="villager")openVillageTrade(target.actor);
+  else if(target?.type==="petFish")scoopPetFish(target.id);
   else if(target?.type==="boat")useBoat(target.boat.id);
   else if(target?.type==="block"&&USE_BLOCKS.has(target.block.type))openCraft(false,target.block);
   else if(target?.type==="mob")attack();else beginMining(true);
@@ -2281,7 +2479,9 @@ function finishPointer(e){
   const tap=!touchMoved&&mode==="playing";lookPointer=null;
   if(tap){
    const r=canvas.getBoundingClientRect(),hit=pick((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
-   if(hit?.type==="boat")useBoat(hit.boat.id);
+   if(hit?.type==="villager")openVillageTrade(hit.actor);
+   else if(hit?.type==="petFish")scoopPetFish(hit.id);
+   else if(hit?.type==="boat")useBoat(hit.boat.id);
    else if(hit?.type==="block"&&USE_BLOCKS.has(hit.block.type))openCraft(false,hit.block);
   }
  }if(e.pointerType==="mouse"&&mouseMining)stopMining();
@@ -2299,7 +2499,7 @@ window.addEventListener("keydown",e=>{
  if(mode==="chat"){if(e.code==="Escape"){e.preventDefault();closeChat();}return;}
  if(e.target instanceof HTMLInputElement||e.target?.isContentEditable||e.target?.tagName==="TEXTAREA")return;
  if(mode==="playing"&&["KeyT","Enter"].includes(e.code)&&!e.repeat){e.preventDefault();openChat();return;}
- if(e.code==="Escape"){if(mode==="craft")closeCraft();else if(mode==="chest")closeStorage();else if(mode==="inventory")closeInventory();else if(mode==="playing")pauseGame();return;}
+ if(e.code==="Escape"){if(mode==="trade")closeVillageTrade();else if(mode==="craft")closeCraft();else if(mode==="chest")closeStorage();else if(mode==="inventory")closeInventory();else if(mode==="playing")pauseGame();return;}
  if(e.code==="KeyI"&&!e.repeat){if(mode==="inventory")closeInventory();else if(mode==="playing")openInventory();return;}
  if(mode!=="playing")return;if(e.code==="Space")held.add("rise");if(moveKeys[e.code]){e.preventDefault();held.add(moveKeys[e.code]);return;}if(e.repeat)return;
  if(e.code==="Space"){e.preventDefault();jump();}if(e.code==="KeyE")openCraft();if(e.code==="KeyQ")eat();if(e.code==="KeyF")beginMining();
@@ -2341,12 +2541,56 @@ function closeChat(){
  if(mode==="chat")mode="playing";renderChat();
 }
 function validMatchaPosition(p){return Array.isArray(p)&&p.length===3&&p.every(Number.isFinite)&&Math.abs(p[0])<=LIMIT+1&&Math.abs(p[2])<=LIMIT+1&&p[1]>=-62&&p[1]<=45;}
+/* The Cyno chat secret uses the same host-authoritative chat echo as Matcha. */
+const cynoSkyTexts=[],cynoChatCooldown=new Map();
+const CYNO_COOLDOWN=12,CYNO_SKY_DURATION=12;
+function isCynoQuestion(value){
+ return /^who is your favorite genshin (?:character|charecter)\s*\?*$/.test(cleanChatText(value).toLowerCase().replace(/\s+/g," "));
+}
+function removeCynoSkyText(effect){
+ scene.remove(effect.root);effect.material.dispose();effect.texture.dispose();
+}
+function clearCynoSkyTexts(){
+ for(const effect of cynoSkyTexts)removeCynoSkyText(effect);
+ cynoSkyTexts.length=0;cynoChatCooldown.clear();
+}
+function spawnCynoSkyText(p,heading){
+ if(!validMatchaPosition(p)||!Number.isFinite(heading))return null;
+ if(cynoSkyTexts.length>=4)removeCynoSkyText(cynoSkyTexts.shift());
+ const art=document.createElement("canvas");art.width=2048;art.height=256;
+ const ctx=art.getContext("2d");
+ ctx.clearRect(0,0,art.width,art.height);ctx.textAlign="center";ctx.textBaseline="middle";
+ ctx.font='bold 164px "Trebuchet MS", sans-serif';ctx.lineJoin="round";
+ ctx.shadowColor="#e9c565";ctx.shadowBlur=20;
+ ctx.strokeStyle="#20102e";ctx.lineWidth=20;ctx.strokeText("cyno why ask?",1024,128);
+ ctx.shadowBlur=0;ctx.fillStyle="#ffe7a3";ctx.fillText("cyno why ask?",1024,128);
+ const texture=new THREE.CanvasTexture(art);texture.colorSpace=THREE.SRGBColorSpace;
+ const material=new THREE.SpriteMaterial({map:texture,transparent:true,opacity:0,depthWrite:false,fog:false});
+ // Three.js sprites face each viewer's camera, including other co-op players.
+ const root=new THREE.Sprite(material),bottom=Math.max(11,p[1]+13);
+ root.position.set(p[0]-Math.sin(heading)*26,bottom,p[2]-Math.cos(heading)*26);
+ root.scale.set(32,4,1);root.frustumCulled=false;root.userData.skyText="cyno why ask?";
+ const effect={root,texture,material,age:0,bottom};cynoSkyTexts.push(effect);scene.add(root);return effect;
+}
+function updateCynoSkyTexts(dt){
+ if(document.hidden||["home","worlds","network"].includes(mode))return;
+ for(let i=cynoSkyTexts.length-1;i>=0;i--){
+  const effect=cynoSkyTexts[i];effect.age+=Math.max(0,Math.min(.1,dt));
+  if(effect.age>=CYNO_SKY_DURATION){removeCynoSkyText(effect);cynoSkyTexts.splice(i,1);continue;}
+  effect.material.opacity=Math.min(1,effect.age/.35,(CYNO_SKY_DURATION-effect.age)/2);
+  effect.root.position.y=effect.bottom+Math.sin(effect.age*.7)*.3;
+ }
+}
+
 function ingestChat(packet){
  if(!packet||!Number.isSafeInteger(packet.id)||packet.id<=chatLastReceived||typeof packet.name!=="string"||typeof packet.text!=="string")return false;
  const text=cleanChatText(packet.text),name=cleanName(packet.name)||"PLAYER";if(!text)return false;
  chatLastReceived=packet.id;chatMessages.push({id:packet.id,name,text});if(chatMessages.length>CHAT_LIMIT)chatMessages.shift();renderChat();
  if(packet.skin==="hotaruuu"&&text.toLowerCase()==="matcha"&&validMatchaPosition(packet.firework?.p)&&Number.isFinite(packet.firework.yaw)){
   spawnMatchaFirework(packet.firework.p,packet.firework.yaw);notify("LOOK UP — MATCHA!");
+ }
+ if(isCynoQuestion(text)&&packet.skyText?.kind==="cyno"&&validMatchaPosition(packet.skyText.p)&&Number.isFinite(packet.skyText.yaw)){
+  spawnCynoSkyText(packet.skyText.p,packet.skyText.yaw);notify("LOOK UP — CYNO!");
  }
  return true;
 }
@@ -2357,6 +2601,9 @@ function publishChat(value,person){
  const now=chatClock(),last=chatFireworkCooldown.get(person.id)??-Infinity;
  if(packet.skin==="hotaruuu"&&text.toLowerCase()==="matcha"&&now-last>=MATCHA_COOLDOWN&&validMatchaPosition(person.feet)&&Number.isFinite(person.yaw)){
   packet.firework={p:person.feet.slice(),yaw:person.yaw};chatFireworkCooldown.set(person.id,now);
+ }
+ if(isCynoQuestion(text)&&now-(cynoChatCooldown.get(person.id)??-Infinity)>=CYNO_COOLDOWN&&validMatchaPosition(person.feet)&&Number.isFinite(person.yaw)){
+  packet.skyText={kind:"cyno",p:person.feet.slice(),yaw:person.yaw};cynoChatCooldown.set(person.id,now);
  }
  ingestChat(packet);
  if(netRole==="host")for(const e of netClients.values())if(e.ready)netSend(e.conn,packet);
@@ -2384,6 +2631,7 @@ function removeMatchaFirework(f){
  for(const g of geometries)g.dispose();for(const m of materials)m.dispose();
 }
 function clearChatSession(){
+ clearCynoSkyTexts();
  show("chatPanel",false);$("chatInput").value="";$("chatInput").blur();$("chatStatus").textContent="";
  chatMessages.length=0;chatSequence=chatRequestSequence=chatLastReceived=0;chatLastSent=-Infinity;chatFireworkCooldown.clear();
  for(const f of matchaFireworks)removeMatchaFirework(f);matchaFireworks.length=0;renderChat();
@@ -2592,8 +2840,8 @@ function netAccept(conn){
  });conn.on("error",()=>{try{conn.close();}catch{}});
 }
 function netRequest(op,args){
- if(netRole!=="guest"||!netConnection?.open||netPending||!(mode==="playing"||(mode==="chest"&&op==="storage")||(mode==="inventory"&&["equip","unequip","drink"].includes(op))))return;
- const id=++netSequence;netPending={id,op,args,hpAt:hp,timer:setTimeout(()=>{if(netPending?.id===id){netPending=null;notify("THE HOST IS NOT RESPONDING.");}},8000)};
+ if(netRole!=="guest"||!netConnection?.open||netPending||!(mode==="playing"||(mode==="chest"&&op==="storage")||(mode==="trade"&&op==="trade")||(mode==="inventory"&&["equip","unequip","drink"].includes(op))))return;
+ const id=++netSequence;netPending={id,op,args,hpAt:hp,timer:setTimeout(()=>{if(netPending?.id===id){netPending=null;if(mode==="trade")renderVillageTrade();notify("THE HOST IS NOT RESPONDING.");}},8000)};
  netSend(netConnection,{t:"rpc",id,op,args,profile:netProfile()});
 }
 function netNearBlock(k){
@@ -2622,7 +2870,7 @@ function netWithPlayer(e,s,fn){
 }
 function netHostRequest(e,d){
  if(!Number.isInteger(d.id)||!netValidPose(d.profile)||e.seen.has(d.id))return;
- const allowed=["mine","place","attack","potion","trap","fire","sleep","harvest","pickup","storage","boat","scanner","awaken","equip","unequip","drink"];if(!allowed.includes(d.op))return;
+ const allowed=["mine","place","attack","potion","trap","fire","sleep","harvest","pickup","storage","boat","scanner","awaken","equip","unequip","drink","trade","fishPickup"];if(!allowed.includes(d.op))return;
  e.seen.add(d.id);if(e.seen.size>256)e.seen.delete(e.seen.values().next().value);
  const a=d.args||{};let removedDrop=null;
  const profile=netWithPlayer(e,d.profile,()=>{
@@ -2633,6 +2881,8 @@ function netHostRequest(e,d){
    miningKey=a.key;completeMining();e.mining=null;
   }else if(d.op==="scanner"){if(netNearBlock(a.key))useAquaticScanner(a.key);}
   else if(d.op==="awaken"){if(netNearBlock(a.key)&&blocks.get(a.key)?.type==="stonefish_block")awakenStonefish(blocks.get(a.key));}
+  else if(d.op==="trade")tradeWithBlacksmith(a.actorId,a.offerId);
+  else if(d.op==="fishPickup")scoopPetFish(a.id);
   else if(d.op==="equip")equipSelected();
   else if(d.op==="unequip")removeEquipment(a.slot);
   else if(d.op==="drink")drinkHealing();
@@ -2659,7 +2909,7 @@ function netHostRequest(e,d){
 function netFrame(){
  if(farmFeature()&&farmerActor)farmFeature().farmer=farmerSaveState();
  return{
-  t:"frame",sounds:soundEvents.filter(e=>time-e.t<2),aquaticHazards:aquaticHazardStates(),time,dayClock,blocks:[...netChanges.values()],mobs:[...mobs.values()].map(mobState),features:clone(worldFeatures),farmer:farmerSaveState(),
+  t:"frame",seabedY,sounds:soundEvents.filter(e=>time-e.t<2),aquaticHazards:aquaticHazardStates(),time,dayClock,blocks:[...netChanges.values()],mobs:[...mobs.values()].map(mobState),features:clone(worldFeatures),farmer:farmerSaveState(),
   corn:[...cornPlants.values()].map(p=>({x:p.x,y:p.y,z:p.z,plantedAt:p.plantedAt,matureAt:p.matureAt})),
   traps:[...devices].map(([k,t])=>({key:k,baited:t.baited,nextCatch:t.nextCatch,snapAt:t.snapAt,catches:t.catches})),
   fires:[...fires].map(([k,f])=>({key:k,rawType:f.rawType,readyAt:f.readyAt})),
@@ -2687,8 +2937,8 @@ function netLoadWorld(payload){
  netSend(netConnection,{t:"ready",pose:netProfile()});netNextPose=0;netUI();notify("JOINED YOUR FRIEND'S WORLD.");
 }
 function netApplyFrame(d){
- if(netRole!=="guest")return;time=Number(d.time)||time;dayClock=Number(d.dayClock)||0;ingestSounds(d.sounds);
- const oldWell=JSON.stringify(worldFeatures.desert?.wellWater||[]);if(d.features)worldFeatures=d.features;
+ if(netRole!=="guest")return;time=Number(d.time)||time;dayClock=Number(d.dayClock)||0;ingestSounds(d.sounds);if(Number.isFinite(d.seabedY)&&d.seabedY!==seabedY){setSeabedHeight(d.seabedY);liftFromSeabed();}
+ const oldWell=JSON.stringify(worldFeatures.desert?.wellWater||[]);if(d.features)worldFeatures=d.features;syncVillageActors();
  if(JSON.stringify(worldFeatures.desert?.wellWater||[])!==oldWell||(!farmWaterRoot&&farmFeature()?.placed))makeWaterRoots();
  let changed=false;
  for(const [x,y,z,t] of d.blocks||[]){
@@ -2722,7 +2972,7 @@ function netApplyFrame(d){
  for(const [id,p] of projectiles)if(!shots.has(id)){scene.remove(p.mesh);p.mesh.geometry.dispose();projectiles.delete(id);}
  const waveIds=new Set();for(const s of d.spikes||[]){waveIds.add(s.id);if(!spikes.has(s.id))createSpikeWave(s);}
  for(const [id,w] of spikes)if(!waveIds.has(id)){scene.remove(w.root);spikes.delete(id);}
- syncAquaticHazards(d.aquaticHazards||[]);
+ syncAquaticHazards(d.aquaticHazards||[]);syncPetFish();
  netRoster=Array.isArray(d.players)?d.players:[];updateSky();updateFires();updateCornVisuals();netUI();if(mode==="chest")renderStorage();
 }
 function netClientMessage(d){
@@ -2750,7 +3000,7 @@ function netClientMessage(d){
     }
    }
    if(d.removedDrop){const i=drops.findIndex(p=>p.id===d.removedDrop);if(i>=0)removeDrop(i);}
-   handKey="";updateHand();renderHUD();if(mode==="chest")renderStorage();if(mode==="inventory")renderInventory();netSaveGuest();
+   handKey="";updateHand();renderHUD();if(mode==="chest")renderStorage();if(mode==="inventory")renderInventory();if(mode==="trade")renderVillageTrade();netSaveGuest();
   }else if(d.t==="heal"&&netRole==="guest"){hp=Math.min(4,hp+Math.max(0,Math.min(4,Number(d.amount)||0)));renderHUD();
   }else if(d.t==="hurt"&&netRole==="guest"){
    hp=Math.max(0,hp-Math.max(0,Math.min(1,Number(d.amount)||0)));playerFlash=time+.5;deathReason=d.reason||"AN OGGER GOT YOU";
@@ -2781,8 +3031,7 @@ function netMakeAvatar(person){
  }else{
   part(root,.50,.1,.50,0,1.77,0,s.hat);part(root,.54,.04,.22,0,1.72,-.20,s.hat);part(root,.065,.6,.025,-.14,.95,-.17,"#a98654");
  }
- if(person.equipment?.helmet){part(root,.58,.57,.54,0,1.5,0,"#50b5c4");part(root,.43,.26,.05,0,1.52,-.3,"#a2eeef");}
- if(person.equipment?.armor)part(root,.63,.70,.36,0,.98,0,"#3295b6");
+ addAvatarEquipment(root,person.equipment);
  const c=document.createElement("canvas");c.width=256;c.height=64;const x=c.getContext("2d");
  x.fillStyle="#10271ee8";x.fillRect(0,0,256,64);x.fillStyle="#f3e7c1";x.font='32px "VT323", monospace';x.textAlign="center";x.fillText(cleanName(person.name)||"PLAYER",128,43);
  const texture=new THREE.CanvasTexture(c),label=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,depthWrite:false}));
@@ -2837,21 +3086,21 @@ $("copyRoomCode").onclick=async()=>{try{await navigator.clipboard.writeText(netC
 $("stopRoom").onclick=()=>{if(netRole==="guest"){goHome();return;}saveCurrent();netStop(true);notify("MULTIPLAYER ENDED. YOUR WORLD IS SAVED.");};
 
 /* Aquatic equipment and rescue potions. */
-function normaliseEquipment(e){return{helmet:e?.helmet==="aquatic_helmet"?"aquatic_helmet":null,armor:e?.armor==="aquatic_armor"?"aquatic_armor":null};}
+function normaliseEquipment(e){return{helmet:["aquatic_helmet","iron_helmet"].includes(e?.helmet)?e.helmet:null,armor:e?.armor==="aquatic_armor"?"aquatic_armor":null};}
 function renderEquipment(){
  if(netActing)return;
- $("equipmentStatus").textContent=`HELMET: ${equipment.helmet?"AQUATIC — UNLIMITED AIR":"NONE"} | ARMOR: ${equipment.armor?"AQUATIC — HALF AQUATIC DAMAGE":"NONE"}`;
- $("equipItem").disabled=!["aquatic_helmet","aquatic_armor"].includes(activeStack()?.type);
+ $("equipmentStatus").textContent=`HELMET: ${equipment.helmet==="aquatic_helmet"?"AQUATIC — UNLIMITED AIR":equipment.helmet==="iron_helmet"?"IRON":"NONE"} | ARMOR: ${equipment.armor?"AQUATIC — HALF AQUATIC DAMAGE":"NONE"}`;
+ $("equipItem").disabled=!["aquatic_helmet","iron_helmet","aquatic_armor"].includes(activeStack()?.type);
  $("removeHelmet").disabled=!equipment.helmet;$("removeArmor").disabled=!equipment.armor;
  $("drinkPotion").disabled=!inventory.some(s=>s?.type==="healing_potion");
 }
 function equipSelected(){
  if(!["playing","inventory"].includes(mode)||netPending)return;
- const type=activeStack()?.type,slot=type==="aquatic_helmet"?"helmet":type==="aquatic_armor"?"armor":null;if(!slot)return;
+ const type=activeStack()?.type,slot=["aquatic_helmet","iron_helmet"].includes(type)?"helmet":type==="aquatic_armor"?"armor":null;if(!slot)return;
  if(netRole==="guest"){netRequest("equip",{});return;}
  if(equipment[slot]){notify("YOU ARE ALREADY WEARING THIS GEAR.");return;}
- takeItem(active);equipment[slot]=type;if(slot==="helmet")wetTime=0;
- updateHand();renderInventory();renderHUD();saveCurrent();notify(slot==="helmet"?"AQUATIC HELMET ON — UNLIMITED AIR.":"AQUATIC ARMOR ON — AQUATIC DAMAGE HALVED.");
+ takeItem(active);equipment[slot]=type;if(type==="aquatic_helmet")wetTime=0;
+ updateHand();renderInventory();renderHUD();saveCurrent();notify(type==="iron_helmet"?"IRON HELMET ON.":slot==="helmet"?"AQUATIC HELMET ON — UNLIMITED AIR.":"AQUATIC ARMOR ON — AQUATIC DAMAGE HALVED.");
 }
 function removeEquipment(slot){
  if(!["helmet","armor"].includes(slot)||!equipment[slot]||netPending)return;
@@ -2869,7 +3118,7 @@ function drinkHealing(){
 function tryRevival(){
  const i=inventory.findIndex(s=>s?.type==="revival_potion");if(i<0)return false;
  takeItem(i);hp=4;hunger=Math.max(2,hunger);wetTime=0;nextStarve=time+1;revivalShieldUntil=time+5;playerFlash=0;
- if(feet.y<-61||(!equipment.helmet&&feet.y+1.62<WATER)){
+ if(feet.y<-61||(equipment.helmet!=="aquatic_helmet"&&feet.y+1.62<WATER)){
   const t=worldFeatures.temple,entry=t?.entrance||t?.scanner;
   if(entry){feet.set(entry.x,3.5,entry.z+4);vy=0;}else{feet.set(spawn.x,spawn.y,spawn.z);vy=0;}
  }
@@ -3355,6 +3604,150 @@ function updateCelestialBodies(){
  sunVisual.visible=!night;moonVisual.visible=night;
 }
 
+/* A solid ocean floor uses one mesh and no saved voxel records. */
+const SEABED_Y=-41;
+let seabedY=SEABED_Y;
+function setSeabedHeight(y){seabedY=Math.max(-60,Math.min(SEABED_Y,Math.floor(y)));seabedMesh.position.y=seabedY+.5;}
+function prepareSeabedForState(d){
+ let y=SEABED_Y;
+ if(Number.isFinite(d.seabedY))y=d.seabedY;
+ else{
+  for(const b of d.blocks||[])if(Number.isInteger(b[1])&&b[1]>=-59)y=Math.min(y,b[1]-1);
+  if(Array.isArray(d.feet)&&Number.isFinite(d.feet[1]))y=Math.min(y,Math.floor(d.feet[1]-2));
+ }
+ setSeabedHeight(y);
+}
+function liftFromSeabed(){
+ if(feet.y>=seabedY+.5)return;
+ for(let y=seabedY+.5;y<=45;y++)if(!bodyCollides({x:feet.x,y,z:feet.z})){feet.y=y;vy=0;wetTime=0;return;}
+ feet.set(spawn.x,Math.max(spawn.y,seabedY+.5),spawn.z);vy=0;
+}
+const villageActors=new Map();
+let villageSign=null;
+const seabedCanvas=document.createElement('canvas');seabedCanvas.width=seabedCanvas.height=256;
+const seabedContext=seabedCanvas.getContext('2d');seabedContext.fillStyle='#65766c';seabedContext.fillRect(0,0,256,256);
+for(let i=0;i<850;i++){seabedContext.fillStyle=i%3?'#819082':'#4e625d';const n=noise(i,19,731);seabedContext.fillRect((i*79)%256,(i*113)%256,2+n*7,2+n*5);}
+const seabedTexture=new THREE.CanvasTexture(seabedCanvas);seabedTexture.magFilter=THREE.NearestFilter;seabedTexture.colorSpace=THREE.SRGBColorSpace;seabedTexture.wrapS=seabedTexture.wrapT=THREE.RepeatWrapping;seabedTexture.repeat?.set(64,64);
+const seabedMesh=new THREE.Mesh(new THREE.PlaneGeometry(2048,2048),new THREE.MeshLambertMaterial({map:seabedTexture,color:'#87998d',side:THREE.DoubleSide}));
+seabedMesh.rotation.x=-Math.PI/2;seabedMesh.position.y=SEABED_Y+.5;scene.add(seabedMesh);
+
+function disposeVillageActors(){
+ for(const actor of villageActors.values()){
+  const materials=new Set();actor.root.traverse(o=>{if(o.isMesh)materials.add(o.material);});for(const m of materials)m.dispose();scene.remove(actor.root);
+ }villageActors.clear();
+ if(villageSign){scene.remove(villageSign);villageSign.material.map.dispose();villageSign.material.dispose();villageSign=null;}
+}
+function createVillageActor(state){
+ const root=new THREE.Group(),body=new THREE.Group();root.add(body);
+ const smith=state.kind==='blacksmith',palette=smith?['#4b535e','#694834','#cf9b73','#272c36']:['#71885d','#bca678','#d4a37d','#675447'];
+ const materials=palette.map(color=>new THREE.MeshLambertMaterial({color}));
+ const eye=new THREE.MeshLambertMaterial({color:'#203635'}),hair=new THREE.MeshLambertMaterial({color:smith?'#454044':'#6b553e'});
+ function part(w,h,d,x,y,z,mat){const m=cube(body,w,h,d,x,y,z,mat);m.userData.villageActorId=state.id;return m;}
+ part(.58,.7,.35,0,.96,0,materials[0]);part(.23,.53,.28,-.16,.36,0,materials[3]);part(.23,.53,.28,.16,.36,0,materials[3]);
+ part(.55,.55,.5,0,1.58,0,materials[2]);part(.56,.16,.51,0,1.9,0,hair);
+ part(.06,.055,.015,-.13,1.66,.256,eye);part(.06,.055,.015,.13,1.66,.256,eye);part(.14,.2,.15,0,1.51,.31,materials[2]);
+ const arms=[part(.2,.6,.22,-.39,1,0,materials[0]),part(.2,.6,.22,.39,1,0,materials[0])];
+ part(.43,.59,.045,0,.91,.2,materials[1]);
+ if(smith){part(.27,.07,.1,0,1.82,.27,materials[3]);part(.12,.35,.12,.48,.81,.1,materials[1]);part(.32,.16,.18,.48,1.01,.1,materials[3]);}
+ else{part(.69,.08,.61,0,1.99,0,materials[1]);part(.47,.17,.44,0,2.1,0,materials[1]);}
+ root.position.set(state.x,state.y,state.z);root.rotation.y=state.heading||0;
+ const actor={id:state.id,kind:state.kind,root,body,arms,hp:4,baseY:state.y};villageActors.set(actor.id,actor);scene.add(root);return actor;
+}
+function syncVillageActors(){
+ const village=worldFeatures.village,states=village?.placed?village.actors||[]:[],ids=new Set(states.map(s=>s.id));
+ for(const [id,actor] of villageActors)if(!ids.has(id)){const materials=new Set();actor.root.traverse(o=>{if(o.isMesh)materials.add(o.material);});for(const m of materials)m.dispose();scene.remove(actor.root);villageActors.delete(id);}
+ for(const state of states)if(!villageActors.has(state.id))createVillageActor(state);
+ if(village?.placed&&!villageSign){
+  const c=document.createElement('canvas');c.width=512;c.height=128;const x=c.getContext('2d');
+  x.fillStyle='#3d3828';x.fillRect(0,0,512,128);x.strokeStyle='#d9c78c';x.lineWidth=6;x.strokeRect(5,5,502,118);
+  x.fillStyle='#f4eac8';x.font='bold 40px sans-serif';x.textAlign='center';x.fillText('VILLAGE ISLAND',256,55);x.font='24px sans-serif';x.fillText('OAK HOUSES • BLACKSMITH',256,96);
+  const texture=new THREE.CanvasTexture(c);texture.colorSpace=THREE.SRGBColorSpace;
+  villageSign=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true}));villageSign.scale.set(8,2,1);villageSign.position.set(village.dock.x-3,3.8,village.dock.z-2);scene.add(villageSign);
+ }
+}
+function updateVillageActors(){
+ for(const actor of villageActors.values()){
+  const phase=time*1.7+(hashString(actor.id)%100)*.1;
+  actor.arms.forEach((arm,i)=>arm.rotation.x=Math.sin(phase+i*.4)*.035);
+ }
+}
+function villageDirectionLabel(){
+ const v=worldFeatures.village;if(!v?.placed)return '';
+ const dx=v.x-feet.x,dz=v.z-feet.z,d=Math.hypot(dx,dz);
+ if(d<29)return ' · VILLAGE ISLAND';
+ if(!mountedBoat)return '';
+ const dir=(Math.abs(dz)>Math.abs(dx)*.4?(dz<0?'N':'S'):'')+(Math.abs(dx)>Math.abs(dz)*.4?(dx<0?'W':'E'):'');
+ return ` · VILLAGE ${Math.round(d)}m ${dir}`;
+}
+function findVillageSite(){
+ // Refuse the whole footprint if an older world has already built here.
+ const candidates=[[-84,0],[-84,76],[-84,-76],[0,92],[0,-92],[-145,0],[-145,85],[-145,-85],[85,105],[85,-105],[0,150],[0,-150],[145,145],[145,-145]];
+ const occupied=[...blocks.values()];
+ for(const [x,z] of candidates){
+  const overlaps=occupied.some(b=>Math.abs(b.x-x)<35&&Math.abs(b.z-z)<32);
+  const landOverlap=land.some(t=>Math.abs(t.x-x)<35&&Math.abs(t.z-z)<32);
+  if(!overlaps&&!landOverlap)return{x,z};
+ }return null;
+}
+function ensureVillage(){
+ if(worldFeatures.village?.placed){syncVillageActors();return;}
+ if(netRole==='guest'||!current)return;
+ const site=findVillageSite();if(!site)return;
+ const {x:cx,z:cz}=site,seed=hashString(current.seed+'|village-v1');
+ const v={version:1,placed:true,x:cx,z:cz,center:{x:cx,z:cz},houses:[],trees:[],actors:[],dock:{x:cx+29,z:cz}};
+ worldFeatures.village=v;
+ for(let dx=-23;dx<=23;dx++)for(let dz=-25;dz<=25;dz++){
+  const angle=Math.atan2(dz/24,dx/22),radius=Math.hypot(dx/22,dz/24);
+  if(radius>1+Math.sin(angle*5+seed%99)*.04)continue;
+  const beach=radius>.83,h=beach?0:1,x=cx+dx,z=cz+dz;
+  for(let y=-4;y<=h;y++)put(x,y,z,y<-1?'stone':beach&&y===h?'sand':'dirt');
+  land.push({x,z,h,beach,biome:'village'});landColumns.add(`${x},${z}`);
+ }
+ // Two broad paths connect every doorway and the low pier to the central square.
+ for(let dx=-17;dx<=18;dx++)for(let dz=-1;dz<=1;dz++)setBlock(cx+dx,1,cz+dz,'sandstone');
+ for(let dz=-20;dz<=20;dz++)for(let dx=-2;dx<=1;dx++)setBlock(cx+dx,1,cz+dz,'sandstone');
+ for(let dx=18;dx<=30;dx++)for(let dz=-1;dz<=1;dz++){put(cx+dx,0,cz+dz,'oak_log');if(dx===18)put(cx+dx,1,cz+dz,'oak_log');}
+ for(const dx of [23,29])for(const dz of [-2,2])for(let y=-2;y<=1;y++)put(cx+dx,y,cz+dz,'oak_log');
+ const layouts=[[-15,-18,7,7,'oak_log','stone'],[-15,-7,7,6,'sandstone','oak_log'],[-15,6,7,7,'stone','oak_log'],[6,-18,7,6,'oak_log','smooth_stone'],[6,-7,8,7,'sandstone','oak_log'],[6,7,7,7,'oak_log','stone'],[-5,13,7,7,'smooth_stone','stone']];
+ layouts.forEach(([dx,dz,w,d,wall,roof],index)=>{
+  const x=cx+dx,z=cz+dz,y=1,door=Math.floor(w/2),smith=index===6;
+  for(let ix=0;ix<w;ix++)for(let iz=0;iz<d;iz++){
+   // Solid foundations make the beach-side buildings level, without erasing pre-existing player blocks.
+   for(let sy=0;sy<=y;sy++)setBlock(x+ix,sy,z+iz,'stone');
+   setBlock(x+ix,y,z+iz,smith?'smooth_stone':'oak_log');
+   for(let iy=1;iy<=3;iy++){
+    const edge=ix===0||ix===w-1||iz===0||iz===d-1;
+    const doorway=iz===d-1&&ix===door&&iy<=2;
+    const window=iy===2&&((iz===0&&(ix===2||ix===w-3))||((ix===0||ix===w-1)&&iz===Math.floor(d/2)));
+    if(edge&&!doorway)setBlock(x+ix,y+iy,z+iz,window?'glass':wall);
+   }
+   setBlock(x+ix,y+4,z+iz,roof);
+   if(index%2===0&&ix>0&&ix<w-1)setBlock(x+ix,y+5,z+iz,roof);
+   if(index%2===0&&ix>1&&ix<w-2)setBlock(x+ix,y+6,z+iz,roof);
+  }
+  const chest={x:x+w-2,y:y+1,z:z+1},bed={x:x+1,y:y+1,z:z+1},table={x:x+w-2,y:y+1,z:z+d-2};
+  setBlock(bed.x,bed.y,bed.z,'bed');setBlock(table.x,table.y,table.z,'table');
+  fillChest(chest.x,chest.y,chest.z,[...Array.from({length:smith?5:2},()=>({type:'corn'})),{type:'oak_log'},{type:'oak_log'},...Array.from({length:3},()=>({type:index%2?'sand':'stone'}))]);
+  for(let iz=d;iz<=d+1;iz++)for(let ix=door-1;ix<=door+1;ix++)setBlock(x+ix,y,z+iz,'sandstone');
+  const house={x,y,z,width:w,depth:d,kind:smith?'blacksmith':'house',bed,chest,table,door:{x:x+door,y:y+.5,z:z+d-1}};v.houses.push(house);
+  if(smith){
+   setBlock(x+w-1,y+1,z+d+1,'campfire');setBlock(x+w-1,y,z+d+1,'stone');
+   for(let sy=y+1;sy<=y+7;sy++)setBlock(x+w-1,sy,z,'stone');
+  }
+  v.actors.push({id:`village:${current.id}:${index}`,kind:smith?'blacksmith':'villager',x:x+door+(smith?-1:0),y:y+.5,z:z+d+.25,heading:0});
+ });
+ // Broad oak crowns distinguish this island from the pointed pine forest.
+ for(const [dx,dz] of [[-19,-2],[-19,15],[-19,-17],[17,-12],[18,10],[13,19],[-9,20],[2,-20]]){
+  const x=cx+dx,z=cz+dz,ground=at(x,1,z)?1:0;
+  if(v.houses.some(h=>x>=h.x-2&&x<=h.x+h.width+1&&z>=h.z-2&&z<=h.z+h.depth+1))continue;
+  for(let sy=ground+1;sy<=ground+5;sy++)put(x,sy,z,'oak_log');
+  for(let dy=3;dy<=6;dy++){const r=dy===6?1:2;for(let ox=-r;ox<=r;ox++)for(let oz=-r;oz<=r;oz++)if(Math.abs(ox)+Math.abs(oz)<=r+1)put(x+ox,ground+dy,z+oz,'oak_leaves');}
+  v.trees.push({x,z});
+ }
+ rebuildTerrain();syncVillageActors();
+}
+
+
 /* Startup and shared animation loop. */
 renderProfile();generate("corny-menu-forest");mode="home";show("loading",false);show("home",true);show("notice",false);hand.visible=false;netUI();
 let previous=performance.now();
@@ -3388,7 +3781,7 @@ renderer.setAnimationLoop(now=>{
    $("damageTint").style.opacity=time<playerFlash?"1":"0";if(time>=nextHUD){renderHUD();nextHUD=time+.1;}
   }if(hp<=0)die();
  }else if(!["home","worlds","network"].includes(mode))hand.visible=false;
- netTick(dt);updateMatchaFireworks(dt);updateGameAudio(now);updateCelestialBodies();
+ netTick(dt);updateMatchaFireworks(dt);updateCynoSkyTexts(dt);updateGameAudio(now);updateCelestialBodies();updatePetFish();updateVillageActors();
  for(const root of [farmWaterRoot,desertWaterRoot])if(root)for(const m of root.children){const p=m.userData.pond;m.visible=!at(p.x,p.y,p.z);}
  renderer.render(scene,camera);
 });
