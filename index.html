@@ -4521,7 +4521,7 @@ netAccept=function(conn){return bbActive()?bbAccept(conn):bbOriginal.netAccept(c
 netAcceptPose=function(e,p){return bbActive()?bbAcceptPose(e,p):bbOriginal.netAcceptPose(e,p);};
 netRequest=function(...a){if(bbActive())return;return bbOriginal.netRequest(...a);};
 netHostRequest=function(...a){if(bbActive())return;return bbOriginal.netHostRequest(...a);};
-netFrame=function(){bbSyncFeature();const d=bbOriginal.netFrame();if(bbActive())d.buildBattle=bbSnapshot();return d;};
+netFrame=function(){bbSyncFeature();const d=bbOriginal.netFrame();if(bbActive())d.buildBattle=bbSnapshot();return clone(d);};
 netLoadWorld=function(payload){
  if(!bbJoining&&!payload?.state?.features?.buildBattle)return bbOriginal.netLoadWorld(payload);
  if(!bbJoining||payload?.state?.features?.buildBattle?.version!==1||!payload.battlePlayer||!Array.isArray(payload.state.blocks)){netJoinFailed("THAT CODE IS NOT A BUILD BATTLE ROOM.");return;}
@@ -6324,7 +6324,7 @@ function sendPublicFrame(force=false){
       entry.publicPendingBlocks=null;entry.publicReady=true;
     }else netSend(entry.conn,delta);
   }
-  publicRoom.lastFrame=clone(frame);
+  publicRoom.lastFrame=frame;
 }
 function receivePublicFrame(d){
   if(netRole!=='guest'||!inNoobpixel()||!Number.isSafeInteger(d.seq)||!Array.isArray(d.blocks))return;
@@ -6406,7 +6406,7 @@ saveCurrent=function(manual=false){
 };
 // Quests and their rewards stay in personal worlds. Shopping, renting rooms,
 // opening the castle, and repeat ruler challenges still work in Noobpixel.
-const publicServices=new Set(['hotel','castle_gate','fire_ruler']);
+const publicServices=new Set(['hotel','castle_gate','fire_ruler','tank_controls','military_drill']);
 netHostRequest=function(entry,d){
   if(inNoobpixel()&&d?.op==='quest'&&!publicServices.has(d.args?.questId)){
     netSend(entry.conn,{t:'reply',id:d.id,profile:null});return;
