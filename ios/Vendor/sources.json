@@ -1,0 +1,26 @@
+{
+  "three.module.js": {
+    "url": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+    "sha256": "0a3368c165eea773490aec7b77c22de70e3eac288503409256fdbf4d12578416"
+  },
+  "three-LICENSE.txt": {
+    "url": "https://cdn.jsdelivr.net/npm/three@0.169.0/LICENSE",
+    "sha256": "4c40a1ef62450b857c3b2aaf294936304cd552d965fbcd9d32d4c5bcf4ba4454"
+  },
+  "peerjs.min.js": {
+    "url": "https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js",
+    "sha256": "7604d8c31bec4f134b0d15c2d80b1d095ea18af005354f439f14291fcd7b4168"
+  },
+  "peerjs-LICENSE.txt": {
+    "url": "https://cdn.jsdelivr.net/npm/peerjs@1.5.5/LICENSE",
+    "sha256": "9407807dba7f47a79bfb3ac55759d63d77c9371ebd0616d5a093e97d3e810397"
+  },
+  "VT323-Regular.ttf": {
+    "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/vt323/VT323-Regular.ttf",
+    "sha256": "cf4de751ada78ceac033dbe16a687742939995b77bc2a052ae17a4957958594d"
+  },
+  "VT323-OFL.txt": {
+    "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/vt323/OFL.txt",
+    "sha256": "27d9af34210253e7ca1251fbace86c6f65b40031d6ce1a75493a1b2093631298"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "identifier": "F6672C99-61DE-4E0E-96D7-A4CBA56949C4",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "1.50",
+      "familyShareable": false,
+      "internalID": "B5D8B490-91D7-4184-9295-E2CE67EAAE85",
+      "localizations": [
+        {
+          "description": "Santa and Gingerbread skins, 2 gold blocks and 10 emeralds. Santa mines twice as fast.",
+          "displayName": "Christmas Super-Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.vorontzov.cornygame.christmaspack",
+      "referenceName": "Christmas Super-Pack",
+      "type": "NonConsumable"
+    }
+  ],
+  "settings": {"_failTransactionsEnabled":false,"_locale":"en_US","_storefront":"USA","_storeKitErrors":[]},
+  "subscriptionGroups": [],
+  "version": {"major":3,"minor":0}
+}

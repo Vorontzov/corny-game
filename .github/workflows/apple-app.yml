@@ -1,0 +1,38 @@
+name: Apple app build
+on:
+  push:
+    paths:
+      - 'ios/**'
+      - 'index.html'
+      - 'audio/**'
+      - '.github/workflows/apple-app.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  simulator:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build iPhone and iPad app
+        run: >-
+          xcodebuild -project ios/CornyGame.xcodeproj -scheme CornyGame
+          -sdk iphonesimulator -configuration Debug
+          -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+      - name: Launch the bundled game
+        run: |
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import sys,json; print(next(d["udid"] for a in json.load(sys.stdin)["devices"].values() for d in a if d["name"].startswith("iPhone")))')
+          xcrun simctl boot "$DEVICE"
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcrun simctl install "$DEVICE" build/Build/Products/Debug-iphonesimulator/CornyGame.app
+          xcrun simctl launch "$DEVICE" com.vorontzov.cornygame
+          sleep 12
+          xcrun simctl io "$DEVICE" screenshot build/iphone-home.png
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Corny-Game-iOS-simulator
+          path: |
+            build/Build/Products/Debug-iphonesimulator/CornyGame.app
+            build/iphone-home.png
+          retention-days: 14
