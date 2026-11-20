@@ -632,12 +632,12 @@ const $=id=>document.getElementById(id);
 const show=(id,on)=>$(id).classList.toggle("hidden",!on);
 const clone=o=>JSON.parse(JSON.stringify(o));
 const SAVE_KEY="corny-worlds-v2",PROFILE_KEY="corny-player-profile-v1";
-const WATER=-.22,LIMIT=192,NET_VERSION=10;
-const BLOCKS=["spore_stem","cap_ruby","cap_lilac","cap_honey","training_dummy","map_islands","map_kingdom","iron_ore","orange_stone","dirt","sand","log","leaves","oak_log","oak_leaves","table","stone","ogger_trap","wool","bed","campfire","farmland","sandstone","cactus","chest","smooth_stone","marked_stone","glass","keycard_scanner","bullseye","stonefish_block","gold_block","throne"];
+const WATER=-.22,LIMIT=192,NET_VERSION=11;
+const BLOCKS=["map_frontiers","megamap","megamap_0","megamap_1","megamap_2","megamap_3","megamap_4","megamap_5","megamap_6","megamap_7","megamap_8","megamap_9","megamap_10","megamap_11","megamap_12","megamap_13","megamap_14","megamap_15","spore_stem","cap_ruby","cap_lilac","cap_honey","training_dummy","map_islands","map_kingdom","iron_ore","orange_stone","dirt","sand","log","leaves","oak_log","oak_leaves","table","stone","ogger_trap","wool","bed","campfire","farmland","sandstone","cactus","chest","smooth_stone","marked_stone","glass","keycard_scanner","bullseye","stonefish_block","gold_block","throne"];
 const KINDS=["war_skeleton","war_ally","cave_spider","fire_ruler","quest_spider","cow","horse","sheep","ogger","dweller","sandwitch","oggerfish","stonefish","knightfish","aquatic_ruler"];
 const TOOLS=new Set(["wooden_dagger","wooden_pickaxe","poison_potion"]);
 const USE_BLOCKS=new Set(["table","ogger_trap","campfire","bed","chest","keycard_scanner","throne"]);
-const NAMES={spore_stem:"MUSHROOM STEM",cap_ruby:"RUBY MUSHROOM CAP",cap_lilac:"LILAC MUSHROOM CAP",cap_honey:"HONEY MUSHROOM CAP",training_dummy:"TRAINING DUMMY",tank:"TANK",loan_tank:"VLAD’S LOAN TANK",golden_axe:"GOLDEN AXE",map_islands:"EDWARD’S ISLAND MAP",map_kingdom:"KINGDOM OF FIRE MAP",book:"BOOK",iron_ore:"IRON ORE",orange_stone:"ORANGE STONE",iron:"IRON",iron_sword:"IRON SWORD",
+const NAMES={ship:"EDWARD’S VOYAGE SHIP",seat:"WOOL SEAT",map_frontiers:"EDWARD’S FRONTIER MAP",megamap:"MEGAMAP · 4×4",megamap_0:"MEGAMAP PANEL",megamap_1:"MEGAMAP PANEL",megamap_2:"MEGAMAP PANEL",megamap_3:"MEGAMAP PANEL",megamap_4:"MEGAMAP PANEL",megamap_5:"MEGAMAP PANEL",megamap_6:"MEGAMAP PANEL",megamap_7:"MEGAMAP PANEL",megamap_8:"MEGAMAP PANEL",megamap_9:"MEGAMAP PANEL",megamap_10:"MEGAMAP PANEL",megamap_11:"MEGAMAP PANEL",megamap_12:"MEGAMAP PANEL",megamap_13:"MEGAMAP PANEL",megamap_14:"MEGAMAP PANEL",megamap_15:"MEGAMAP PANEL",spore_stem:"MUSHROOM STEM",cap_ruby:"RUBY MUSHROOM CAP",cap_lilac:"LILAC MUSHROOM CAP",cap_honey:"HONEY MUSHROOM CAP",training_dummy:"TRAINING DUMMY",tank:"TANK",loan_tank:"VLAD’S LOAN TANK",golden_axe:"GOLDEN AXE",map_islands:"EDWARD’S ISLAND MAP",map_kingdom:"KINGDOM OF FIRE MAP",book:"BOOK",iron_ore:"IRON ORE",orange_stone:"ORANGE STONE",iron:"IRON",iron_sword:"IRON SWORD",
  iron_helmet:"IRON HELMET",emerald:"EMERALD",fish_bucket:"PET FISH IN A BUCKET",
  aquatic_keycard:"AQUATIC KEY CARD",aquatic_helmet:"AQUATIC HELMET",aquatic_armor:"AQUATIC ARMOR",healing_potion:"HEALING POTION",revival_potion:"REVIVAL POTION",smooth_stone:"SMOOTH STONE",marked_stone:"MARKED STONE",glass:"GLASS",keycard_scanner:"KEY CARD SCANNER",bullseye:"BULLSEYE",stonefish_block:"STONE",gold_block:"BLOCK OF GOLD",throne:"AQUATIC THRONE",
  oak_log:"OAK LOGS",oak_leaves:"OAK LEAVES",dirt:"DIRT",sand:"SAND",log:"PINE LOGS",leaves:"PINE LEAVES",table:"BUILDING TABLE",
@@ -647,7 +647,7 @@ const NAMES={spore_stem:"MUSHROOM STEM",cap_ruby:"RUBY MUSHROOM CAP",cap_lilac:"
  cooked_beef:"COOKED BEEF",cooked_lamb:"COOKED LAMB",
  wooden_dagger:"WOODEN DAGGER",wooden_pickaxe:"WOODEN PICKAXE",poison_potion:"POISON POTION"
 };
-const COLORS={spore_stem:"#e0ceaa",cap_ruby:"#b54b47",cap_lilac:"#9478ae",cap_honey:"#cd8c47",training_dummy:"#ad8656",tank:"#647347",loan_tank:"#7f8158",golden_axe:"#efbf49",map_islands:"#e5ca8a",map_kingdom:"#d7a25b",book:"#805d8f",iron_ore:"#7b838c",orange_stone:"#c96a30",iron:"#c3d8df",iron_sword:"#c3d8df",
+const COLORS={ship:"#c79b56",seat:"#d8c8a3",map_frontiers:"#e5ca8a",megamap:"#e5ca8a",megamap_0:"#e5ca8a",megamap_1:"#e5ca8a",megamap_2:"#e5ca8a",megamap_3:"#e5ca8a",megamap_4:"#e5ca8a",megamap_5:"#e5ca8a",megamap_6:"#e5ca8a",megamap_7:"#e5ca8a",megamap_8:"#e5ca8a",megamap_9:"#e5ca8a",megamap_10:"#e5ca8a",megamap_11:"#e5ca8a",megamap_12:"#e5ca8a",megamap_13:"#e5ca8a",megamap_14:"#e5ca8a",megamap_15:"#e5ca8a",spore_stem:"#e0ceaa",cap_ruby:"#b54b47",cap_lilac:"#9478ae",cap_honey:"#cd8c47",training_dummy:"#ad8656",tank:"#647347",loan_tank:"#7f8158",golden_axe:"#efbf49",map_islands:"#e5ca8a",map_kingdom:"#d7a25b",book:"#805d8f",iron_ore:"#7b838c",orange_stone:"#c96a30",iron:"#c3d8df",iron_sword:"#c3d8df",
  iron_helmet:"#bcc8ce",emerald:"#4cdb9a",fish_bucket:"#68c0d5",
  aquatic_keycard:"#47d9dd",aquatic_helmet:"#65e2ee",aquatic_armor:"#3295b6",healing_potion:"#ff76a5",revival_potion:"#b89aff",smooth_stone:"#aaaead",marked_stone:"#49777d",glass:"#9ce3e8",keycard_scanner:"#263f49",bullseye:"#e5d9bb",stonefish_block:"#92958c",gold_block:"#ffd566",throne:"#365e6a",
  oak_log:"#a47b46",oak_leaves:"#6d8c43",dirt:"#8b6949",sand:"#dcc48b",log:"#805438",leaves:"#3a643f",table:"#b8874a",
@@ -738,7 +738,7 @@ function texture(type){
   for(let n=4;n<16;n+=5){x.beginPath();x.moveTo(0,n);x.lineTo(16,n);x.stroke();}
   if(type==="table")for(let n=5;n<16;n+=5){x.beginPath();x.moveTo(n,0);x.lineTo(n,16);x.stroke();}
  }
- if(type==="map_islands"||type==="map_kingdom"){c.width=c.height=256;drawExpeditionChart(x,type);}
+ if(type==="map_islands"||type==="map_kingdom"||type==="map_frontiers"||type==="megamap"||type.startsWith("megamap_")){c.width=c.height=256;drawExpeditionChart(x,type);}
  if(type.startsWith("cap_")){x.fillStyle="#f4e6c3";x.fillRect(1,2,3,2);x.fillRect(9,5,4,3);x.fillRect(5,12,2,2);x.fillStyle="#fff1d7";x.fillRect(2,2,1,1);x.fillRect(10,5,2,1);}
  if(type==="spore_stem"){x.fillStyle="#b8a17b";x.fillRect(3,1,1,8);x.fillRect(11,6,1,9);x.fillStyle="#f1e1bf";x.fillRect(6,0,2,10);}
  if(type==="iron_ore"){x.fillStyle="#dceaf0";for(const [a,b] of [[2,2],[10,3],[5,8],[11,11]])x.fillRect(a,b,3,3);x.fillStyle="#8eacba";x.fillRect(3,3,2,2);x.fillRect(12,12,2,2);}
@@ -769,7 +769,7 @@ for(const type of BLOCKS){
   c.multiplyScalar(ny<-.5?.72:1);colors.push(c.r,c.g,c.b);
  }
  g.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));
- const m=new THREE.InstancedMesh(g,new THREE.MeshLambertMaterial({map:texture(type),vertexColors:true,transparent:type==="glass",opacity:type==="glass"?.34:1,depthWrite:type!=="glass"}),type==="stone"?100000:type==="dirt"?50000:24000);
+ const m=new THREE.InstancedMesh(g,new THREE.MeshLambertMaterial({map:texture(type),vertexColors:true,transparent:type==="glass",opacity:type==="glass"?.34:1,depthWrite:type!=="glass"}),type.startsWith("megamap_")?256:type==="stone"?100000:type==="dirt"?50000:24000);
  m.count=0;m.visible=false;m.userData.cells=[];m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
  batches.set(type,m);scene.add(m);
 }
@@ -1327,7 +1327,7 @@ function eat(quick=false){
 }
 const holdingPickaxe=()=>activeStack()?.type==="wooden_pickaxe"&&activeStack().tools[0].hp>0;
 const needsPickaxe=t=>["iron_ore","orange_stone","stone","sandstone","ogger_trap","campfire","smooth_stone","marked_stone","keycard_scanner","stonefish_block","gold_block","throne"].includes(t);
-const WOOD_BLOCKS=new Set(["log","oak_log","table","chest","bed","map_islands","map_kingdom"]);
+const WOOD_BLOCKS=new Set(["map_frontiers","megamap","megamap_0","megamap_1","megamap_2","megamap_3","megamap_4","megamap_5","megamap_6","megamap_7","megamap_8","megamap_9","megamap_10","megamap_11","megamap_12","megamap_13","megamap_14","megamap_15","log","oak_log","table","chest","bed","map_islands","map_kingdom"]);
 const baseMiningSeconds=(b=blocks.get(miningKey)||target?.block)=>activeStack()?.type==="golden_axe"&&WOOD_BLOCKS.has(b?.type)?1:holdingPickaxe()?2.5:5;
 const miningSeconds=block=>baseMiningSeconds(block)/((netActing?.pose?.skin||playerProfile.skin)==='santa'?2:1);
 const hitDamage=(kind,type)=>type==="iron_sword"?5:type==="golden_axe"?3:kind==="fire_ruler"?(type==="wooden_dagger"?2:1):kind==="aquatic_ruler"?(type==="wooden_dagger"?1:.5):isAquaticKind(kind)?(type==="wooden_dagger"?2:1):(["ogger","sandwitch"].includes(kind)?1:8/6)*(type==="wooden_dagger"?2:1);
@@ -1345,7 +1345,7 @@ function beginMining(mouse=false){
  const b=target.block;if(b.permanentSeabed){stopMining();notify("THE SOLID OCEAN FLOOR CANNOT BE MINED. YOU CAN BUILD ON IT.");return;}if(petFishAt(b.x,b.y+1,b.z)){notify("PICK UP THE PET FISH POND BEFORE MINING ITS SUPPORT.");return;}if(b.type==="stonefish_block"){if(netRole==="guest")netRequest("awaken",{key:key(b.x,b.y,b.z)});else awakenStonefish(b);return;}if(needsPickaxe(b.type)&&!holdingPickaxe()){notify(`HOLD A WOODEN PICKAXE TO COLLECT ${NAMES[b.type]}.`);return;}
  miningKey=key(b.x,b.y,b.z);miningTime=0;mouseMining=mouse;
  if(netRole==="guest")netSend(netConnection,{t:"mineStart",key:miningKey,pose:netProfile()});
- notify(`KEEP AIMING FOR ${miningSeconds()} SECONDS.`);
+ notify("KEEP MINING — WATCH THE BLOCK CRACK.");
 }
 function completeMining(){
  const b=blocks.get(miningKey);if(!b){stopMining();return;}
@@ -2698,8 +2698,8 @@ function renderHUD(){
  if(target?.type==="petFish"){text="PET FISH POND — E / USE TO PICK UP";$("craft").textContent="PICK UP FISH";}
  if(target?.type==="crop"){text=time>=target.plant.matureAt?"CORN — READY TO HARVEST":"CORN — GROWING";$("mine").textContent="HARVEST";}
  if(target?.type==="boat"){text=target.boat.occupant?"BOAT — OCCUPIED":"BOAT — BOARD OR PICK UP";$("craft").textContent="BOARD";$("mine").textContent="PICK UP";}
- $("target").textContent=text;show("target",!!text);show("mineBox",!!miningKey);
- $("mineText").textContent=`MINING ${miningTime.toFixed(1)} / ${miningSeconds()}s`;$("mineFill").style.width=`${Math.min(100,miningTime/miningSeconds()*100)}%`;renderQuick();
+ $("target").textContent=text;show("target",!!text);show("mineBox",false);
+ renderQuick();
 }
 
 /* Input. */
@@ -4572,7 +4572,7 @@ function bbOpenPalette(){if(!bbActive()||battleState.phase!=="build")return;mode
 function bbClosePalette(){show("bbPalette",false);if(bbActive()){mode="playing";updateHand();renderHUD();}}
 function bbRenderPalette(){
  const search=$("bbSearch").value.trim().toLowerCase();$("bbPaletteGrid").replaceChildren();
- for(const type of Object.keys(NAMES).sort((a,b)=>Number(BLOCKS.includes(b))-Number(BLOCKS.includes(a))||NAMES[a].localeCompare(NAMES[b]))){
+ for(const type of Object.keys(NAMES).filter(type=>!type.startsWith("megamap_")).sort((a,b)=>Number(BLOCKS.includes(b))-Number(BLOCKS.includes(a))||NAMES[a].localeCompare(NAMES[b]))){
   if(search&&!NAMES[type].toLowerCase().includes(search))continue;
   const button=document.createElement("button"),swatch=document.createElement("span"),label=document.createElement("span");swatch.className="bbSwatch";swatch.style.background=COLORS[type]||"#bbb";label.textContent=NAMES[type]+(BLOCKS.includes(type)?" — ∞":"");button.append(swatch,label);button.onclick=()=>{bbChooseItem(type);bbClosePalette();};$("bbPaletteGrid").append(button);
  }
@@ -5017,7 +5017,7 @@ const storyOriginalSmithFinish=finishBlacksmithQuestIfReady;
 finishBlacksmithQuestIfReady=function(){const done=storyOriginalSmithFinish();if(done&&worldFeatures.trackedStory==='blacksmith1'){worldFeatures.trackedStory=null;saveCurrent();}return done;};
 const storyTradeKnown=knownVillageTrade;knownVillageTrade=function(t){return t===GOLDEN_AXE_TRADE||storyTradeKnown(t);};
 const storyTradeOffers=villageOffers;villageOffers=function(a){const offers=storyTradeOffers(a);return a?.kind==='blacksmith'&&storyComplete('blacksmith2')?[...offers,GOLDEN_AXE_TRADE]:offers;};
-function travellingStory(){return ['edward2','edward1'].map(id=>({id,q:storyState(id)})).find(({q})=>q?.started&&!q.completed&&q.phase!=='talk');}
+function travellingStory(){return ['edward3','edward2','edward1'].map(id=>({id,q:storyState(id)})).find(({q})=>q?.started&&!q.completed&&q.phase!=='talk');}
 function traveller(q){const owner=q.owner||'host';return netPeople().find(p=>p.id===owner&&p.hp>0)||netPeople().find(p=>p.id==='host'&&p.hp>0);}
 function travellerBoat(p){return p?.id==='host'?(netActing?netHostPose?.mountedBoat:mountedBoat):netClients.get(p?.id)?.boat||netClients.get(p?.id)?.pose?.mountedBoat;}
 function storyZone(phase,p=feet){
@@ -5099,23 +5099,23 @@ const storyOriginalSleep=sleepInBed;sleepInBed=function(k){
 };
 const storyOriginalTalk=talkVillageResident;talkVillageResident=function(a){
  if(!a||!nearVillageBlacksmith(a.id))return;
- if(a.kind==='edward'){const active=travellingStory()||['edward1','edward2'].map(id=>({id,q:storyState(id)})).find(o=>o.q?.started&&!o.q.completed);if(active){storyAction(active.id,'talk',a.id);renderVillageTrade();return;}}
+ if(a.kind==='edward'){const active=travellingStory()||['edward1','edward2','edward3'].map(id=>({id,q:storyState(id)})).find(o=>o.q?.started&&!o.q.completed);if(active){storyAction(active.id,'talk',a.id);renderVillageTrade();return;}}
  if(a.kind==='blacksmith'){const q=storyState('blacksmith2');if(q?.started&&!q.completed){storyAction('blacksmith2','talk',a.id);return;}if(blacksmithQuest()?.completed){const lines=['The forge is still open. Bring three iron for an unbreakable sword.',storyComplete('blacksmith2')?'A block of gold buys another unbreakable golden axe, whenever you need one.':'I wonder what royal gold might do for an axe. Look for Blacksmith’s Duty II in World Events.','Good to see you again! A strong tool and a familiar friend make a fine day.'];const n=a.talkIndex||0;a.talkIndex=n+1;storySay('blacksmith',lines[n%lines.length]);return;}}
  storyOriginalTalk(a);renderStoryTradeActions(a);
 };
 function renderStoryTradeActions(a){
  const node=$('storyTradeActions');node.replaceChildren();if(!a)return;
  const add=(text,fn,disabled=false)=>{const b=document.createElement('button');b.className='primary full';b.textContent=text;b.disabled=disabled||!!netPending;b.onclick=fn;node.append(b);};
- if(a.kind==='edward'){const active=travellingStory()||['edward1','edward2'].map(id=>({id,q:storyState(id)})).find(o=>o.q?.started&&!o.q.completed);if(active){const label=active.q.phase==='talk'?'BEGIN OUR JOURNEY':active.q.phase==='drawing'?'SKETCHING…':['village','escape'].includes(active.q.phase)?'FINISH THE JOURNEY':'CONTINUE WITH EDWARD';add(label,()=>{storyAction(active.id,'advance',a.id);renderVillageTrade();},active.q.phase==='drawing');}}
+ if(a.kind==='edward'){const active=travellingStory()||['edward1','edward2','edward3'].map(id=>({id,q:storyState(id)})).find(o=>o.q?.started&&!o.q.completed);if(active){const label=active.q.phase==='talk'?'BEGIN OUR JOURNEY':active.q.phase==='drawing'?'SKETCHING…':['village','escape'].includes(active.q.phase)?'FINISH THE JOURNEY':'CONTINUE WITH EDWARD';add(label,()=>{storyAction(active.id,'advance',a.id);renderVillageTrade();},active.q.phase==='drawing');}}
  if(a.kind==='innkeeper'){const q=storyState('edward2');if(q?.phase==='hotel')add('EDWARD · BOOK OUR ROOM',()=>{storyAction('edward2','rent',a.id);renderVillageTrade();});else add('RENT A ROOM · 2 EMERALDS',()=>{rentHotelRoom();renderVillageTrade();},!inNoobpixel()&&!storyComplete('edward2'));}
  if(a.kind==='knight')add('ASK TO ENTER THE CASTLE',()=>{const q=storyState('edward2');if(q?.phase==='castle')storyAction('edward2','enter',a.id);else enterKingdomCastle();renderVillageTrade();});
 }
 const storyTradeActions=document.createElement('div');storyTradeActions.id='storyTradeActions';$('tradeOffers').parentNode?.append(storyTradeActions);
 const storyOriginalRenderTrade=renderVillageTrade;renderVillageTrade=function(){storyOriginalRenderTrade();if(mode==='trade')renderStoryTradeActions(villageActors.get(tradingWith));};
 const companionOriginalBoat=useBoat;useBoat=function(id,action='board'){
- const a=questActor('edward'),journey=travellingStory(),near=journey&&a&&a.root.position.distanceTo(feet)<9;const previous=mountedBoat;const result=companionOriginalBoat(id,action);
+ const a=questActor('edward'),journey=travellingStory(),near=journey&&a&&a.root.position.distanceTo(feet)<9&&(journey.id!=='edward3'||voyageMapOwnsStory(journey.q));const previous=mountedBoat;const result=companionOriginalBoat(id,action);
  if(netRole!=='guest'&&journey&&near&&action==='board'&&mountedBoat===id){journey.q.companionBoat=id;journey.q.owner=netActing?.id||'host';storySay('edward','All aboard! I have my pencils. Let’s follow the quest destination.');}
- if(netRole!=='guest'&&journey&&action==='leave'&&previous&&journey.q.companionBoat===previous){const p=companionLanding(feet);if(p){a.root.position.set(p.x,p.y,p.z);Object.assign(a.state,p);journey.q.companionBoat=null;}}
+ if(netRole!=='guest'&&journey&&(journey.id!=='edward3'||voyageMapOwnsStory(journey.q))&&action==='leave'&&previous&&journey.q.companionBoat===previous){const p=companionLanding(feet);if(p){a.root.position.set(p.x,p.y,p.z);Object.assign(a.state,p);journey.q.companionBoat=null;}}
  return result;
 };
 function companionLanding(p){for(const [dx,dz]of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1]]){const x=p.x+dx,z=p.z+dz,y=walkingFloor(x,z,p.y,.28,2.12,1,2);if(y!==null)return{x,y,z};}return null;}
@@ -5184,7 +5184,7 @@ function renderStoryJournal(completed=false){
  for(const d of defs){
   const card=document.createElement('article');card.className='storyCard';const art=document.createElement('div');art.className='storyArt';art.innerHTML=storyArtwork(d.kind);const title=document.createElement('h3');title.textContent=d.title;const description=document.createElement('p');description.textContent=d.summary;const reward=document.createElement('p');reward.className='storyReward';reward.textContent=d.reward;card.append(art,title,description,reward);
   if(completed){const done=document.createElement('p');done.className='completedBadge';done.textContent='✓ COMPLETED · '+(r?.name||'THIS WORLD');card.append(done);}
-  else{const locked=d.requires&&!storyComplete(d.requires,features),q=storyState(d.id,features),button=document.createElement('button');button.className='primary full';button.textContent=locked?'COMPLETE CHAPTER I FIRST':q?.started?'CONTINUE QUEST':'TRACK QUEST';button.disabled=!!locked;button.setAttribute('aria-label',(q?.started?'Continue ':'Track ')+d.title);button.onclick=()=>chooseStoryWorld(d.id);card.append(button);if(locked){const note=document.createElement('p');note.className='storyStatus';note.textContent='Requires '+STORY_DEFS.find(x=>x.id===d.requires).title+' in this world.';card.append(note);}}
+  else{const locked=d.requires&&!storyComplete(d.requires,features),q=storyState(d.id,features),button=document.createElement('button');button.className='primary full';button.textContent=locked?'COMPLETE THE PREVIOUS CHAPTER FIRST':q?.started?'CONTINUE QUEST':'TRACK QUEST';button.disabled=!!locked;button.setAttribute('aria-label',(q?.started?'Continue ':'Track ')+d.title);button.onclick=()=>chooseStoryWorld(d.id);card.append(button);if(locked){const note=document.createElement('p');note.className='storyStatus';note.textContent='Requires '+STORY_DEFS.find(x=>x.id===d.requires).title+' in this world.';card.append(note);}}
   root.append(card);
  }
  if(completed&&crimsonUnlocked()){const card=document.createElement('article');card.className='storyCard';const h=document.createElement('h3');h.textContent='BRING A FRIEND · COMPLETED';const p=document.createElement('p');p.textContent='Crimson Explorer is unlocked on this device.';const b=document.createElement('button');b.className='primary full';b.textContent=ownsSkin(skinById('crimson_hood'))?'WEAR CRIMSON EXPLORER':'CLAIM CRIMSON EXPLORER';b.onclick=()=>{chooseSkin('crimson_hood');renderStoryJournal(true);};card.append(h,p,b);root.append(card);}
@@ -6806,6 +6806,659 @@ soundtrackForPlayer=function(){
  return soundtrackBeforeExpedition();
 };
 
+/* Edward III and joined charts. */
+STORY_DEFS.push({id:'edward3',title:'EDWARD’S QUEST III',person:'Edward',requires:'edward2',summary:'Sail with Edward to chart Skeleton Island and the mushroom coast, then bring the final chart home to the village.',reward:'Your own sailing ship · Frontier map · Combine all three charts into a 4×4 megamap',kind:'voyage'});
+const voyageMapStoryArtwork=storyArtwork;
+storyArtwork=function(kind){
+ if(kind!=='voyage')return voyageMapStoryArtwork(kind);
+ return '<svg viewBox="0 0 900 270" role="img" aria-label="A sailing ship between Skeleton Island and colourful mushroom homes"><rect width="900" height="270" fill="#8ab8b5"/><path fill="#487d86" d="M0 170h900v100H0z"/><path fill="#606f69" d="m0 200 90-95 90 10 140 85z"/><path fill="#90a371" d="m610 210 70-60 140-20 80 90z"/><g fill="#e9d4ae"><path d="M76 87h25v96H76zM140 100h23v82h-23zM706 132h18v69h-18zM802 123h18v79h-18z"/></g><path fill="#bb5b5b" d="m676 135 37-58 42 58z"/><path fill="#9b7fb4" d="m773 127 37-63 43 63z"/><path fill="#805239" d="m342 188 46 44h142l42-44zM449 35h9v156h-9z"/><path fill="#f6e8ba" d="m440 48-81 126h81zm27 8v118h70z"/><path fill="#e1b566" d="M457 29h40l-14 16h-26z"/><path stroke="#bad7ca" stroke-width="4" d="M345 247h195M42 229h186M646 245h208"/></svg>';
+};
+const voyageMapLocation=storyLocation;
+storyLocation=function(id){
+ if(id!=='edward3')return voyageMapLocation(id);
+ const q=storyState(id);if(!q?.started||q.completed)return '';
+ const labels={talk:'Village Island — speak to Edward about the final chart',skeleton:'Skeleton Island — sail with Edward, land and ask him to sketch',mushroom:'Mushroom Island — sail with Edward, land and ask him to sketch',drawing:'Edward is sketching — stay beside him',village:'Village Island — return by boat and collect your ship from Edward'};
+ const p=q.phase==='skeleton'?worldFeatures.military?.island:q.phase==='mushroom'?worldFeatures.mushroom:q.phase==='village'?worldFeatures.village:null;
+ return (labels[q.phase]||labels.talk)+(p?militaryHeading(p):'');
+};
+const voyageMapZone=storyZone;
+storyZone=function(phase,p=feet){
+ if(phase==='skeleton')return onSkeletonIsland(p)&&p.y>WATER;
+ if(phase==='mushroom')return onMushroomIsland(p)&&p.y>WATER;
+ return voyageMapZone(phase,p);
+};
+const voyageMapStart=startStory;
+startStory=function(id){
+ if(id==='edward3'&&inNoobpixel())return false;
+ if(['edward1','edward2','edward3'].includes(id)){
+  const busy=travellingStory();if(busy&&busy.id!==id){notify('FINISH YOUR CURRENT JOURNEY WITH EDWARD FIRST.');return false;}
+ }
+ return voyageMapStart(id);
+};
+function voyageMapRewardPlan(source){
+ const plan=clone(source);return addMain(plan,{type:'map_frontiers'})&&addMain(plan,{type:'ship'})?plan:null;
+}
+function voyageMapSpeakerKey(){
+ if(typeof voyageProfileKey!=='function')return netActing?.id||'host';
+ // A guest must have an accepted identity. Never inherit the host's fallback key.
+ return netActing?netActing.voyageKey||null:voyageProfileKey();
+}
+function voyageMapOwnsStory(q){
+ if(netRole==='guest')return false;
+ const speaker=netActing?.id||'host',identity=voyageMapSpeakerKey();if(!identity)return false;
+ if(!q.ownerKey){if((q.owner||'host')!==speaker)return false;q.ownerKey=identity;}
+ if(q.ownerKey!==identity)return false;q.owner=speaker;return true;
+}
+const voyageMapTraveller=traveller;
+traveller=function(q){
+ if(q!==storyState('edward3'))return voyageMapTraveller(q);
+ const people=netPeople().filter(p=>p.hp>0),keyOf=p=>typeof voyageProfileKey==='function'?(p.id==='host'?voyageOwnerKey:netClients.get(p.id)?.voyageKey):p.id;
+ if(!q.ownerKey){const person=people.find(p=>p.id===(q.owner||'host'));if(!person)return null;const identity=keyOf(person);if(!identity)return null;q.ownerKey=identity;}
+ const owner=people.find(p=>keyOf(p)===q.ownerKey);if(!owner)return null;q.owner=owner.id;return owner;
+};
+const voyageMapStoryAction=storyAction;
+storyAction=function(id,action='talk',actorId=null){
+ if(id!=='edward3')return voyageMapStoryAction(id,action,actorId);
+ if(inNoobpixel()||bbActive()||hp<=0||!['playing','trade'].includes(mode)||!['talk','advance'].includes(action))return false;
+ const q=storyState(id),a=questActor('edward');
+ if(!q?.started||q.completed||!storyComplete('edward2')||!a||!nearVillageBlacksmith(a.id)||(actorId&&actorId!==a.id))return false;
+ if(netRole==='guest'){netRequest('quest',{questId:id,action,actorId:a.id});return false;}
+ const speaker=netActing?.id||'host';
+ if(q.phase!=='talk'&&!voyageMapOwnsStory(q)){storySay('edward','My travelling companion needs to speak to me to continue this journey.');return false;}
+ if(q.phase==='talk'){
+  const identity=voyageMapSpeakerKey();if(!identity)return false;
+  q.owner=speaker;q.ownerKey=identity;q.phase='skeleton';q.sketches=[];q.boatLeg=false;q.sailedDistance=0;q.lastSail=null;
+  storySay('edward','Our final chart needs Skeleton Island and the mushroom coast. Sail me to each shore and ask me to sketch. Bring me home, and a sailing ship is yours. All three chart pieces join west to east!');
+ }else if(['skeleton','mushroom'].includes(q.phase)&&q.boatLeg&&storyZone(q.phase)&&!mountedBoat&&a.root.position.y>WATER){
+  beginSketch(q,q.phase==='skeleton'?'mushroom':'village',q.phase==='skeleton'?'Skeleton Island, its landing and the old stone ruins':'the mushroom coast and its eight little homes');return true;
+ }else if(q.phase==='village'&&q.boatLeg&&storyZone('village')&&!mountedBoat&&['skeleton','mushroom'].every(p=>q.sketches?.includes(p))){
+  const plan=voyageMapRewardPlan(inventory);if(!plan){storySay('edward','Make room for your ship and final map. I will keep them safe until you are ready.');return false;}
+  grantStoryItems('map_frontiers',1);grantStoryItems('ship',1);q.rewardIssued=true;finishStory(id);a.path=[];
+  storySay('edward','Every island is on paper! Here is your ship and the third chart. Place charts I, II and III side by side from west to east, or combine them at a building table for a four-by-four megamap.');updateHand();renderHUD();
+ }else{storySay('edward',q.phase==='drawing'?'Stay beside me while I finish this sketch.':storyLocation(id)+(q.boatLeg?' — land beside me before we draw.':' — we need to travel together in a boat.'));return true;}
+ saveCurrent();return true;
+};
+const voyageMapFinishSketch=finishSketch;
+finishSketch=function(id,q){
+ voyageMapFinishSketch(id,q);
+ if(id==='edward3')storySay('edward',q.phase==='mushroom'?'The ruins and landing are drawn. Next, sail us to Mushroom Island and we will sketch its colourful homes.':'The final coast is drawn. Sail us home to Village Island, and your ship will be waiting.');
+};
+const voyageMapDirection=villageDirectionLabel;
+villageDirectionLabel=function(){
+ const q=storyState('edward3');if(worldFeatures.trackedStory==='edward3'&&q?.started&&!q.completed&&mountedBoat){const p=q.phase==='skeleton'?worldFeatures.military?.island:q.phase==='mushroom'?worldFeatures.mushroom:q.phase==='village'?worldFeatures.village:null;if(p)return ' · QUEST'+militaryHeading(p);}
+ return voyageMapDirection();
+};
+const voyageMapRecipe=recipe;
+recipe=function(){
+ const items=craftSlots.filter(Boolean).map(s=>s.item.type).sort();
+ if(craftSize===3&&items.join(',')==='map_frontiers,map_islands,map_kingdom')return{type:'megamap'};
+ return voyageMapRecipe();
+};
+const voyageMapCrafting=renderCrafting;
+renderCrafting=function(){voyageMapCrafting();if(craftSize===3)$('craftInstructions').textContent+=' MEGAMAP: ONE EACH OF EDWARD’S THREE MAPS, IN ANY THREE SLOTS. PLACE ON A CLEAR 4×4 FLOOR.';};
+
+/* A single geographical projection joins the three original chart blocks. */
+function voyageChartProjection(terrain,width,height){
+ const tiles=terrain.filter(t=>Number.isFinite(t.x)&&Number.isFinite(t.z));
+ if(!tiles.length)return null;
+ const xs=tiles.map(t=>t.x),zs=tiles.map(t=>t.z),minX=Math.min(...xs)-6,maxX=Math.max(...xs)+6,minZ=Math.min(...zs)-6,maxZ=Math.max(...zs)+6;
+ const scale=Math.min((width-26)/(maxX-minX+1),(height-42)/(maxZ-minZ+1));
+ return {minX,maxX,minZ,maxZ,scale,px:x=>width/2+(x-(minX+maxX)/2)*scale,pz:z=>height/2+9+(z-(minZ+maxZ)/2)*scale};
+}
+function voyageChartAtlas(features,terrain,width,height){
+ const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;const c=canvas.getContext('2d'),p=voyageChartProjection(terrain,width,height);
+ c.fillStyle='#a9c6bd';c.fillRect(0,0,width,height);if(!p)return canvas;
+ const {px,pz,scale:s}=p;
+ for(let z=36;z<height;z+=22)for(let x=(z%3)*7;x<width;x+=33){c.fillStyle='#c1d7cb';c.fillRect(x,z,6,1);}
+ c.fillStyle='#eddfb9';c.fillRect(0,0,width,25);c.fillStyle='#394d48';c.font='bold 13px Georgia, serif';c.textAlign='center';c.fillText('EDWARD’S ATLAS  ·  THE CORNY ISLES',width/2,17);
+ const square=(x,z,w,d,color)=>{c.fillStyle=color;c.fillRect(px(x-.5),pz(z-.5),Math.max(.8,w*s),Math.max(.8,d*s));};
+ for(const t of terrain)square(t.x+1,t.z+1,1,1,'#739e97');
+ for(const t of terrain){const surface=at(t.x,t.h,t.z)?.type;square(t.x,t.z,1,1,t.beach?'#dec48b':t.biome==='desert'?'#dfb777':t.biome==='stone'||t.biome==='skeleton'?'#828e86':t.biome==='mushroom'?'#9dab78':surface==='sandstone'?'#d3bc87':t.h>1?'#729260':'#91aa78');}
+ const footprint=(h,color)=>{if(h)square(h.x,h.z,h.width||5,h.depth||5,color);};
+ for(const h of features.village?.houses||[])footprint(h,'#a27950');
+ const k=features.kingdom;
+ if(k){for(const h of k.houses||[])footprint(h,h.kind==='house'?'#ba8b64':'#9f6757');footprint(k.castle,'#676e70');footprint(k.hotel,'#b4794e');c.strokeStyle='#716954';c.lineWidth=Math.max(1,s);c.strokeRect(px(k.x-32),pz(k.z-36),64*s,72*s);}
+ for(const h of features.mushroom?.huts||[])square(h.x-2,h.z-2,5,5,h.outsider?'#a37d59':'#b36478');
+ const war=features.military?.island;if(war)for(const sign of [-1,1])square(war.x+sign*11,war.z-7,1,9,'#566d6c');
+ for(const t of terrain)if(t.biome==='pine'&&at(t.x,t.h+1,t.z)?.type==='log')square(t.x,t.z,1,1,'#42684a');
+ function label(text,x,z){c.font='bold 11px Georgia, serif';c.textAlign='center';const tx=Math.max(text.length*3.4+4,Math.min(width-text.length*3.4-4,px(x))),ty=Math.max(37,Math.min(height-10,pz(z)));c.fillStyle='#f3e6bede';c.fillRect(tx-text.length*3.4-3,ty-10,text.length*6.8+6,14);c.fillStyle='#344d46';c.fillText(text,tx,ty);}
+ label('PINE FOREST',0,7);const v=features.village,d=features.desert?.center,t=features.temple?.island||features.temple?.center,m=features.mushroom;
+ if(v)label('VILLAGE',v.x,v.z+8);if(d)label('DESERT',d.x,d.z+8);if(t)label('AQUATIC TEMPLE',t.x,t.z+12);if(k)label('FIRE KINGDOM',k.x,k.z+43);if(war)label('SKELETON ISLAND',war.x,war.z+27);if(m)label('MUSHROOM ISLAND',m.x,m.z+31);
+ c.textAlign='right';c.font='bold 10px serif';c.fillStyle='#345a58';c.fillText('N ↑',width-10,40);
+ c.font='9px sans-serif';c.fillText('E. FEN · ACTUAL WORLD SURVEY',width-9,height-5);
+ return canvas;
+}
+function drawExpeditionChart(c,type,features,terrain){
+ c.fillStyle='#a9c6bd';c.fillRect(0,0,256,256);if(!features||!terrain?.length)return;
+ const piece=['map_islands','map_kingdom','map_frontiers'].indexOf(type),panel=/^megamap_(\d+)$/.exec(type);
+ const atlas=voyageChartAtlas(features,terrain,piece>=0?768:1024,piece>=0?256:1024);
+ if(piece>=0){c.drawImage(atlas,piece*256,0,256,256,0,0,256,256);c.fillStyle='#eddfb9';c.fillRect(0,242,256,14);c.fillStyle='#45584b';c.font='bold 9px sans-serif';c.textAlign='center';c.fillText(['I · WEST  → II','← I  ·  II · CENTRAL  ·  III →','II ←  III · EAST'][piece],128,252);}
+ else if(panel){const n=+panel[1];c.drawImage(atlas,(n%4)*256,Math.floor(n/4)*256,256,256,0,0,256,256);}
+ else c.drawImage(atlas,0,0,1024,1024,0,0,256,256);
+}
+function refreshEdwardCharts(){
+ if(!current||!land?.length)return;
+ const strips=voyageChartAtlas(worldFeatures,land,768,256),mega=voyageChartAtlas(worldFeatures,land,1024,1024);
+ for(const type of ['map_islands','map_kingdom','map_frontiers','megamap',...Array.from({length:16},(_,i)=>'megamap_'+i)]){
+  const texture=batches.get(type)?.material?.map,canvas=texture?.image;if(!canvas?.getContext)continue;const c=canvas.getContext('2d'),piece=['map_islands','map_kingdom','map_frontiers'].indexOf(type);
+  if(piece>=0){c.drawImage(strips,piece*256,0,256,256,0,0,256,256);c.fillStyle='#eddfb9';c.fillRect(0,242,256,14);c.fillStyle='#45584b';c.font='bold 9px sans-serif';c.textAlign='center';c.fillText(['I · WEST  → II','← I  ·  II · CENTRAL  ·  III →','II ←  III · EAST'][piece],128,252);}
+  else if(type==='megamap')c.drawImage(mega,0,0,1024,1024,0,0,256,256);
+  else{const n=+type.slice(8);c.drawImage(mega,(n%4)*256,Math.floor(n/4)*256,256,256,0,0,256,256);}
+  texture.needsUpdate=true;
+ }
+}
+
+/* The assembled chart is one inventory item and sixteen atomic world cells. */
+function voyageMegamapCells(x,y,z){return Array.from({length:16},(_,n)=>({x:x+n%4,y,z:z+Math.floor(n/4),type:'megamap_'+n}));}
+function voyageMegamapAt(b){return (worldFeatures.megamaps||[]).find(m=>b.y===m.y&&b.x>=m.x&&b.x<m.x+4&&b.z>=m.z&&b.z<m.z+4);}
+function voyageMegamapClearShip(c){
+ return typeof voyageShips!=='function'||typeof voyageInside!=='function'||!voyageShips().some(s=>voyageInside(s,c,Math.SQRT1_2));
+}
+function voyageMegamapPlan(b,n){
+ if(!b||n?.y<.5)return null;const cells=voyageMegamapCells(b.x,b.y+1,b.z);
+ const actors=[...mobs.values(),...villageActors.values(),...(farmerActor?[farmerActor]:[])];
+ return cells.every(c=>Math.abs(c.x)<=LIMIT&&Math.abs(c.z)<=LIMIT&&c.y>=-60&&c.y<=40&&!at(c.x,c.y,c.z)&&at(c.x,c.y-1,c.z)&&voyageMegamapClearShip(c)&&!petFishAt(c.x,c.y,c.z)&&!netPeople().some(p=>p.hp>0&&Math.abs(p.position.x-c.x)<.77&&Math.abs(p.position.z-c.z)<.77&&c.y+.5>p.position.y&&c.y-.5<p.position.y+1.7)&&!actors.some(a=>a.hp>0&&Math.abs(a.root.position.x-c.x)<.9&&Math.abs(a.root.position.z-c.z)<.9&&c.y+.5>a.root.position.y&&c.y-.5<a.root.position.y+2))?cells:null;
+}
+function placeVoyageMegamap(){
+ if(mode!=='playing'||netPending||activeStack()?.type!=='megamap')return false;
+ if(bbActive()){notify('PLACE YOUR MEGAMAP IN AN ADVENTURE WORLD.');return false;}
+ if(netRole==='guest'){netRequest('place',{});return false;}
+ updateAim();const cells=target?.type==='block'?voyageMegamapPlan(target.block,target.normal):null;
+ if(!cells){notify('AIM AT THE NORTHWEST CORNER OF A CLEAR, LEVEL 4×4 FLOOR.');return false;}
+ const oldInventory=clone(inventory),oldActive=active,oldMaps=worldFeatures.megamaps;
+ try{takeItem(active);for(const c of cells)put(c.x,c.y,c.z,c.type);worldFeatures.megamaps=[...(oldMaps||[]),{id:uid(),x:cells[0].x,y:cells[0].y,z:cells[0].z}];rebuildTerrain();}
+ catch(error){for(const c of cells)blocks.delete(key(c.x,c.y,c.z));inventory=oldInventory;active=oldActive;worldFeatures.megamaps=oldMaps;rebuildTerrain();notify('THE MAP DID NOT FIT. YOUR MEGAMAP WAS RETURNED.');return false;}
+ stopMining();updateHand();audioEvent('place','block',cells[0],'megamap');saveCurrent();notify('MEGAMAP PLACED · ALL ISLANDS ON A 4×4 CHART. MINE ANY PANEL TO COLLECT IT.');return true;
+}
+const voyageMapPlace=place;
+place=function(){return activeStack()?.type==='megamap'?placeVoyageMegamap():voyageMapPlace();};
+const voyageMapMine=completeMining;
+completeMining=function(){
+ const b=blocks.get(miningKey);if(!b?.type?.startsWith('megamap_'))return voyageMapMine();
+ if(bbActive())return;
+ if(netRole==='guest'){netRequest('mine',{key:miningKey});stopMining();return;}
+ const m=voyageMegamapAt(b);if(!m){blocks.delete(miningKey);stopMining();rebuildTerrain();return;}
+ const broke=holdingPickaxe()?wearHeldTool('wooden_pickaxe'):false;
+ for(const c of voyageMegamapCells(m.x,m.y,m.z))if(at(c.x,c.y,c.z)?.type===c.type)blocks.delete(key(c.x,c.y,c.z));
+ worldFeatures.megamaps=worldFeatures.megamaps.filter(row=>row.id!==m.id);receive({type:'megamap'},b.x,b.y+.5,b.z);stopMining();rebuildTerrain();updateHand();saveCurrent();notify('COLLECTED YOUR COMPLETE MEGAMAP.'+(broke?' YOUR PICKAXE BROKE.':''));
+};
+
+/* Edward III voyage ships and seats. */
+const VOYAGE_SPEED=8.8,VOYAGE_LOWER=.18,VOYAGE_UPPER=2.65;
+const voyageMeshes=new Map(),voyageSeatMeshes=new Map(),voyageInputs=new Map();
+let voyageOwnerKey='';
+try{voyageOwnerKey=localStorage.getItem('corny-voyage-owner-v1')||'';}catch{}
+if(!/^[a-zA-Z0-9_-]{12,100}$/.test(voyageOwnerKey)){
+ voyageOwnerKey='sailor_'+(globalThis.crypto?.randomUUID?.()||uid()+uid()).replace(/[^a-zA-Z0-9_-]/g,'');
+ try{localStorage.setItem('corny-voyage-owner-v1',voyageOwnerKey);}catch{}
+}
+const voyageProfileKey=()=>netActing?.voyageKey||voyageOwnerKey;
+const voyageShips=()=>Array.isArray(worldFeatures.voyageShips)?worldFeatures.voyageShips:[];
+const voyageSeats=()=>Array.isArray(worldFeatures.voyageSeats)?worldFeatures.voyageSeats:[];
+const voyageShip=id=>voyageShips().find(s=>s.id===id);
+const voyageDriven=(owner=voyageProfileKey())=>voyageShips().find(s=>s.driver===owner)||null;
+function voyageLocal(s,p){const c=Math.cos(s.heading),n=Math.sin(s.heading),x=p.x-s.x,z=p.z-s.z;return{x:c*x-n*z,y:p.y-WATER,z:n*x+c*z};}
+function voyagePoint(s,x,y,z){const c=Math.cos(s.heading),n=Math.sin(s.heading);return new THREE.Vector3(s.x+c*x+n*z,WATER+y,s.z-n*x+c*z);}
+function voyageInside(s,p,pad=0){const q=voyageLocal(s,p);return Math.abs(q.x)<3+pad&&Math.abs(q.z)<5+pad&&q.y>-.2-pad&&q.y<VOYAGE_UPPER+2.2+pad;}
+function voyageUnderfoot(p=feet){return voyageShips().find(s=>voyageInside(s,p,.15))||null;}
+const voyageChestKey=id=>'voyage-chest:'+id;
+const voyageFireKey=id=>'voyage-fire:'+id;
+const VOYAGE_FIXTURES={helm:[0,VOYAGE_UPPER,-3.7],hatch:[1.25,VOYAGE_UPPER,1.1],ladder:[1.25,VOYAGE_LOWER,1.1],chest:[-1.95,VOYAGE_LOWER,-3.5],table:[1.95,VOYAGE_LOWER,-3.5],fire:[-1.95,VOYAGE_LOWER,.7],bed1:[-1.95,VOYAGE_LOWER,3.5],bed2:[1.95,VOYAGE_LOWER,3.5],seat1:[-1.95,VOYAGE_UPPER,.4],seat2:[1.95,VOYAGE_UPPER,.4],seat3:[-1.95,VOYAGE_UPPER,2.2],seat4:[1.95,VOYAGE_UPPER,2.2]};
+function voyageFixturePoint(s,part){const p=VOYAGE_FIXTURES[part];return p?voyagePoint(s,...p):voyagePoint(s,0,VOYAGE_UPPER,4.1);}
+function voyageNear(s,part){
+ if(part==='board'){const q=voyageLocal(s,feet);return Math.hypot(Math.max(0,Math.abs(q.x)-3),Math.max(0,Math.abs(q.z)-5),Math.max(0,-.5-q.y,q.y-4))<4.8;}
+ const p=voyageFixturePoint(s,part);return feet.distanceTo(p)<3.8&&Math.abs(feet.y-p.y)<(part==='ladder'?2.7:1.2);
+}
+function voyageSeat(owner=voyageProfileKey()){
+ for(const s of voyageShips())for(const [part,who]of Object.entries(s.seated||{}))if(who===owner)return{id:s.id+':'+part,ship:s,part,point:voyageFixturePoint(s,part),heading:s.heading};
+ const seat=voyageSeats().find(s=>s.occupant===owner);return seat?{id:seat.id,seat,point:new THREE.Vector3(seat.x,seat.y,seat.z),heading:seat.heading}:null;
+}
+function voyageLeaveSeat(owner=voyageProfileKey()){
+ const seat=voyageSeat(owner);if(!seat)return false;
+ if(seat.ship)delete seat.ship.seated[seat.part];else seat.seat.occupant=null;
+ if(owner===voyageProfileKey()){feet.copy(seat.point);feet.y+=.05;vy=0;grounded=true;}
+ return true;
+}
+function voyageSeatModel(root,x,y,z,part,id,heading=0){
+ const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=heading;root.add(g);
+ const p=(w,h,d,a,b,c,color)=>{const m=cube(g,w,h,d,a,b,c,militaryMat(color));m.userData.voyageId=id;m.userData.voyagePart=part;return m;};
+ for(const a of [-.31,.31])for(const c of [-.29,.29])p(.1,.45,.1,a,.225,c,'#775638');
+ p(.78,.16,.74,0,.5,0,'#d9c9a3');p(.78,.62,.12,0,.85,.31,'#d9c9a3');
+}
+function voyageModel(s){
+ const root=new THREE.Group();
+ const p=(w,h,d,x,y,z,color,part='board')=>{const m=cube(root,w,h,d,x,y,z,militaryMat(color));m.userData.voyageId=s.id;m.userData.voyagePart=part;return m;};
+ p(6,.32,10,0,0,0,'#684727');p(6,.1,10,0,VOYAGE_LOWER-.05,0,'#ad8650');
+ for(const x of [-2.95,2.95]){p(.16,2.65,10,x,1.33,0,'#947044');for(const z of [-3,-1,1,3])p(.18,.48,.6,x,1.6,z,'#76c7d1');}
+ for(const z of [-4.95,4.95])p(6,2.65,.16,0,1.33,z,'#947044');
+ // A real opening surrounds the hatch ladder; the rest of each deck is walkable.
+ p(6,.18,5.2,0,VOYAGE_UPPER-.09,-2.4,'#b28a55');p(6,.18,3.2,0,VOYAGE_UPPER-.09,3.4,'#b28a55');
+ p(3.6,.18,1.6,-1.2,VOYAGE_UPPER-.09,1,'#b28a55');p(1.2,.18,1.6,2.4,VOYAGE_UPPER-.09,1,'#b28a55');
+ for(const x of [-2.9,2.9]){p(.12,.12,10,x,VOYAGE_UPPER+.75,0,'#d4ad70');for(const z of [-4.8,-2.4,0,2.4,4.8])p(.13,.8,.13,x,VOYAGE_UPPER+.4,z,'#6c4d2d');}
+ p(6,.12,.12,0,VOYAGE_UPPER+.75,-4.9,'#d4ad70');
+ for(const x of [-1.95,1.95])p(2.1,.12,.12,x,VOYAGE_UPPER+.75,4.9,'#d4ad70');
+ p(.24,5.6,.24,0,VOYAGE_UPPER+2.8,-1.5,'#684727');p(4.7,.15,.15,0,VOYAGE_UPPER+5,-1.5,'#ad8650');
+ p(4.4,3.8,.08,0,VOYAGE_UPPER+3.05,-1.5,'#efe4c5');p(.22,3.8,.09,0,VOYAGE_UPPER+3.05,-1.55,'#d3b95b');
+ p(.28,.75,.28,0,VOYAGE_UPPER+.375,-3.7,'#63452b','helm');
+ const wheel=p(.95,.95,.10,0,VOYAGE_UPPER+1.08,-3.7,'#b8904c','helm');wheel.rotation.z=Math.PI/4;
+ p(.18,1.05,.12,0,VOYAGE_UPPER+1.08,-3.78,'#58422d','helm');p(1.05,.18,.12,0,VOYAGE_UPPER+1.08,-3.78,'#58422d','helm');
+ p(1.25,.12,1.45,1.25,VOYAGE_UPPER+.13,1.65,'#6e4f30','hatch').rotation.x=-1.1;
+ for(const x of [.8,1.7])p(.09,2.5,.09,x,1.43,.45,'#d5b374','ladder');for(let y=.42;y<2.6;y+=.35)p(.95,.075,.09,1.25,y,.45,'#d5b374','ladder');
+ for(const name of ['bed1','bed2']){const [x,y,z]=VOYAGE_FIXTURES[name];p(1.05,.37,2.1,x,y+.185,z,'#644a31',name);p(1.02,.16,1.6,x,y+.45,z+.2,'#668582',name);p(.95,.2,.45,x,y+.47,z-.78,'#e4d7bc',name);}
+ {const [x,y,z]=VOYAGE_FIXTURES.chest;p(.95,.75,.85,x,y+.375,z,'#b47b34','chest');p(.14,.25,.06,x,y+.43,z+.45,'#dfbd61','chest');}
+ {const [x,y,z]=VOYAGE_FIXTURES.table;p(1,.2,1,x,y+.8,z,'#9a663c','table');for(const dx of [-.36,.36])for(const dz of [-.36,.36])p(.12,.8,.12,x+dx,y+.4,z+dz,'#644a31','table');p(.05,.01,.96,x,y+.905,z,'#594a36','table');p(.96,.01,.05,x,y+.905,z,'#594a36','table');}
+ for(const name of ['seat1','seat2','seat3','seat4'])voyageSeatModel(root,...VOYAGE_FIXTURES[name],name,s.id);
+ const fp=voyageFixturePoint(s,'fire'),f=createFire({x:fp.x,y:fp.y+.35,z:fp.z});scene.remove(f.root);root.add(f.root);f.root.position.set(-1.95,VOYAGE_LOWER+.35,.7);f.root.traverse(o=>{if(o.isMesh){o.userData.voyageId=s.id;o.userData.voyagePart='fire';}});
+ Object.assign(f,s.fire||{});fires.set(voyageFireKey(s.id),f);scene.add(root);return{root,fire:f};
+}
+function voyageDisposeVisual(v){for(const puff of v.fire?.smoke||[])puff.material.dispose();scene.remove(v.root);}
+function voyageSync(){
+ const ids=new Set(voyageShips().map(s=>s.id));
+ for(const[id,v]of voyageMeshes)if(!ids.has(id)){voyageDisposeVisual(v);fires.delete(voyageFireKey(id));chests.delete(voyageChestKey(id));voyageMeshes.delete(id);}
+ for(const s of voyageShips()){
+  let v=voyageMeshes.get(s.id);if(!v){v=voyageModel(s);voyageMeshes.set(s.id,v);}
+  v.root.position.set(s.x,WATER,s.z);v.root.rotation.y=s.heading;v.root.updateMatrixWorld(true);
+  s.storage??={inventory:Array(20).fill(null),revision:0};chests.set(voyageChestKey(s.id),s.storage);
+  const f=v.fire,fp=voyageFixturePoint(s,'fire');f.x=fp.x;f.y=fp.y+.35;f.z=fp.z;
+  if(netRole==='guest')Object.assign(f,s.fire||{});fires.set(voyageFireKey(s.id),f);
+ }
+ const seats=new Set(voyageSeats().map(s=>s.id));
+ for(const[id,root]of voyageSeatMeshes)if(!seats.has(id)){scene.remove(root);voyageSeatMeshes.delete(id);}
+ for(const s of voyageSeats())if(!voyageSeatMeshes.has(s.id)){const root=new THREE.Group();voyageSeatModel(root,0,0,0,'landseat',s.id);root.position.set(s.x,s.y,s.z);root.rotation.y=s.heading;root.updateMatrixWorld(true);scene.add(root);voyageSeatMeshes.set(s.id,root);}
+}
+function voyageSaveFixtures(){for(const s of voyageShips()){const f=fires.get(voyageFireKey(s.id));if(f)s.fire={rawType:f.rawType,readyAt:f.readyAt};const c=chests.get(voyageChestKey(s.id));if(c)s.storage=c;}}
+function voyageClear(){for(const v of voyageMeshes.values())voyageDisposeVisual(v);for(const v of voyageSeatMeshes.values())scene.remove(v);voyageMeshes.clear();voyageSeatMeshes.clear();voyageInputs.clear();}
+const voyageClearWorld=clearWorld;clearWorld=function(...a){voyageClear();return voyageClearWorld(...a);};
+const voyageCapture=capture;capture=function(){voyageSaveFixtures();return voyageCapture();};
+const voyageRestore=restoreState;restoreState=function(input){const r=voyageRestore(input);for(const s of voyageShips()){s.driver=null;s.seated={};s.heading=Number(s.heading)||0;s.storage={inventory:normaliseInventory(s.storage?.inventory,20),revision:s.storage?.revision||0};}for(const s of voyageSeats())s.occupant=null;voyageSync();return r;};
+const voyageSyncFires=syncFires;syncFires=function(){const custom=[...fires].filter(([k])=>k.startsWith('voyage-fire:'));for(const[k]of custom)fires.delete(k);voyageSyncFires();for(const[k,v]of custom)fires.set(k,v);};
+const voyageSyncChests=syncChests;syncChests=function(){const custom=[...chests].filter(([k])=>k.startsWith('voyage-chest:'));voyageSyncChests();for(const[k,v]of custom)chests.set(k,v);};
+
+// Ship hulls remain independent of mineable terrain. Collision uses local ship coordinates.
+const voyageBaseBody=bodyCollides;
+function voyageSolid(s,p,r=.27,height=1.7){
+ const q=voyageLocal(s,p),radius=r*1.42;
+ const overlaps=(x0,x1,y0,y1,z0,z1)=>q.x+radius>x0&&q.x-radius<x1&&q.y<y1-.001&&q.y+height>y0+.001&&q.z+radius>z0&&q.z-radius<z1;
+ if(Math.abs(q.x)>3+radius||Math.abs(q.z)>5+radius||q.y>9||q.y+height<-.16)return false;
+ if(overlaps(-3,3,-.16,VOYAGE_LOWER,-5,5))return true;
+ for(const b of [[-3,3,2.47,2.65,-5,.2],[-3,3,2.47,2.65,1.8,5],[-3,.6,2.47,2.65,.2,1.8],[1.8,3,2.47,2.65,.2,1.8],[-3,-2.83,.18,3.4,-5,5],[2.83,3,.18,3.4,-5,5],[-3,3,.18,3.4,-5,-4.83],[-3,3,.18,2.65,4.83,5],[-3,-.9,2.65,3.4,4.83,5],[.9,3,2.65,3.4,4.83,5],[-.13,.13,2.65,8.3,-1.63,-1.37]])if(overlaps(...b))return true;
+ return false;
+}
+bodyCollides=function(p,r=.27,height=1.7){return voyageBaseBody(p,r,height)||voyageShips().some(s=>voyageSolid(s,p,r,height));};
+function voyageDeckAt(s,x,z,y,up=1.001,down=1.001){
+ const q=voyageLocal(s,{x,y,z});if(Math.abs(q.x)>2.82||Math.abs(q.z)>4.82)return null;
+ for(const h of [VOYAGE_UPPER,VOYAGE_LOWER]){if(h===VOYAGE_UPPER&&q.x>.6&&q.x<1.8&&q.z>.2&&q.z<1.8)continue;const v=WATER+h;if(v<=y+up+.001&&v>=y-down-.001&&!bodyCollides({x,y:v,z},.27,1.7))return v;}return null;
+}
+const voyageFloor=walkingFloor;walkingFloor=function(x,z,y,r=.36,height=1.85,up=1.001,down=1.001){
+ const base=voyageFloor(x,z,y,r,height,up,down);let best=base;for(const s of voyageShips()){const v=voyageDeckAt(s,x,z,y,up,down);if(v!==null&&!bodyCollides({x,y:v,z},r,height)&&(best===null||v>best))best=v;}return best;
+};
+const voyageLanding=landingHeight;landingHeight=function(next,oldY){let y=voyageLanding(next,oldY);for(const s of voyageShips()){const v=voyageDeckAt(s,next.x,next.z,oldY,.003,Math.max(0,oldY-next.y)+.004);if(v!==null&&(y===null||v>y))y=v;}return y;};
+function voyageWaterOpen(x,z,heading,ignore=null){
+ const s={x,z,heading};for(let a=-2.7;a<=2.71;a+=.9)for(let c=-4.5;c<=4.51;c+=.9){const p=voyagePoint(s,a,.02,c);if(Math.abs(p.x)>LIMIT-1||Math.abs(p.z)>LIMIT-1||landColumns.has(`${Math.round(p.x)},${Math.round(p.z)}`)||voyageBaseBody(p,.5,8.8))return false;}
+ return !voyageShips().some(t=>t.id!==ignore&&Math.hypot(t.x-x,t.z-z)<11);
+}
+function voyagePlaceShip(){
+ if(bbActive()||mode!=='playing'||hp<=0||activeStack()?.type!=='ship'||mountedBoat||drivenTank())return false;
+ const owner=voyageProfileKey(),credit=worldFeatures.voyageCredits?.[owner]||0;
+ if(credit<1){notify('THIS SHIP MUST BE EARNED FROM EDWARD’S THIRD QUEST IN THIS WORLD.');return false;}
+ updateCamera();ray.setFromCamera(new THREE.Vector2(),camera);const o=ray.ray.origin,d=ray.ray.direction;
+ if(d.y>=-.01){notify('LOOK DOWN AT OPEN WATER TO LAUNCH YOUR SHIP.');return false;}
+ const len=(WATER-o.y)/d.y;if(len<=0||len>13){notify('AIM AT OPEN WATER NEARBY. YOUR SHIP NEEDS ROOM AROUND ITS HULL.');return false;}
+ const x=o.x+d.x*len,z=o.z+d.z*len;if(!voyageWaterOpen(x,z,yaw)){notify('THE SHIP NEEDS A CLEAR 6 × 10 PATCH OF OPEN WATER.');return false;}
+ const s={id:uid(),ownerKey:owner,x,z,heading:yaw,driver:null,seated:{},storage:{inventory:Array(20).fill(null),revision:0},fire:{rawType:null,readyAt:0},launchedAt:time};
+ (worldFeatures.voyageShips??=[]).push(s);worldFeatures.voyageCredits[owner]--;takeItem(active);voyageSync();updateHand();saveCurrent();notify('SHIP LAUNCHED · YOUR RESPAWN POINT NOW TRAVELS WITH IT. USE THE HULL TO BOARD.');return true;
+}
+function voyagePlaceSeat(){
+ if(bbActive()||activeStack()?.type!=='seat'||hp<=0)return false;updateAim();
+ if(target?.type!=='block'||target.normal.y<.5){notify('AIM AT THE TOP OF CLEAR GROUND TO PLACE A SEAT.');return false;}
+ const b=target.block,p={x:b.x,y:b.y+.5,z:b.z};
+ if(p.y<WATER||bodyCollides(p,.4,1.2)||voyageUnderfoot(p)||feet.distanceTo(new THREE.Vector3(p.x,p.y,p.z))<.85||netPeople().some(v=>Math.hypot(v.position.x-p.x,v.position.z-p.z)<.8&&Math.abs(v.position.y-p.y)<1.5)||voyageSeats().some(s=>Math.hypot(s.x-p.x,s.z-p.z)<.9&&Math.abs(s.y-p.y)<1)){notify('THE SEAT NEEDS A CLEAR SPACE ON LAND.');return false;}
+ (worldFeatures.voyageSeats??=[]).push({id:uid(),...p,heading:Math.round(yaw/(Math.PI/2))*(Math.PI/2),occupant:null});takeItem(active);voyageSync();updateHand();saveCurrent();notify('SEAT PLACED · USE TO SIT · JUMP TO STAND.');return true;
+}
+const voyageGrant=grantStoryItems;grantStoryItems=function(type,n){if(type==='ship'&&!bbActive()&&netRole!=='guest'){const credits=worldFeatures.voyageCredits??={};credits[voyageProfileKey()]=(credits[voyageProfileKey()]||0)+n;}return voyageGrant(type,n);};
+const voyagePlace=place;place=function(){
+ if(mode!=='playing'||netPending)return;
+ const type=activeStack()?.type;if(['ship','seat'].includes(type)){if(bbActive()){notify('SHIPS AND SEATS BELONG IN ADVENTURE WORLDS.');return;}if(netRole==='guest'){netRequest('place',{});return;}return type==='ship'?voyagePlaceShip():voyagePlaceSeat();}
+ updateAim();const b=target?.block,n=target?.normal;
+ if(target?.type==='voyage'||target?.type==='voyageSeat'||(b&&n&&voyageUnderfoot({x:b.x+Math.round(n.x),y:b.y+Math.round(n.y)-.5,z:b.z+Math.round(n.z)}))){notify('THE SHIP’S DECKS AND FURNISHINGS STAY AS BUILT.');return;}
+ return voyagePlace();
+};
+const voyageRecipe=recipe;recipe=function(){
+ if(craftSlots.filter(Boolean).length===4)for(let r=0;r<craftSize-1;r++)for(let c=0;c<craftSize-1;c++){
+  const i=r*craftSize+c;if([i,i+1].every(k=>craftSlots[k]?.item.type==='wool')&&[i+craftSize,i+craftSize+1].every(k=>['log','oak_log'].includes(craftSlots[k]?.item.type)))return{type:'seat'};
+ }return voyageRecipe();
+};
+const voyageRenderCrafting=renderCrafting;renderCrafting=function(){voyageRenderCrafting();$('craftInstructions').textContent+=' SEAT: 2 WOOL ABOVE 2 PINE OR OAK LOGS.';};
+const voyageBattleItem=bbChooseItem;bbChooseItem=function(type,...a){if(type==='ship'||type==='seat')return false;return voyageBattleItem(type,...a);};
+
+function voyageUse(id,part){
+ if(bbActive()||mode!=='playing'||hp<=0)return false;
+ if(netRole==='guest'){netRequest('voyage',{id,part});return true;}
+ const owner=voyageProfileKey();
+ if(part==='stand'){return voyageLeaveSeat(owner);}
+ const s=voyageShip(id);
+ if(!s){const seat=voyageSeats().find(v=>v.id===id);if(!seat||!['landseat','pickup'].includes(part)||feet.distanceTo(new THREE.Vector3(seat.x,seat.y,seat.z))>4)return false;
+  if(part==='pickup'){if(seat.occupant){notify('WAIT FOR THE PERSON TO STAND UP.');return false;}if(!addMain(inventory,{type:'seat'})){notify('MAKE ROOM FOR YOUR SEAT.');return false;}worldFeatures.voyageSeats=voyageSeats().filter(v=>v.id!==id);voyageSync();}
+  else{if(seat.occupant&&seat.occupant!==owner){notify('THIS SEAT IS OCCUPIED.');return false;}voyageLeaveSeat(owner);seat.occupant=owner;feet.set(seat.x,seat.y-.12,seat.z);yaw=seat.heading;vy=0;wetTime=0;}
+  updateHand();saveCurrent();return true;
+ }
+ if(part==='release'){if(s.driver!==owner)return false;s.driver=null;voyageInputs.delete(owner);saveCurrent();return true;}
+ if(!['board',...Object.keys(VOYAGE_FIXTURES)].includes(part)||!voyageNear(s,part))return false;
+ if(mountedBoat||drivenTank()){notify('LEAVE YOUR CURRENT VEHICLE FIRST.');return false;}
+ if(part==='helm'){
+  if(owner!==s.ownerKey){notify('ONLY THIS SHIP’S OWNER CAN STEER. YOU CAN WALK ABOARD OR TAKE A SEAT.');return false;}
+  if(Math.abs(feet.y-(WATER+VOYAGE_UPPER))>1)return false;
+  if(s.driver&&s.driver!==owner)return false;voyageLeaveSeat(owner);s.driver=owner;feet.copy(voyageFixturePoint(s,'helm'));yaw=s.heading;notify('AT THE HELM · MOVE TO SAIL · JUMP TO RELEASE THE WHEEL');
+ }else if(part==='board'){voyageLeaveSeat(owner);feet.copy(voyagePoint(s,0,VOYAGE_UPPER,4.1));notify('WELCOME ABOARD · HELM AT THE BOW · HATCH TO THE CABIN');}
+ else if(part==='hatch'||part==='ladder'){
+  if(voyageDriven(owner)||voyageSeat(owner))return false;
+  feet.copy(voyagePoint(s,.95,part==='hatch'?VOYAGE_LOWER:VOYAGE_UPPER,part==='hatch'?1.2:2.05));notify(part==='hatch'?'LOWER CABIN · BEDS, CHEST, CRAFTING TABLE AND CAMPFIRE':'TOP DECK · USE THE WHEEL TO SAIL');
+ }else if(part.startsWith('seat')){
+  if(s.seated?.[part]&&s.seated[part]!==owner)return false;if(voyageDriven(owner))return false;voyageLeaveSeat(owner);(s.seated??={})[part]=owner;feet.copy(voyageFixturePoint(s,part));feet.y-=.12;yaw=s.heading;
+ }else if(part==='chest'){voyageSync();openStorage(voyageChestKey(id));}
+ else if(part==='table'){voyageOriginalCraft(false,{type:'table',x:0,y:0,z:0});}
+ else if(part==='fire'){useFire(voyageFireKey(id));}
+ else if(part.startsWith('bed')){sleepInBed(voyageChestKey(id));}
+ vy=0;wetTime=0;grounded=true;playerStepOffset=0;updateCamera();saveCurrent();return true;
+}
+const voyagePick=pick;pick=function(...a){
+ const terrain=voyagePick(...a);camera.updateMatrixWorld();ray.setFromCamera(new THREE.Vector2(a[0]||0,a[1]||0),camera);ray.far=Math.min(6,terrain?.distance??6);
+ const hits=ray.intersectObjects([...voyageMeshes.values()].map(v=>v.root).concat([...voyageSeatMeshes.values()]),true);const h=hits[0];
+ if(!h?.object.userData.voyageId)return terrain;return{type:voyageSeatMeshes.has(h.object.userData.voyageId)?'voyageSeat':'voyage',id:h.object.userData.voyageId,part:h.object.userData.voyagePart,distance:h.distance};
+};
+const voyageOriginalCraft=openCraft;openCraft=function(...a){
+ if(!a[0]&&!a[1]&&mode==='playing'&&!bbActive()){
+  if(voyageSeat()){voyageUse(voyageSeat().id,'stand');return;}
+  updateAim();if(['voyage','voyageSeat'].includes(target?.type)){
+   const {id,part}=target;if(part==='chest'){const s=voyageShip(id);if(s&&voyageNear(s,part)){voyageSync();openStorage(voyageChestKey(id));}return;}
+   if(part==='table'){const s=voyageShip(id);if(s&&voyageNear(s,part))return voyageOriginalCraft(false,{type:'table',x:0,y:0,z:0});return;}
+   voyageUse(id,part);return;
+  }
+ }return voyageOriginalCraft(...a);
+};
+const voyageMine=beginMining;beginMining=function(...a){updateAim();if(target?.type==='voyage'){notify('YOUR VOYAGE SHIP CANNOT BE MINED.');return;}if(target?.type==='voyageSeat'){voyageUse(target.id,'pickup');return;}return voyageMine(...a);};
+const voyageJump=jump;jump=function(...a){const s=voyageDriven();if(s){voyageUse(s.id,'release');return;}const seat=voyageSeat();if(seat){voyageUse(seat.id,'stand');return;}return voyageJump(...a);};
+
+function voyageCarry(s,x,z,heading){
+ const previous={...s},local=voyageInside(s,feet,.2)?voyageLocal(s,feet):null,passengers=[];
+ if(netRole==='host')for(const e of netClients.values())if(e.ready&&netValidPose(e.pose)){const p=new THREE.Vector3().fromArray(e.pose.feet);if(voyageInside(s,p,.2))passengers.push([e,voyageLocal(s,p)]);}
+ Object.assign(s,{x,z,heading});if(local)feet.copy(voyagePoint(s,local.x,local.y,local.z));
+ for(const[e,p]of passengers){e.pose.feet=voyagePoint(s,p.x,p.y,p.z).toArray();e.voyageCarryAt=time;}
+ return previous;
+}
+function voyageMoveHull(s,input,dt){
+ if(!s||!input||dt<=0)return;
+ const f=Math.max(-1,Math.min(1,input.f||0)),side=Math.max(-1,Math.min(1,input.side||0)),heading=Number.isFinite(input.yaw)?input.yaw:s.heading;
+ if(!f&&!side&&Math.abs(heading-s.heading)<.00001)return;
+ const len=Math.max(1,Math.hypot(f,side)),step=VOYAGE_SPEED*Math.min(.1,dt)/len;
+ let x=s.x,z=s.z,h=s.heading;
+ if(Math.abs(heading-s.heading)>.00001&&voyageWaterOpen(x,z,heading,s.id))h=heading;
+ const dx=(-Math.sin(h)*f+Math.cos(h)*side)*step,dz=(-Math.cos(h)*f-Math.sin(h)*side)*step;
+ if(dx&&voyageWaterOpen(x+dx,z,h,s.id))x+=dx;if(dz&&voyageWaterOpen(x,z+dz,h,s.id))z+=dz;
+ voyageCarry(s,x,z,h);
+}
+function voyageInput(){return{f:Number(held.has('forward'))-Number(held.has('backward')),side:Number(held.has('right'))-Number(held.has('left')),yaw};}
+const voyageMove=movePlayer;movePlayer=function(dt){
+ const seat=voyageSeat();if(seat){feet.copy(seat.point);feet.y-=.12;vy=0;grounded=true;wetTime=0;return;}
+ const s=voyageDriven();if(s){voyageMoveHull(s,voyageInput(),dt);feet.copy(voyageFixturePoint(s,'helm'));vy=0;grounded=true;wetTime=0;playerStepOffset=0;$('waterTint').style.opacity='0';voyageSync();return;}
+ return voyageMove(dt);
+};
+const voyageWorldTick=worldTick;worldTick=function(dt){
+ voyageWorldTick(dt);if(bbActive())return;
+ if(netRole==='host')for(const s of voyageShips())if(s.driver&&s.driver!==voyageOwnerKey){const e=[...netClients.values()].find(e=>e.ready&&e.voyageKey===s.driver);if(!e){voyageInputs.delete(s.driver);s.driver=null;continue;}const input=voyageInputs.get(s.driver);if(input&&time-input.at<.6)voyageMoveHull(s,input,dt);e.pose.feet=voyageFixturePoint(s,'helm').toArray();}
+ if(netRole!=='guest'){const connected=new Set([voyageOwnerKey,...[...netClients.values()].filter(e=>e.ready).map(e=>e.voyageKey)]);for(const s of voyageShips())for(const [part,owner]of Object.entries(s.seated||{}))if(!connected.has(owner))delete s.seated[part];for(const s of voyageSeats())if(s.occupant&&!connected.has(s.occupant))s.occupant=null;}
+ voyageSync();
+};
+const voyageRespawn=respawn;respawn=function(...a){
+ const result=voyageRespawn(...a);if(bbActive())return result;
+ const s=voyageShips().filter(s=>s.ownerKey===voyageProfileKey()).sort((a,b)=>(b.launchedAt||0)-(a.launchedAt||0)).at(0);
+ if(s){voyageLeaveSeat();if(s.driver===voyageProfileKey())s.driver=null;feet.copy(voyagePoint(s,0,VOYAGE_UPPER,3.5));vy=0;wetTime=0;grounded=true;updateCamera();saveCurrent();notify('RESPAWNED ON YOUR SHIP AT ITS CURRENT LOCATION.');}return result;
+};
+const voyageDie=die;die=function(...a){const r=voyageDie(...a);if(mode==='dead'){voyageLeaveSeat();const s=voyageDriven();if(s)s.driver=null;saveCurrent();}return r;};
+
+// A stable device profile survives peer IDs changing. The host binds it once per connection.
+function voyageBind(e,p){
+ if(e.voyageKey)return p?.voyageKey===e.voyageKey;
+ const key=p?.voyageKey;if(typeof key!=='string'||!/^[a-zA-Z0-9_-]{12,100}$/.test(key)||key===voyageOwnerKey||[...netClients.values()].some(v=>v!==e&&v.ready&&v.voyageKey===key))return false;
+ e.voyageKey=key;return true;
+}
+const voyageNetProfile=netProfile;netProfile=function(){const p=voyageNetProfile();p.voyageKey=voyageProfileKey();p.voyageSeat=voyageSeat()?.id||null;p.voyageDriver=voyageDriven()?.id||null;if(p.voyageDriver)p.voyageInput=voyageInput();return p;};
+const voyageNetPerson=netPerson;netPerson=function(id,name,p){const person=voyageNetPerson(id,name,p);person.voyageKey=p.voyageKey||(id==='host'?voyageOwnerKey:null);person.voyageSeat=p.voyageSeat||null;return person;};
+const voyageNetFrame=netFrame;netFrame=function(){voyageSaveFixtures();const d=voyageNetFrame();for(const p of d.players||[]){const owner=p.id==='host'?voyageOwnerKey:netClients.get(p.id)?.voyageKey;p.voyageKey=owner;p.voyageSeat=voyageSeat(owner)?.id||null;p.voyageDriver=voyageDriven(owner)?.id||null;}return d;};
+const voyageNetPose=netAcceptPose;netAcceptPose=function(e,p){
+ if(bbActive())return voyageNetPose(e,p);if(!netValidPose(p)||!voyageBind(e,p))return;
+ // Death arrives as a pose, independently of interaction RPCs. Release the host's
+ // occupancy too, so an old helm/seat cannot pull a respawned guest back aboard.
+ if(!(p.hp>0)){const previous=voyageDriven(e.voyageKey);if(previous)previous.driver=null;voyageInputs.delete(e.voyageKey);voyageLeaveSeat(e.voyageKey);}
+ const s=voyageDriven(e.voyageKey),seat=voyageSeat(e.voyageKey);let next={...p};
+ if(s){const input=p.voyageInput;if(input&&[input.f,input.side,input.yaw].every(Number.isFinite))voyageInputs.set(e.voyageKey,{f:Math.max(-1,Math.min(1,input.f)),side:Math.max(-1,Math.min(1,input.side)),yaw:input.yaw,at:time});next.feet=voyageFixturePoint(s,'helm').toArray();}
+ if(seat){next.feet=seat.point.toArray();next.feet[1]-=.12;}
+ next.voyageDriver=s?.id||null;next.voyageSeat=seat?.id||null;return voyageNetPose(e,next);
+};
+const voyageNetWithPlayer=netWithPlayer;netWithPlayer=function(e,p,fn){
+ if(!bbActive()&&e.voyageKey){p={...p,voyageKey:e.voyageKey};const s=voyageDriven(e.voyageKey),seat=voyageSeat(e.voyageKey);if(s)p.feet=voyageFixturePoint(s,'helm').toArray();if(seat){p.feet=seat.point.toArray();p.feet[1]-=.12;}}
+ return voyageNetWithPlayer(e,p,fn);
+};
+const voyageHostRequest=netHostRequest;netHostRequest=function(e,d){
+ const custom=d?.op==='voyage'||(d?.op==='storage'&&String(d.args?.key).startsWith('voyage-chest:'));
+ if(bbActive()){if(custom||d?.op==='place'&&['ship','seat'].includes(d.profile?.inventory?.[d.profile?.active]?.type))return;return voyageHostRequest(e,d);}
+ if(!custom){
+  if(d?.op==='place'&&['ship','seat'].includes(d.profile?.inventory?.[d.profile?.active]?.type)){
+   if(!voyageBind(e,d.profile))return;
+   if(netValidPose(e.pose))d={...d,profile:{...d.profile,feet:e.pose.feet,yaw:e.pose.yaw,pitch:e.pose.pitch}};
+  }
+  return voyageHostRequest(e,d);
+ }
+ if(!Number.isInteger(d.id)||!netValidPose(d.profile)||e.seen.has(d.id)||!voyageBind(e,d.profile))return;
+ e.seen.add(d.id);if(e.seen.size>256)e.seen.delete(e.seen.values().next().value);
+ // Use the last accepted position, not a second position smuggled inside an action.
+ const accepted=netValidPose(e.pose)?{...d.profile,feet:e.pose.feet,yaw:e.pose.yaw,pitch:e.pose.pitch}:d.profile;
+ const profile=netWithPlayer(e,accepted,()=>{
+  if(hp<=0)return;const a=d.args||{};
+  if(d.op==='voyage')voyageUse(a.id,a.part);
+  else{const id=String(a.key).slice('voyage-chest:'.length),s=voyageShip(id);if(s&&voyageNear(s,'chest')&&Number.isInteger(a.index)&&a.index>=0&&a.index<(a.dir==='out'?20:23)){voyageSync();transferChest(a.key,a.dir,a.index,a.revision);}}
+ });voyageSaveFixtures();netSend(e.conn,{t:'reply',id:d.id,profile});netBroadcast();return profile;
+};
+const voyageApplyFrame=netApplyFrame;netApplyFrame=function(d){
+ const old=voyageUnderfoot(),local=old?voyageLocal(old,feet):null;voyageApplyFrame(d);voyageSync();
+ if(old&&local){const next=voyageShip(old.id);if(next)feet.copy(voyagePoint(next,local.x,local.y,local.z));}
+ const me=(d.players||[]).find(p=>p.id===netPeer?.id);if(me&&(me.voyageDriver||me.voyageSeat)&&netValidPose({...me,pitch:0})){feet.fromArray(me.feet);vy=0;wetTime=0;}
+};
+const voyageClientMessage=netClientMessage;netClientMessage=function(d){
+ const request=netPending;
+ const control=d?.t==='reply'&&request?.id===d.id&&request.op==='voyage'&&netValidPose(d.profile);
+ voyageClientMessage(d);if(control){feet.fromArray(d.profile.feet);yaw=d.profile.yaw;vy=0;wetTime=0;playerStepOffset=0;updateCamera();}
+};
+const voyageAnimate=netAnimate;netAnimate=function(dt){voyageAnimate(dt);for(const p of netPeople())if(p.voyageSeat){const a=netAvatars.get(p.id);if(a)a.legs.forEach(l=>l.rotation.x=-Math.PI/2);}};
+const voyageHUD=renderHUD;renderHUD=function(){
+ voyageHUD();if(bbActive()||mode!=='playing')return;
+ if(voyageDriven()){$('target').textContent='SHIP HELM · TWICE BOAT SPEED · JUMP TO RELEASE';$('jump').textContent='LEAVE HELM';show('target',true);}
+ else if(voyageSeat()){$('target').textContent='SEATED · JUMP OR USE TO STAND';$('jump').textContent='STAND';show('target',true);}
+ else if(target?.type==='voyage'){
+  const names={board:'SHIP · USE TO BOARD',helm:'HELM · OWNER CAN STEER',hatch:'HATCH · USE TO GO DOWN',ladder:'LADDER · USE TO GO UP',chest:'SHIP CHEST · USE TO OPEN',table:'BUILDING TABLE · USE TO CRAFT',fire:'CAMPFIRE · USE TO COOK',bed1:'BED · USE TO SLEEP',bed2:'BED · USE TO SLEEP'};
+  $('target').textContent=names[target.part]||'PASSENGER SEAT · USE TO SIT';$('craft').textContent='USE';show('target',true);
+ }else if(target?.type==='voyageSeat'){$('target').textContent='WOOL SEAT · USE TO SIT · MINE TO PICK UP';show('target',true);}
+};
+const voyageHand=updateHand;updateHand=function(){voyageHand();if(netActing||!['ship','seat'].includes(activeStack()?.type))return;const t=activeStack().type;if(hand.children[0]?.userData.voyageHeld===t)return;for(const c of [...hand.children])hand.remove(c);if(t==='ship'){cube(hand,.3,.1,.47,0,0,0,mats.wood);cube(hand,.025,.45,.025,0,.2,0,mats.brown);cube(hand,.27,.25,.02,0,.25,0,militaryMat('#efe4c5'));}else{cube(hand,.28,.06,.25,0,0,0,militaryMat('#d9c9a3'));cube(hand,.28,.2,.04,0,.1,.1,militaryMat('#d9c9a3'));for(const x of [-.1,.1])cube(hand,.04,.2,.04,x,-.1,0,mats.wood);}for(const c of hand.children)c.userData.voyageHeld=t;};
+
+/* Progressive cracks and reusable block fragments. Mining rules stay authoritative. */
+const miningVisuals = {
+  key: null, stage: -1, world: null, elapsed: 0, lastChip: 0, cursor: 0,
+  root: new THREE.Group(), particles: [], canvas: document.createElement('canvas')
+};
+miningVisuals.canvas.width = miningVisuals.canvas.height = 128;
+miningVisuals.context = miningVisuals.canvas.getContext('2d');
+miningVisuals.texture = new THREE.CanvasTexture(miningVisuals.canvas);
+miningVisuals.texture.magFilter = THREE.NearestFilter;
+miningVisuals.texture.minFilter = THREE.NearestFilter;
+miningVisuals.texture.generateMipmaps = false;
+miningVisuals.crackGeometry = new THREE.BoxGeometry(1.006, 1.006, 1.006);
+miningVisuals.crackMaterial = new THREE.MeshBasicMaterial({
+  map: miningVisuals.texture, transparent: true, depthWrite: false,
+  polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+  toneMapped: false
+});
+miningVisuals.cracks = new THREE.Mesh(miningVisuals.crackGeometry, miningVisuals.crackMaterial);
+miningVisuals.cracks.visible = false;
+miningVisuals.cracks.renderOrder = 2;
+miningVisuals.root.add(miningVisuals.cracks);
+miningVisuals.chipGeometry = new THREE.BoxGeometry(.1, .1, .1);
+scene.add(miningVisuals.root);
+
+// A single small texture is redrawn only when the crack stage changes.
+const MINING_CRACK_BRANCHES = [
+  [[63,61],[48,48],[42,29],[24,19],[19,1]],
+  [[63,61],[79,47],[86,27],[103,20],[116,1]],
+  [[63,61],[84,65],[98,78],[116,77],[127,88]],
+  [[63,61],[63,83],[48,98],[48,116],[36,127]],
+  [[63,61],[42,69],[29,64],[13,75],[0,70]],
+  [[63,61],[73,79],[84,94],[100,102],[109,127]],
+  [[42,29],[55,20],[58,0]], [[86,27],[73,14],[74,0]],
+  [[98,78],[104,59],[123,49]], [[48,98],[29,103],[20,121]],
+  [[29,64],[29,46],[12,37]], [[84,94],[70,104],[69,127]],
+  [[48,48],[62,38],[68,24]], [[63,83],[49,80],[39,88]]
+];
+function drawMiningCrackStage(stage) {
+  const c = miningVisuals.context;
+  c.clearRect(0, 0, 128, 128);
+  const progress = (stage + 1) / 10;
+  const draw = (color, width) => {
+    c.strokeStyle = color; c.lineWidth = width; c.lineCap = 'square'; c.lineJoin = 'miter';
+    for (let branch = 0; branch < MINING_CRACK_BRANCHES.length; branch++) {
+      const points = MINING_CRACK_BRANCHES[branch];
+      const growth = Math.max(0, Math.min(1, branch < 6 ? progress * 1.2 : (progress - .38) / .62));
+      if (!growth) continue;
+      let remaining = growth * (points.length - 1);
+      c.beginPath(); c.moveTo(...points[0]);
+      for (let i = 1; i < points.length && remaining > 0; i++, remaining--) {
+        const amount = Math.min(1, remaining), a = points[i - 1], b = points[i];
+        c.lineTo(a[0] + (b[0] - a[0]) * amount, a[1] + (b[1] - a[1]) * amount);
+      }
+      c.stroke();
+    }
+  };
+  draw('rgba(255,240,205,.38)', 3.5 + progress * 1.6);
+  draw('rgba(22,18,17,.9)', 1.5 + progress * 1.5);
+  miningVisuals.texture.needsUpdate = true;
+  miningVisuals.stage = stage;
+}
+function resetMiningCracks() {
+  miningVisuals.key = null; miningVisuals.stage = -1;
+  miningVisuals.cracks.visible = false;
+}
+function clearMiningFragments() {
+  for (const p of miningVisuals.particles) { p.life = 0; p.mesh.visible = false; }
+}
+function emitMiningFragments(block, count = 12, normal = null) {
+  if (!block || mode !== 'playing') return;
+  // Remote edits outside the view need no particle work. The pool never grows past 48.
+  if (camera.position.distanceToSquared(new THREE.Vector3(block.x, block.y, block.z)) > 55 * 55) return;
+  for (let i = 0; i < count; i++) {
+    const index = miningVisuals.cursor++ % 48;
+    let p = miningVisuals.particles[index];
+    if (!p) {
+      const material = new THREE.MeshLambertMaterial({ color: '#92958c', transparent: true, depthWrite: false });
+      const mesh = new THREE.Mesh(miningVisuals.chipGeometry, material);
+      p = { mesh, velocity: new THREE.Vector3(), life: 0, duration: 0 };
+      miningVisuals.particles[index] = p; miningVisuals.root.add(mesh);
+    }
+    p.duration = p.life = count > 2 ? .45 + Math.random() * .22 : .28 + Math.random() * .15;
+    p.mesh.material.color.set(COLORS[block.type] || '#92958c');
+    p.mesh.material.opacity = block.type === 'glass' ? .65 : 1;
+    p.mesh.position.set(block.x + (Math.random() - .5) * .7,
+      block.y + (Math.random() - .5) * .7, block.z + (Math.random() - .5) * .7);
+    if (normal) {
+      if (Math.abs(normal.x) > .5) p.mesh.position.x = block.x + normal.x * .53;
+      if (Math.abs(normal.y) > .5) p.mesh.position.y = block.y + normal.y * .53;
+      if (Math.abs(normal.z) > .5) p.mesh.position.z = block.z + normal.z * .53;
+    }
+    p.velocity.set((Math.random() - .5) * 2.7, 1.2 + Math.random() * 2, (Math.random() - .5) * 2.7);
+    if (normal) p.velocity.addScaledVector(normal, .8);
+    const size = count > 2 ? .65 + Math.random() * .7 : .4 + Math.random() * .45;
+    p.mesh.scale.setScalar(size); p.mesh.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+    p.mesh.visible = true; p.glass = block.type === 'glass';
+  }
+}
+function updateMiningAnimation(dt) {
+  const world = current?.id || 'menu';
+  if (mode !== 'playing' || hp <= 0 || document.hidden || world !== miningVisuals.world) {
+    resetMiningCracks(); clearMiningFragments(); miningVisuals.world = world;
+    if (mode !== 'playing' || hp <= 0 || document.hidden) return;
+  }
+  const step = Math.max(0, Math.min(.1, dt));
+  miningVisuals.elapsed += step;
+  const block = miningKey && blocks.get(miningKey);
+  const aimed = target?.type === 'block' && key(target.block.x, target.block.y, target.block.z) === miningKey;
+  if (block && aimed) {
+    if (miningVisuals.key !== miningKey) {
+      resetMiningCracks(); miningVisuals.key = miningKey; miningVisuals.lastChip = miningVisuals.elapsed;
+    }
+    const stage = Math.min(9, Math.floor(Math.max(0, miningTime) / Math.max(.001, miningSeconds(block)) * 10));
+    if (stage !== miningVisuals.stage) drawMiningCrackStage(stage);
+    miningVisuals.cracks.position.set(block.x, block.y - (block.type === 'campfire' ? .39 : 0), block.z);
+    miningVisuals.cracks.scale.set(block.type === 'campfire' ? .94 : 1, block.type === 'campfire' ? .22 : 1, block.type === 'campfire' ? .94 : 1);
+    miningVisuals.cracks.visible = true;
+    if (miningVisuals.elapsed - miningVisuals.lastChip >= .2) {
+      emitMiningFragments(block, 2, target.normal); miningVisuals.lastChip = miningVisuals.elapsed;
+    }
+    if (hand.visible && time >= swingUntil) hand.rotation.z = -.25 + Math.sin(miningTime * 16) * .32;
+  } else resetMiningCracks();
+  for (const p of miningVisuals.particles) {
+    if (p.life <= 0) continue;
+    p.life -= step;
+    if (p.life <= 0) { p.mesh.visible = false; continue; }
+    p.velocity.y -= step * 6; p.mesh.position.addScaledVector(p.velocity, step);
+    p.mesh.rotation.x += step * 5; p.mesh.rotation.z += step * 4;
+    p.mesh.material.opacity = Math.min(1, p.life / .18) * (p.glass ? .65 : 1);
+  }
+}
+
+const cracksPreviousStopMining = stopMining;
+stopMining = function(...args) {
+  const result = cracksPreviousStopMining(...args);
+  // Host-authoritative guest actions temporarily borrow the local mining variables.
+  if (!netActing) resetMiningCracks();
+  return result;
+};
+// Keep the small GPU pool for the application's lifetime, resetting it on every world switch.
+const cracksPreviousClearWorld = clearWorld;
+clearWorld = function(...args) {
+  resetMiningCracks(); clearMiningFragments();
+  return cracksPreviousClearWorld(...args);
+};
+const cracksPreviousCompleteMining = completeMining;
+completeMining = function(...args) {
+  const block = blocks.get(miningKey), cell = miningKey;
+  const result = cracksPreviousCompleteMining(...args);
+  if (block && !blocks.has(cell)) emitMiningFragments(block);
+  return result;
+};
+const cracksPreviousAwakenStonefish = awakenStonefish;
+awakenStonefish = function(block, ...args) {
+  const result = cracksPreviousAwakenStonefish(block, ...args);
+  if (result && block && !blocks.has(key(block.x, block.y, block.z))) emitMiningFragments(block);
+  return result;
+};
+const cracksPreviousNetApplyFrame = netApplyFrame;
+netApplyFrame = function(frame, ...args) {
+  // Guests emit only after the host confirms removal, never on an optimistic request.
+  const removed = netRole === 'guest' ? (frame.blocks || [])
+    .filter(cell => cell[3] === null).map(cell => blocks.get(key(cell[0], cell[1], cell[2]))).filter(Boolean) : [];
+  const result = cracksPreviousNetApplyFrame(frame, ...args);
+  for (const block of removed) if (!blocks.has(key(block.x, block.y, block.z))) emitMiningFragments(block);
+  if (miningVisuals.key && !blocks.has(miningVisuals.key)) resetMiningCracks();
+  return result;
+};
+// Build Battle removes blocks immediately, so it uses the same burst without a timed overlay.
+const cracksPreviousBbEdit = bbEdit;
+bbEdit = function(entry, op, ...args) {
+  const block = op === 'mine' ? bbRay(entry?.pose || netProfile())?.block : null;
+  const result = cracksPreviousBbEdit(entry, op, ...args);
+  if (result && block && !blocks.has(key(block.x, block.y, block.z))) emitMiningFragments(block);
+  return result;
+};
+
+
 /* Corny mobile controls */
 /* Touch presentation only. Inject inside main(), after gameplay modules and before startup. */
 (() => {
@@ -7038,6 +7691,7 @@ renderer.setAnimationLoop(now=>{
  }else if(!["home","worlds","network"].includes(mode))hand.visible=false;
  netTick(dt);updateMatchaFireworks(dt);updateCynoSkyTexts(dt);updateGameAudio(now);updateCelestialBodies();updatePetFish();updateVillageActors(dt);tickBlacksmithQuest(dt);tickKingdomStories(dt);
  for(const root of [farmWaterRoot,desertWaterRoot])if(root)for(const m of root.children){const p=m.userData.pond;m.visible=!at(p.x,p.y,p.z);}
+ updateMiningAnimation(dt);
  renderer.render(scene,camera);
 });
 }
